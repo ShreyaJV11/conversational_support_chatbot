@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Chatbot Integration Example</title>
+    <style>
+        /* Example website styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* Header */
+        .header {
+            background: #2563eb;
+            color: white;
+            padding: 1rem 0;
+            text-align: center;
+        }
+
+        /* Navigation */
+        .nav {
+            background: #1e40af;
+            padding: 0.5rem 0;
+        }
+
+        .nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .nav a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Main content */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            margin: 2rem 0;
+            border-radius: 12px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #6b7280;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Features section */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 4rem 0;
+        }
+
+        .feature {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature h3 {
+            color: #2563eb;
+            margin-bottom: 1rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: #1f2937;
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+
+        /* Chat widget notice */
+        .chat-notice {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .chat-notice h3 {
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+        }
+
+        .chat-notice p {
+            color: #1e40af;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>MPS Enterprise Solutions</h1>
+        <p>Your trusted partner for digital publishing and hosting</p>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#support">Support</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>Welcome to MPS</h1>
+            <p>We provide comprehensive digital publishing solutions, DOI registration services, and enterprise hosting for academic and research institutions worldwide.</p>
+        </section>
+
+        <!-- Chat Widget Notice -->
+        <div class="chat-notice">
+            <h3>🤖 Need Help?</h3>
+            <p>Our AI-powered support assistant is available 24/7. Look for the chat button in the bottom-right corner!</p>
+        </div>
+
+        <!-- Features Section -->
+        <section class="features">
+            <div class="feature">
+                <h3>DOI Registration</h3>
+                <p>Register and manage Digital Object Identifiers for your publications with our streamlined process and comprehensive metadata management.</p>
+            </div>
+            
+            <div class="feature">
+                <h3>Enterprise Hosting</h3>
+                <p>Reliable, scalable hosting solutions with multiple tiers to meet your organization's needs, from basic shared hosting to dedicated servers.</p>
+            </div>
+            
+            <div class="feature">
+                <h3>Account Management</h3>
+                <p>Secure account access with robust authentication, password management, and comprehensive user administration tools.</p>
+            </div>
+        </section>
+
+        <!-- Content Section -->
+        <section>
+            <h2>Our Services</h2>
+            <p>MPS has been serving the academic and research community for over two decades. Our platform provides:</p>
+            <ul>
+                <li><strong>DOI Services:</strong> Complete DOI lifecycle management from registration to resolution</li>
+                <li><strong>Hosting Solutions:</strong> Three-tier hosting with Basic, Professional, and Enterprise options</li>
+                <li><strong>Technical Support:</strong> 24/7 support with AI-powered initial response and expert escalation</li>
+                <li><strong>Account Security:</strong> Advanced authentication and account management features</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Getting Started</h2>
+            <p>Ready to get started with MPS? Here's how:</p>
+            <ol>
+                <li>Create your account through our secure registration process</li>
+                <li>Choose your hosting plan based on your organization's needs</li>
+                <li>Upload your publications and request DOI registration</li>
+                <li>Use our support chat for any questions along the way</li>
+            </ol>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2024 MPS Enterprise Solutions. All rights reserved.</p>
+        <p>Questions? Try our AI support assistant or contact us at support@mps.com</p>
+    </footer>
+
+    <!-- Chatbot Widget Integration -->
+    <script src="../dist/chatbot-widget.umd.js"></script>
+    <script>
+        // Initialize the chatbot widget
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.ChatbotWidget) {
+                window.ChatbotWidget.init({
+                    // API Configuration
+                    apiBaseUrl: 'http://localhost:3000',
+                    
+                    // User Configuration
+                    userName: 'Website Visitor',
+                    
+                    // UI Configuration
+                    theme: {
+                        primaryColor: '#2563eb',
+                        backgroundColor: '#ffffff',
+                        textColor: '#374151'
+                    },
+                    
+                    // Position (default bottom-right)
+                    position: {
+                        bottom: '20px',
+                        right: '20px'
+                    },
+                    
+                    // Behavior
+                    initialMessage: true,
+                    maxMessages: 50,
+                    typingDelay: 1000
+                });
+                
+                console.log('✅ MPS Support Chatbot initialized successfully');
+            } else {
+                console.error('❌ ChatbotWidget not found. Make sure the script is loaded.');
+            }
+        });
+
+        // Optional: Add event listeners for widget interactions
+        document.addEventListener('chatbot-message-sent', function(event) {
+            console.log('User sent message:', event.detail.message);
+        });
+
+        document.addEventListener('chatbot-response-received', function(event) {
+            console.log('Bot response:', event.detail.response);
+        });
+    </script>
+</body>
+</html>

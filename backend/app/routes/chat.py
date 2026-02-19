@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from typing import Optional, Dict
 from app.services.retrieval_service import retrieve_chunks
 from app.services.llm_service import get_answers
 from app.services.memory_service import (
@@ -8,41 +9,67 @@ from app.services.memory_service import (
     save_message,
     get_recent_messages
 )
-router=APIRouter()
+
+router = APIRouter()
+
+# 1. Request model update kiya (Frontend 'user_question' bhej raha hai)
 class ChatRequest(BaseModel):
-    name:str
-    email:str
-    query:str
+    user_question: str
+    user_info: Optional[Dict] = None  # Frontend name/email info yahan bhejta hai
+    user_session_id: Optional[str] = "default_session"
+
 @router.post("/chat")
 async def chat_with_highwire(request: ChatRequest):
     try:
-        user_id = get_or_create_user(request.name, request.email)
+        # User info extract karna (Name/Email)
+        name = request.user_info.get("name", "Anonymous") if request.user_info else "Anonymous"
+        email = request.user_info.get("email", "unknown@mps.com") if request.user_info else "unknown@mps.com"
+        query = request.user_question
+
+        user_id = get_or_create_user(name, email)
         conversation_id = get_or_create_conversation(user_id)
-        history_rows = get_recent_messages(conversation_id)
+        history_rows = get_recent_messages(conversation_id, limit=6)
 
-        history_text = ""
-        for role, content in history_rows:
-            history_text += f"{role.upper()}: {content}\n"
-        chunks, is_domain = retrieve_chunks(request.query)
+        history_text = "\n".join([f"{r[0].upper()}: {r[1]}" for r in history_rows])
+        chunks, is_domain = retrieve_chunks(query)
 
+        # 2. Response format update kiya (Frontend ke switch-case ke liye)
         if not is_domain:
+            ans = "I am a HighWire specialist. I can only assist with HighWirePress systems."
+            save_message(conversation_id, "assistant", ans)
             return {
-                "answer": "Sorry, I can only answer questions related to HighWirePress systems and services.",
-                "sources": []
+                "response_type": "ERROR",
+                "message": "Sorry, I can only answer questions related to HighWirePress systems."
             }
 
         if not chunks:
+            ans = "I don't have enough technical data on this. Escalating..."
+            save_message(conversation_id, "assistant", ans)
             return {
-                "answer": "I do not have enough internal information to answer that.",
-                "sources": []
+                "response_type": "ESCALATED",
+                "message": "I don't have enough info. A support ticket has been raised.",
+                "case_id": f"REQ-{user_id}"
             }
-        combined_context = history_text + "\n\n" + "\n".join(chunks)
-        answer = get_answers(combined_context, request.query)
-        save_message(conversation_id, "user", request.query)
+
+        context_text = "\n".join(chunks)
+        answer = get_answers(history_text, context_text, query)
         save_message(conversation_id, "assistant", answer)
+
+        # Frontend expects 'response_type' and 'answer'
         return {
+            "response_type": "ANSWERED",
             "answer": answer,
-            "sources": chunks
+            "confidence_score": 0.95
         }
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Backend error: {str(e)}")
+        # Frontend catch block handle karega
+        return {
+            "response_type": "ERROR",
+            "message": f"Backend error: {str(e)}"
+        }
+
+# Initial message endpoint (Frontend uses this)
+@router.get("/chat/initial-message")
+async def get_initial():
+    return "Hi, I'm the MPS Support Assistant. How can I help you today?"

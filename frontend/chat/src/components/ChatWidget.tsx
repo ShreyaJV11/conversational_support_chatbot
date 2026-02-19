@@ -11,7 +11,7 @@ interface ChatWidgetProps {
 
 const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   const {
-    apiBaseUrl = 'http://localhost:3000',
+    apiBaseUrl = 'http://127.0.0.1:8000/api',
     theme = {},
     position = { bottom: '20px', right: '20px' },
     initialMessage = true,

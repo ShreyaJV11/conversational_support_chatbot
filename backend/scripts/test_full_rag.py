@@ -2,7 +2,7 @@ from app.services.retrieval_service import retrieve_chunks
 from app.services.llm_service import get_answers
 
 if __name__=="__main__":
-    query = "what is JCore?"
+    query = "how to install highwire chrome extension?"
     print("\nRunning full RAG Pipeline ...\n")
     chunks,is_domain=retrieve_chunks(query,top_k=3)
     if not chunks:

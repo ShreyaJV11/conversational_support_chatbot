@@ -8,8 +8,8 @@ embeddings=HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6
 def retrieve_chunks(
         user_query:str,
         top_k:int=5,
-        relevance_threshold:float=0.8,
-        domain_threshold:float=0.8
+        relevance_threshold:float=0.6,
+        domain_threshold:float=0.6
 )-> Tuple[List[str],bool]:
     query_vector=embeddings.embed_query(user_query)
     conn=get_connection()

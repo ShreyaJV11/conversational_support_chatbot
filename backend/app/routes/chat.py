@@ -50,6 +50,7 @@ async def chat_with_highwire(request: ChatRequest):
                 "message": "I don't have enough info. A support ticket has been raised.",
                 "case_id": f"REQ-{user_id}"
             }
+        
 
         context_text = "\n".join(chunks)
         answer = get_answers(history_text, context_text, query)

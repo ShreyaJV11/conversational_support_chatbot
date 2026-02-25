@@ -2,6 +2,7 @@
 export interface ChatRequest {
   user_question: string;
   user_session_id?: string;
+  
   user_info?: {
     name?: string;
     email?: string;

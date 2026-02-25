@@ -104,6 +104,8 @@ Do not explain anything.
             HumanMessage(content=prompt)
         ])
 
+        if not response or not hasattr(response, "content"):
+            return user_query
         rewritten = response.content.strip()
 
         # Safety guard (avoid hallucinated long rewrite)

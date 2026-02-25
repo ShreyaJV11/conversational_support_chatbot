@@ -30,7 +30,11 @@ STRICT RULES:
 6. Do NOT add confidence scores.
 7.Do NOT include 'Question:' or 'Answer:' labels.\n"
 8.If multiple sentences apply, format as numbered list.\n
-9. If answer is not clearly present, respond EXACTLY with:
+9.Do not add assumptions.
+Do not speculate.
+Do not mention ambiguity unless explicitly in context.
+Keep answers concise and professional.
+10. If answer is not clearly present, respond EXACTLY with:
 I do not have enough internal information to answer that.
 """
 

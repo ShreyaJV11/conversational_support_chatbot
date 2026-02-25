@@ -62,23 +62,26 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   }, [state.isOpen, state.isMinimized]);
 
   const loadInitialMessage = async () => {
-    try {
-      const initialMsg = await chatApi.getInitialMessage(userName);
-      const botMessage: ChatMessage = {
-        id: `msg_${Date.now()}`,
-        type: 'bot',
-        content: initialMsg,
-        timestamp: new Date()
-      };
+  try {
+    const response = await chatApi.getInitialMessage();
 
-      setState(prev => ({
-        ...prev,
-        messages: [botMessage]
-      }));
-    } catch (error) {
-      console.error('Failed to load initial message:', error);
-    }
-  };
+    const botMessage: ChatMessage = {
+      id: `msg_${Date.now()}`,
+      type: 'bot',
+      content: response.message || "Welcome!",
+      timestamp: new Date()
+    };
+
+    setState(prev => ({
+      ...prev,
+      messages: [botMessage],
+      collectingInfo: response.response_type === 'COLLECT_INFO'
+    }));
+
+  } catch (error) {
+    console.error('Failed to load initial message:', error);
+  }
+};
 
   const handleToggleChat = () => {
     setState(prev => ({
@@ -96,82 +99,138 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
     }));
   };
 
-  const handleSendMessage = async () => {
-    const message = inputValue.trim();
-    if (!message || state.isLoading) return;
+const handleSendMessage = async () => {
+  const message = inputValue.trim();
+  if (!message || state.isLoading) return;
 
-    // Add user message
-    const userMessage: ChatMessage = {
-      id: `msg_${Date.now()}_user`,
-      type: 'user',
-      content: message,
-      timestamp: new Date()
-    };
+  const userMessage: ChatMessage = {
+    id: `msg_${Date.now()}_user`,
+    type: 'user',
+    content: message,
+    timestamp: new Date()
+  };
 
-    setState(prev => ({
-      ...prev,
-      messages: [...prev.messages, userMessage],
-      isLoading: true,
-      hasError: false,
-      isTyping: true
-    }));
+  setState(prev => ({
+    ...prev,
+    messages: [...prev.messages, userMessage],
+    isLoading: true,
+    hasError: false,
+    isTyping: true
+  }));
 
-    setInputValue('');
+  setInputValue('');
 
-    try {
-      // Simulate typing delay for better UX
-      await new Promise(resolve => setTimeout(resolve, typingDelay));
+  try {
+    await new Promise(resolve => setTimeout(resolve, typingDelay));
 
-      // Prepare request with user info if we have it
-      const request: any = {
-        user_question: message
-      };
+    // 🔹 STEP 1: If collecting user info
+    if (state.collectingInfo) {
 
-      // If we're collecting info or have user info, include it
-      if (state.collectingInfo && state.pendingQuestion) {
-        // This is a response to info collection, parse the user input
-        const userInfoResponse = parseUserInfoResponse(message);
-        request.user_question = state.pendingQuestion;
-        request.user_info = { ...state.userInfo, ...userInfoResponse };
-      } else if (Object.keys(state.userInfo).length > 0) {
-        request.user_info = state.userInfo;
+      const userInfoResponse = parseUserInfoResponse(message);
+
+      if (!userInfoResponse.name || !userInfoResponse.email) {
+        const botMessage: ChatMessage = {
+          id: `msg_${Date.now()}_bot`,
+          type: 'bot',
+          content: "Please provide both name and email in format: name,email",
+          timestamp: new Date()
+        };
+
+        setState(prev => ({
+          ...prev,
+          messages: [...prev.messages, botMessage],
+          isLoading: false,
+          isTyping: false
+        }));
+
+        return;
       }
 
-      const response = await chatApi.sendMessage(request);
-      
-      // Handle different response types
-      let botContent = '';
-      let confidence_score: number | undefined;
-      let case_id: string | undefined;
-      let newState = { ...state };
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(userInfoResponse.email)) {
+        const botMessage: ChatMessage = {
+          id: `msg_${Date.now()}_bot`,
+          type: 'bot',
+          content: "Please enter a valid email address.",
+          timestamp: new Date()
+        };
+
+        setState(prev => ({
+          ...prev,
+          messages: [...prev.messages, botMessage],
+          isLoading: false,
+          isTyping: false
+        }));
+
+        return;
+      }
+
+      const botMessage: ChatMessage = {
+        id: `msg_${Date.now()}_bot`,
+        type: 'bot',
+        content: "Thank you! How can I help you today?",
+        timestamp: new Date()
+      };
+
+      setState(prev => ({
+        ...prev,
+        collectingInfo: false,
+        userInfo: userInfoResponse,
+        messages: [...prev.messages, botMessage],
+        isLoading: false,
+        isTyping: false
+      }));
+
+      return;
+    }
+
+    // 🔹 STEP 2: Normal API Flow
+    const request: any = {
+      user_question: message,
+      user_info: state.userInfo
+    };
+
+    const response = await chatApi.sendMessage(request);
+    
+    console.log("BACKEND RESPONSE:", response);
+
+    let botContent = '';
+    let confidence_score: number | undefined;
+    let case_id: string | undefined;
+
+    setState(prev => {
+      let updatedState = { ...prev };
 
       switch (response.response_type) {
         case 'ANSWERED':
-          botContent = response.answer || 'I was able to find an answer for you.';
+          botContent = response.answer || 'I found an answer for you.';
           confidence_score = response.confidence_score;
-          newState.collectingInfo = false;
-          newState.pendingQuestion = undefined;
+          updatedState.collectingInfo = false;
+          updatedState.pendingQuestion = undefined;
           break;
+        
+
         case 'COLLECT_INFO':
           botContent = response.message || 'I need some information to help you.';
-          newState.collectingInfo = true;
-          newState.pendingQuestion = message;
+          updatedState.collectingInfo = true;
+          updatedState.pendingQuestion = message;
           break;
+
         case 'ESCALATED':
-          botContent = response.message || 'Your question has been escalated to our support team.';
+          botContent = response.message || 'Your question has been escalated.';
           case_id = response.case_id;
-          newState.collectingInfo = false;
-          newState.pendingQuestion = undefined;
-          // Store user info for future use
-          if (request.user_info) {
-            newState.userInfo = request.user_info;
-          }
+          updatedState.collectingInfo = false;
+          updatedState.pendingQuestion = undefined;
           break;
+
         case 'ERROR':
-          botContent = response.message || 'Sorry, something went wrong. Please try again.';
-          newState.collectingInfo = false;
-          newState.pendingQuestion = undefined;
+          botContent = response.message || 'Something went wrong.';
+          updatedState.collectingInfo = false;
+          updatedState.pendingQuestion = undefined;
           break;
+
+        default:
+          botContent = 'Unexpected response from server.';
       }
 
       const botMessage: ChatMessage = {
@@ -183,35 +242,36 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
         case_id
       };
 
-      setState(prev => ({
-        ...newState,
-        messages: [...prev.messages, botMessage].slice(-maxMessages), // Keep only last N messages
+      return {
+        ...updatedState,
+        messages: [...prev.messages, botMessage].slice(-maxMessages),
         isLoading: false,
         isTyping: false,
         unreadCount: prev.isOpen ? 0 : prev.unreadCount + 1
-      }));
-
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      
-      const errorMessage: ChatMessage = {
-        id: `msg_${Date.now()}_error`,
-        type: 'bot',
-        content: error instanceof Error ? error.message : 'Sorry, something went wrong. Please try again.',
-        timestamp: new Date()
       };
+    });
 
-      setState(prev => ({
-        ...prev,
-        messages: [...prev.messages, errorMessage],
-        isLoading: false,
-        hasError: true,
-        isTyping: false,
-        collectingInfo: false,
-        pendingQuestion: undefined
-      }));
-    }
-  };
+  } catch (error) {
+
+    const errorMessage: ChatMessage = {
+      id: `msg_${Date.now()}_error`,
+      type: 'bot',
+      content:
+        error instanceof Error
+          ? error.message
+          : 'Sorry, something went wrong. Please try again.',
+      timestamp: new Date()
+    };
+
+    setState(prev => ({
+      ...prev,
+      messages: [...prev.messages, errorMessage],
+      isLoading: false,
+      hasError: true,
+      isTyping: false
+    }));
+  }
+};
 
   // Helper function to parse user info from natural language input
   const parseUserInfoResponse = (input: string): Partial<{ name: string; email: string; organization: string }> => {
@@ -231,14 +291,18 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
     }
 
     // If no structured format, try to parse as comma-separated values
-    if (Object.keys(result).length === 0 && lines.length === 1) {
-      const parts = lines[0].split(',').map(p => p.trim());
-      if (parts.length >= 3) {
-        result.name = parts[0];
-        result.email = parts[1];
-        result.organization = parts[2];
-      }
-    }
+   if (Object.keys(result).length === 0 && lines.length === 1) {
+  const parts = lines[0].split(',').map(p => p.trim());
+
+  if (parts.length >= 2) {
+    result.name = parts[0];
+    result.email = parts[1];
+  }
+
+  if (parts.length >= 3) {
+    result.organization = parts[2];
+  }
+}
 
     return result;
   };

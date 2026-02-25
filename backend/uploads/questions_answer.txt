@@ -1,5 +1,5 @@
 1
----------------------------
+-----------------------------------------------------------------------------
 How to install Chrome HighWire Extension in my laptop? - Yes
 Guide me how to install HighWire Chrome Extension? -yes
 Guide me how to insall Chrome extension? - Not 
@@ -39,7 +39,7 @@ Feedback to report bugs and feature-requests are welcome. Please open a ticket i
 For developers who wish to contribute, the repository for this project is here: https://github.com/highwire/highwire-chrome-extension
 
 2
----------------------------
+--------------------------------------------------------------------------------------------------
 what is the process for Internal Escalation Matrix in highwire 
 
 1. Purpose
@@ -145,7 +145,7 @@ Leadership must be informed immediately of issues impacting customers, revenue, 
 
 
 3
----------------------------
+-------------------------------------------------------------------------------------------------
 HW Intelligent Commerce Configuration Task List
 Ans
 To setup HW Intelligent Commerce, there are a number of items that need to be addressed.
@@ -203,8 +203,7 @@ Ecom Troubleshooting doc : Troubleshooting
 
 
 
-4
----------------------------
+4------------------------------
 Content Hosting - JCore
 I want to know Jcore Feature
 
@@ -293,72 +292,3 @@ Maximus Application and Architecture Platform Overview (Atom, SASS, A4D).pdf
 HW Platform Architecture.pdf
 JCoreAdminGuide(2024).pdf
 For more details, please refer: JCore and JCore Product Management
-
----------------------------
-H10 Site Restart
- 
-To restart a jserv1 hwmaint H10 service:
- 
-ssh to opstool-01
-sudo /opt/scripts/H10/H10_restart [jcode]
-Example: sudo H10_restart.sh tropmed
-Monthly restart for memory leak issue:
-Restarting hwmaint24 -  44, 53 - 56 Note: (no hwmaint28, 29, 40, 43, 45, 55 (no sgr sites) )
- 
-(/highwire/prodsofts/Pisa/scripts/stopsite -m <hwmaint24>
-(/highwire/prodsofts/Pisa/scripts/startsite -m <hwmaint24>
-./startsite for a list of options, whether to restart all apache on a machine or just restart a jcode that fails to come up.
- 
-usage: stopsite [options]  journal journal2 journal3 ... journalN
-stopsite [options] -m machine [machine2 ... machineN]
-stopsite [options] -a
- 
-stops the specified journal site(s) from any machine.
- 
-options:
--h this help blurb
--d stop the dev server (default is prod)
--a stops all sites on all machines
--m stops all sites on the specified machine(s)
--e use a perl regular expression to specify journal sites
--v verbose mode, spits out more info
--f force restart
--lsof use lsof to scan for processes still bound to ports
--apache only work on the HTTPD process
--jserv only work on the jserv processes
--seq restart only the jserv for the given number (e.g., 1, 2-3)
--nojit disable the Just In Time compiler
--altvm execute the alternate JVM
---debug execute JNDI debugger on the specified port
---profile execute OptimizeIt Profiler on the specified port
---tdebug execute OptimizeIt Thread Debugger on the specified port
--null-logs clear the jserv logs before restarting
- 
-For hwmaint55, no sgr sites restart ( restart individual site, only restart those found in: grep -i hwmaint55 /sites/MASTER_CONF.conf | grep -v sgr ):
-ajnradmin
-ddaaa:H10
-gsladmin:H10
-iijaltinv:H10
-iijderiv:H10
-iijetfind:H10
-iijfixinc:H10
-iijindinv:H10
-iijinvest:H10
-iijournals:H10
-iijpormgmt:H10
-iijpracapp:H10
-iijpriveq:H10
-iijretire:H10
-iijspecial:H10
-iijstrfin:H10
-iijtrade:H10
-iijtrading:H10
-iijturnmgmt:H10
-iijwealthmgmt:H10
-jimmunoladmin
-jimmunoladmin:H10
-sctm:H10
-ecs:H10
- 
- 
-For hwmaint36, 37, 38, 39, 54, 55 (it seems that restartsite script needs longer sleep time, sites just wouldn't start back up. Need a full stopsite and startsite)

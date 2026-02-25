@@ -1,9 +1,10 @@
 Development notes — Chat widget
 
-- Start backend (from project root):
+- Start backend (from the `backend` folder):
 
 ```bash
 # From repository root
+cd backend
 uvicorn app.main:app --reload --port 8000
 ```
 

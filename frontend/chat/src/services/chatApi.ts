@@ -19,9 +19,9 @@ class ChatApiService {
     try {
       let chatRequest: ChatRequest;
       if (typeof request === 'string') {
-        chatRequest = { user_question: request, user_session_id: this.sessionId };
+        chatRequest = { user_question: request, user_session_id: this.sessionId};
       } else {
-        chatRequest = { ...request, user_session_id: request.user_session_id || this.sessionId };
+        chatRequest = { ...request, user_session_id: request.user_session_id || this.sessionId};
       }
 
       const endpoint = this.baseUrl.endsWith('/api') ? '/chat' : '/api/chat';

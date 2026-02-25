@@ -17,6 +17,7 @@ class ChatRequest(BaseModel):
     user_question: str
     user_info: Optional[Dict] = None  # Frontend name/email info yahan bhejta hai
     user_session_id: Optional[str] = "default_session"
+    bot_id: Optional[int] = None
 
 @router.post("/chat")
 async def chat_with_highwire(request: ChatRequest):
@@ -31,7 +32,18 @@ async def chat_with_highwire(request: ChatRequest):
         history_rows = get_recent_messages(conversation_id, limit=6)
 
         history_text = "\n".join([f"{r[0].upper()}: {r[1]}" for r in history_rows])
-        chunks, is_domain = retrieve_chunks(query)
+
+        # Log the incoming request for debugging
+        try:
+            print("Incoming chat request:", request.dict())
+        except Exception:
+            print("Incoming chat request (could not .dict()):", request)
+
+        # Log the user's question in the conversation history
+        save_message(conversation_id, "user", query)
+
+        # Retrieve relevant knowledge base chunks for this query
+        chunks, is_domain = retrieve_chunks(query, history_rows)
 
         # 2. Response format update kiya (Frontend ke switch-case ke liye)
         if not is_domain:

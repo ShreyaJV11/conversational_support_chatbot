@@ -1,40 +1,167 @@
 import os
+import re
 from typing import List, Tuple
-from langchain_huggingface import HuggingFaceEmbeddings
-from pgvector.psycopg2 import register_vector
-from app.db.database import get_connection
 
-# Models Setup
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_core.messages import SystemMessage, HumanMessage
+from pgvector.psycopg2 import register_vector
+
+from app.db.database import get_connection
+from app.services.llm_service import chat_model
+
+
+# ==========================================
+# 🔹 Embedding Model Setup
+# ==========================================
+
+EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+
+embeddings = HuggingFaceEmbeddings(
+    model_name=EMBEDDING_MODEL_NAME
+)
+
+
+# ==========================================
+# 🔹 Follow-up Detection (Improved + Safe)
+# ==========================================
+
+def is_followup_query(user_query: str) -> bool:
+    """
+    Detect likely follow-up queries:
+    - Contains pronouns
+    - Starts with vague connectors
+    - Short contextual questions
+    """
+
+    text = user_query.lower().strip()
+
+    pronouns = ["it", "they", "them", "this", "that"]
+    vague_starts = ("what", "why", "how", "if", "when", "where")
+
+    pronoun_match = any(
+        re.search(rf"\b{p}\b", text)
+        for p in pronouns
+    )
+
+    vague_start = text.startswith(vague_starts)
+
+    short_query = len(text.split()) <= 6
+
+    return pronoun_match or vague_start or short_query
+
+
+# ==========================================
+# 🔹 Rewrite Follow-up → Standalone
+# ==========================================
+
+def rewrite_question(chat_history: List, user_query: str) -> str:
+    """
+    Rewrite follow-up into standalone using last user + assistant message.
+    Keeps rewrite minimal and safe.
+    """
+
+    if not chat_history:
+        return user_query
+
+    last_user = None
+    last_assistant = None
+
+    for msg in reversed(chat_history):
+        role = msg[0] if isinstance(msg, tuple) else msg.get("role")
+        content = msg[1] if isinstance(msg, tuple) else msg.get("content")
+
+        if role and role.lower() == "assistant" and not last_assistant:
+            last_assistant = content
+        elif role and role.lower() == "user" and not last_user:
+            last_user = content
+
+        if last_user and last_assistant:
+            break
+
+    if not last_user:
+        return user_query
+
+    prompt = f"""
+Rewrite the follow-up question into a clear standalone support question.
+
+Previous User Question:
+{last_user}
+
+Previous Assistant Answer:
+{last_assistant}
+
+Follow-up Question:
+{user_query}
+
+Return ONLY the rewritten question.
+Keep it under 20 words.
+Do not explain anything.
+"""
+
+    try:
+        response = chat_model.invoke([
+            SystemMessage(content="You rewrite follow-up support questions clearly and minimally."),
+            HumanMessage(content=prompt)
+        ])
+
+        rewritten = response.content.strip()
+
+        # Safety guard (avoid hallucinated long rewrite)
+        if len(rewritten.split()) > 20:
+            return user_query
+
+        print(f"🔁 Contextual Rewritten Query: {rewritten}")
+        return rewritten
+
+    except Exception as e:
+        print("⚠️ Rewrite failed:", e)
+        return user_query
+
+
+# ==========================================
+# 🔹 MAIN RETRIEVER
+# ==========================================
 
 def retrieve_chunks(
     user_query: str,
-    chat_history: List = [],  # Can be List[Tuple] or List[dict]
+    chat_history: List = None,
     top_k: int = 5,
-    relevance_threshold: float = 0.6, 
-    domain_threshold: float = 0.6  # Thoda relax kiya hai taaki documents list miss na ho
+    domain_threshold: float = 0.75,  # Slightly safer
+    distance_margin: float = 0.05
 ) -> Tuple[List[str], bool]:
-    
-    # 1. Query Refinement (The "It" Fix)
-    search_query = user_query
-    if chat_history and any(word in user_query.lower() for word in ["it", "manage", "team", "who"]):
-        # Pichle context se connect karne ke liye
-        # chat_history can be list of tuples [(role, content), ...] or dicts
-        last_msg = chat_history[-1]
-        if isinstance(last_msg, tuple):
-            last_bot_msg = last_msg[1] if len(last_msg) > 1 else ""
-        else:
-            last_bot_msg = last_msg.get("content", "")
-        # Embeddings ko direction dene ke liye "JCore" specifically add kar rahe hain
-        search_query = f"who manages JCore? Key staff and roles: {user_query}"
 
-    query_vector = embeddings.embed_query(search_query)
-    conn = get_connection()
-    register_vector(conn)
-    cur = conn.cursor()
+    if chat_history is None:
+        chat_history = []
+
+    conn = None
+    cur = None
 
     try:
-        # 2. SQL Execution - Distance ASC (Chota distance = Zyada similarity)
+        # ----------------------------------
+        # 1️⃣ Rewrite if needed
+        # ----------------------------------
+        if chat_history and is_followup_query(user_query):
+            user_query = rewrite_question(chat_history, user_query)
+
+        # ----------------------------------
+        # 2️⃣ Generate embedding
+        # ----------------------------------
+        query_vector = embeddings.embed_query(user_query)
+
+        if not query_vector:
+            print("❌ Embedding generation failed")
+            return [], False
+
+        # ----------------------------------
+        # 3️⃣ DB Connection
+        # ----------------------------------
+        conn = get_connection()
+        register_vector(conn)
+        cur = conn.cursor()
+
+        # ----------------------------------
+        # 4️⃣ Vector Search
+        # ----------------------------------
         cur.execute(
             """
             SELECT chunk_text, embedding <=> %s::vector AS distance
@@ -44,35 +171,50 @@ def retrieve_chunks(
             """,
             (query_vector, top_k)
         )
-        
+
         results = cur.fetchall()
-        if not results: return [], False
 
-        best_distance = results[0][1]
-        
-        # DEBUG: Chunks check karne ke liye
-        print(f"--- Best Match Distance: {best_distance:.4f} ---")
-
-        # 3. Domain Check
-        if best_distance > domain_threshold:
+        if not results:
             return [], False
 
-        # 4. Context Stitching: Multiple chunks ko filter karke join karna
-        # Key Staff ki list aksar chunks mein split hoti hai, isliye hum top results uthayenge
-        relevant_chunks = [
-            row[0] for row in results 
-            if row[1] < relevance_threshold
+        best_distance = results[0][1]
+        print(f"📏 Best Match Distance: {best_distance:.4f}")
+
+        # ----------------------------------
+        # 5️⃣ Smart Domain Guard
+        # ----------------------------------
+
+        # Allow slightly relaxed threshold for short contextual queries
+        if len(user_query.split()) <= 8 and best_distance < 0.9:
+            domain_override = True
+        else:
+            domain_override = False
+
+        if best_distance > domain_threshold and not domain_override:
+            print("⚠️ Query outside knowledge base domain")
+            return [], False
+
+        # ----------------------------------
+        # 6️⃣ Smart Distance Filtering
+        # ----------------------------------
+
+        filtered_chunks = [
+            row[0]
+            for row in results
+            if row[1] <= best_distance + distance_margin
         ]
 
-        # Agar filters bahut tight hain, toh fallback to top result
-        if not relevant_chunks:
-            relevant_chunks = [results[0][0]]
+        if not filtered_chunks:
+            filtered_chunks = [results[0][0]]
 
-        return relevant_chunks, True
+        return filtered_chunks[:3], True
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"❌ Retrieval Error: {e}")
         return [], False
+
     finally:
-        cur.close()
-        conn.close()
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()

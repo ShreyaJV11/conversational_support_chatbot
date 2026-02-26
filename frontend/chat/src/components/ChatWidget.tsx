@@ -123,66 +123,79 @@ const handleSendMessage = async () => {
   try {
     await new Promise(resolve => setTimeout(resolve, typingDelay));
 
-    // 🔹 STEP 1: If collecting user info
-    if (state.collectingInfo) {
+if (state.collectingInfo) {
 
-      const userInfoResponse = parseUserInfoResponse(message);
+  const userInfoResponse = parseUserInfoResponse(message);
 
-      if (!userInfoResponse.name || !userInfoResponse.email) {
-        const botMessage: ChatMessage = {
-          id: `msg_${Date.now()}_bot`,
-          type: 'bot',
-          content: "Please provide both name and email in format: name,email",
-          timestamp: new Date()
-        };
+  // ❌ Missing fields
+  if (!userInfoResponse.name || !userInfoResponse.email) {
+    const botMessage: ChatMessage = {
+      id: `msg_${Date.now()}_bot`,
+      type: 'bot',
+      content: "Please provide both name and email in format: name,email",
+      timestamp: new Date()
+    };
 
-        setState(prev => ({
-          ...prev,
-          messages: [...prev.messages, botMessage],
-          isLoading: false,
-          isTyping: false
-        }));
+    setState(prev => ({
+      ...prev,
+      messages: [...prev.messages, botMessage],
+      isLoading: false,
+      isTyping: false
+    }));
 
-        return;
-      }
+    return;
+  }
 
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(userInfoResponse.email)) {
-        const botMessage: ChatMessage = {
-          id: `msg_${Date.now()}_bot`,
-          type: 'bot',
-          content: "Please enter a valid email address.",
-          timestamp: new Date()
-        };
+  // ❌ Invalid email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(userInfoResponse.email)) {
+    const botMessage: ChatMessage = {
+      id: `msg_${Date.now()}_bot`,
+      type: 'bot',
+      content: "Please enter a valid email address.",
+      timestamp: new Date()
+    };
 
-        setState(prev => ({
-          ...prev,
-          messages: [...prev.messages, botMessage],
-          isLoading: false,
-          isTyping: false
-        }));
+    setState(prev => ({
+      ...prev,
+      messages: [...prev.messages, botMessage],
+      isLoading: false,
+      isTyping: false
+    }));
 
-        return;
-      }
+    return;
+  }
 
-      const botMessage: ChatMessage = {
-        id: `msg_${Date.now()}_bot`,
-        type: 'bot',
-        content: "Thank you! How can I help you today?",
-        timestamp: new Date()
-      };
+  // ✅ VALID USER INFO — NOW CALL BACKEND
 
-      setState(prev => ({
-        ...prev,
-        collectingInfo: false,
-        userInfo: userInfoResponse,
-        messages: [...prev.messages, botMessage],
-        isLoading: false,
-        isTyping: false
-      }));
+  chatApi.setUserInfo(
+    userInfoResponse.name,
+    userInfoResponse.email
+  );
 
-      return;
-    }
+  await chatApi.sendMessage({
+    user_question: state.pendingQuestion || "User Registered",
+    user_info: userInfoResponse
+  });
+
+  const botMessage: ChatMessage = {
+    id: `msg_${Date.now()}_bot`,
+    type: 'bot',
+    content: "Thank you! How can I help you today?",
+    timestamp: new Date()
+  };
+
+  setState(prev => ({
+    ...prev,
+    collectingInfo: false,
+    userInfo: userInfoResponse,
+    messages: [...prev.messages, botMessage],
+    isLoading: false,
+    isTyping: false
+  }));
+
+  return;
+}
 
     // 🔹 STEP 2: Normal API Flow
     const request: any = {

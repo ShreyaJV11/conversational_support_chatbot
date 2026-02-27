@@ -8,7 +8,26 @@ router = APIRouter()
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+from datetime import datetime
 
+@router.get("/admin/kb-files")
+def list_kb_files():
+    files_data = []
+
+    for filename in os.listdir(UPLOAD_DIR):
+        file_path = os.path.join(UPLOAD_DIR, filename)
+
+        if os.path.isfile(file_path):
+            files_data.append({
+                "name": filename,
+                "uploaded": datetime.fromtimestamp(
+                    os.path.getctime(file_path)
+                ).isoformat(),
+                "status": "Processed"
+            })
+
+    return files_data
+    
 @router.post("/admin/upload-kb")
 async def upload_db(
     

@@ -6,14 +6,18 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pgvector.psycopg2 import register_vector
 from app.db.database import get_connection
 
+
+# Initialize embedding model once (global)
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
-def generate_hash(text:str)->str:
+
+def generate_hash(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()
 
-def ingest_file(file_path: str,bot_id:int) -> dict:
+
+def ingest_file(file_path: str) -> dict:
     file_name = os.path.basename(file_path)
 
     # 1️⃣ Load file
@@ -37,53 +41,48 @@ def ingest_file(file_path: str,bot_id:int) -> dict:
     skipped_chunks = 0
 
     try:
-        # 4️⃣ Check if file exists
+        # 4️⃣ Insert file if not exists & get ID
         cur.execute(
             """
-            INSERT INTO kb_files(file_name,bot_id)
-            VALUES (%s,%s)
-            ON CONFLICT (file_name,bot_id)
-            DO UP
+            INSERT INTO kb_files (file_name)
+            VALUES (%s)
+            ON CONFLICT (file_name)
+            DO UPDATE SET file_name = EXCLUDED.file_name
+            RETURNING id;
             """,
             (file_name,)
         )
-        existing_file = cur.fetchone()
 
-        if existing_file:
-            kb_file_id = existing_file[0]
-        else:
-            cur.execute(
-                """
-                INSERT INTO kb_files (file_name)
-                VALUES (%s)
-                RETURNING id
-                """,
-                (file_name,)
-            )
-            kb_file_id = cur.fetchone()[0]
+        kb_file_id = cur.fetchone()[0]
 
         # 5️⃣ Insert chunks
         for chunk in chunks:
+            chunk_text = chunk.page_content.strip()
 
-            # Check duplicate
+            # Skip empty chunks
+            if not chunk_text:
+                continue
+
+            # Check duplicate chunk
             cur.execute(
-                "SELECT id FROM kb_chunks WHERE chunk_text=%s",
-                (chunk.page_content,)
+                "SELECT id FROM kb_chunks WHERE chunk_text = %s;",
+                (chunk_text,)
             )
 
             if cur.fetchone():
                 skipped_chunks += 1
                 continue
 
-            # Create embedding
-            vector = embeddings.embed_query(chunk.page_content)
+            # Generate embedding
+            vector = embeddings.embed_query(chunk_text)
 
+            # Insert chunk
             cur.execute(
                 """
                 INSERT INTO kb_chunks (chunk_text, embedding, kb_file_id)
-                VALUES (%s, %s, %s)
+                VALUES (%s, %s, %s);
                 """,
-                (chunk.page_content, vector, kb_file_id)
+                (chunk_text, vector, kb_file_id)
             )
 
             inserted_chunks += 1

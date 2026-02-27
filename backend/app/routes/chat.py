@@ -29,7 +29,7 @@ def is_valid_email(email: str) -> bool:
 async def chat_with_highwire(request: ChatRequest):
 
     try:
-        # 🚨 STEP 1 — Ensure user_info exists
+        #  STEP 1 — Ensure user_info exists
         if not request.user_info:
             return {
                 "response_type": "COLLECT_INFO",
@@ -71,14 +71,19 @@ async def chat_with_highwire(request: ChatRequest):
                 "response_type": "ERROR",
                 "message": "Sorry, I can only answer questions related to HighWirePress systems."
             }
+        
+        
 
         if not chunks:
+            save_message(conversation_id, "assistant",
+            "I couldn't find relevant information in our knowledge base. "
+            "Would you like me to raise a support case for this issue?"
+            )
             return {
-                "response_type": "ESCALATED",
-                "message": "I don't have enough info. A support ticket has been raised.",
-                "case_id": f"REQ-{user_id}"
-            }
-
+                "response_type": "OFFER_ESCALATION",
+                "message": "I couldn't find relevant information in our knowledge base. "
+                "Would you like me to raise a support case for this issue?"
+                }
         context_text = "\n".join(chunks)
         answer = get_answers(history_text, context_text, query)
 

@@ -15,6 +15,10 @@ app.add_middleware(
 
 app.include_router(chat.router,prefix="/api")
 app.include_router(kb_upload.router, prefix="/api")
+app.include_router(
+    kb_upload.router,
+    prefix="/api"
+)
 
 @app.get("/")
 def root():
@@ -23,3 +27,5 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "healthy"}
+from app.routes import kb_upload
+

@@ -1,0 +1,16 @@
+MPS Overview:
+
+MPS is a global provider of platforms and services for the academic publishing industry.
+
+Services Offered:
+- Journal Hosting
+- Content Ingestion
+- AI-powered Search
+- Platform Customization
+
+Support Process:
+Users can raise a ticket through the support portal.
+High-priority tickets are escalated within 24 hours.
+
+JCore:
+JCore is a modern journal hosting and publishing platform developed by MPS.

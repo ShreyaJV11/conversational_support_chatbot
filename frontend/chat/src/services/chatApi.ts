@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+
 import { ChatRequest, ChatResponse } from '../types';
 
 class ChatApiService {
@@ -21,15 +21,16 @@ class ChatApiService {
   setUserInfo(name: string, email: string) {
     this.userInfo = { name, email };
   }
-async sendMessage(request: ChatRequest | string): Promise<ChatResponse> {
+async sendMessage(
+  request: ChatRequest | string,
+  onChunk: (text: string) => void
+): Promise<void> {
   try {
     let chatRequest: ChatRequest;
 
-    // -----------------------------
-    // 🔹 If user typed name,email
-    // -----------------------------
-    if (typeof request === 'string' && request.includes(',')) {
-      const parts = request.split(',');
+    // 🔹 If user typed "name,email"
+    if (typeof request === "string" && request.includes(",")) {
+      const parts = request.split(",");
 
       if (parts.length === 2) {
         const name = parts[0].trim();
@@ -37,22 +38,18 @@ async sendMessage(request: ChatRequest | string): Promise<ChatResponse> {
 
         this.setUserInfo(name, email);
 
-        // Send to backend so it stores user
         chatRequest = {
           user_question: "User Registered",
           user_session_id: this.sessionId,
           user_info: this.userInfo
         };
-
       } else {
         throw new Error("Invalid name,email format");
       }
     }
 
-    // -----------------------------
-    // 🔹 Normal chat message
-    // -----------------------------
-    else if (typeof request === 'string') {
+    // 🔹 Normal string message
+    else if (typeof request === "string") {
       chatRequest = {
         user_question: request,
         user_session_id: this.sessionId,
@@ -60,6 +57,7 @@ async sendMessage(request: ChatRequest | string): Promise<ChatResponse> {
       };
     }
 
+    // 🔹 Already structured request
     else {
       chatRequest = {
         ...request,
@@ -68,48 +66,65 @@ async sendMessage(request: ChatRequest | string): Promise<ChatResponse> {
       };
     }
 
-    console.log("SENDING TO BACKEND:", chatRequest);
-
     const finalUrl = `${this.baseUrl}/api/chat`;
 
-    const response: AxiosResponse<ChatResponse> = await axios.post(
-      finalUrl,
-      chatRequest,
-      {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 30000,
-      }
-    );
+    const response = await fetch(finalUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(chatRequest)
+    });
 
-    return response.data;
+    if (!response.ok) {
+      throw new Error("Backend connection failed");
+    }
+
+    if (!response.body) {
+      throw new Error("Streaming not supported by backend");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+
+    // 🔥 IMPORTANT: Do NOT accumulate full text here
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+
+      // Send ONLY new chunk
+      onChunk(chunk);
+    }
 
   } catch (error) {
-    console.error('Chat API error:', error);
+    console.error("Chat API streaming error:", error);
+    onChunk("\n⚠ Backend connection issue. Please check server.");
+  }
+}
+
+async getInitialMessage(): Promise<ChatResponse> {
+  try {
+    const finalUrl = `${this.baseUrl}/api/chat/initial-message`;
+
+    const response = await fetch(finalUrl, {
+      method: "GET"
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch initial message");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Initial message error:", error);
+
     return {
-      response_type: 'ERROR',
-      message:
-        'Bhai backend issue aa raha hai. Check karo uvicorn chal raha hai?'
+      response_type: "ERROR",
+      message: "⚠ Unable to load welcome message."
     };
   }
 }
-async getInitialMessage(): Promise<ChatResponse> {
-    try {
-      const endpoint = this.baseUrl.endsWith('/api')
-        ? '/chat/initial-message'
-        : '/api/chat/initial-message';
-
-      const finalUrl = `${this.baseUrl}${endpoint}`;
-
-      const response: AxiosResponse<ChatResponse> = await axios.get(finalUrl);
-
-      return response.data;
-    } catch (error) {
-      return {
-        response_type: "ERROR",
-        message: "Backend connect nahi ho raha."
-      };
-    }
-  }
-
 }
 export default ChatApiService;

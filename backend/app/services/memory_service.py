@@ -16,7 +16,52 @@ def get_or_create_user(name:str,email:str):
     cur.close()
     conn.close()
     return user_id
+def link_session_to_user(user_id: int, session_id: str):
+    conn = get_connection()
+    cur = conn.cursor()
 
+    cur.execute(
+        """
+        INSERT INTO sessions (user_id, session_id)
+        VALUES (%s, %s)
+        ON CONFLICT (session_id)
+        DO UPDATE SET user_id = EXCLUDED.user_id
+        """,
+        (user_id, session_id)
+    )
+
+    conn.commit()          # ✅ VERY IMPORTANT
+    cur.close()
+    conn.close()
+def get_user_by_session(session_id: str):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT u.id, u.name, u.email
+        FROM users u
+        JOIN sessions s ON u.id = s.user_id
+        WHERE s.session_id = %s
+        """,
+        (session_id,)
+    )
+
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if row:
+        return {
+            "id": row[0],
+            "name": row[1],
+            "email": row[2]
+        }
+
+    return None
+    conn.commit()
+    cur.close()
+    conn.close()
 def get_or_create_conversation(user_id: int):
     conn = get_connection()
     cur = conn.cursor()

@@ -73,7 +73,7 @@
 
 /* Ensure the widget doesn't interfere with page content */
 .chat-widget {
-  all: initial;
+  
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 

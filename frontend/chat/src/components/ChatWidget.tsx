@@ -9,9 +9,18 @@ interface ChatWidgetProps {
   config?: ChatWidgetConfig;
 }
 
+
 const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
+  const [sessionId] = useState(() => {
+  const existing = localStorage.getItem("mps_chat_session");
+  if (existing) return existing;
+
+  const newId = "session_" + Date.now();
+  localStorage.setItem("mps_chat_session", newId);
+  return newId;
+});
   const {
-    apiBaseUrl = 'http://127.0.0.1:8000/api',
+    apiBaseUrl = 'http://localhost:3000',
     theme = {},
     position = { bottom: '20px', right: '20px' },
     initialMessage = true,
@@ -68,14 +77,13 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
     const botMessage: ChatMessage = {
       id: `msg_${Date.now()}`,
       type: 'bot',
-      content: response.message || "Welcome!",
+      content: response.message ?? "Welcome!",   // ✅ use response.message
       timestamp: new Date()
     };
 
     setState(prev => ({
       ...prev,
-      messages: [botMessage],
-      collectingInfo: response.response_type === 'COLLECT_INFO'
+      messages: [botMessage]
     }));
 
   } catch (error) {
@@ -103,6 +111,7 @@ const handleSendMessage = async () => {
   const message = inputValue.trim();
   if (!message || state.isLoading) return;
 
+  // 1️⃣ Add user message
   const userMessage: ChatMessage = {
     id: `msg_${Date.now()}_user`,
     type: 'user',
@@ -110,12 +119,21 @@ const handleSendMessage = async () => {
     timestamp: new Date()
   };
 
+  const botMessageId = `msg_${Date.now()}_bot`;
+
+  const botMessage: ChatMessage = {
+    id: botMessageId,
+    type: 'bot',
+    content: '',
+    timestamp: new Date()
+  };
+
   setState(prev => ({
     ...prev,
-    messages: [...prev.messages, userMessage],
+    messages: [...prev.messages, userMessage, botMessage],
     isLoading: true,
-    hasError: false,
-    isTyping: true
+    isTyping: false,
+    hasError: false
   }));
 
   setInputValue('');
@@ -123,165 +141,39 @@ const handleSendMessage = async () => {
   try {
     await new Promise(resolve => setTimeout(resolve, typingDelay));
 
-if (state.collectingInfo) {
-
-  const userInfoResponse = parseUserInfoResponse(message);
-
-  // ❌ Missing fields
-  if (!userInfoResponse.name || !userInfoResponse.email) {
-    const botMessage: ChatMessage = {
-      id: `msg_${Date.now()}_bot`,
-      type: 'bot',
-      content: "Please provide both name and email in format: name,email",
-      timestamp: new Date()
-    };
-
-    setState(prev => ({
-      ...prev,
-      messages: [...prev.messages, botMessage],
-      isLoading: false,
-      isTyping: false
-    }));
-
-    return;
-  }
-
-  // ❌ Invalid email
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(userInfoResponse.email)) {
-    const botMessage: ChatMessage = {
-      id: `msg_${Date.now()}_bot`,
-      type: 'bot',
-      content: "Please enter a valid email address.",
-      timestamp: new Date()
-    };
-
-    setState(prev => ({
-      ...prev,
-      messages: [...prev.messages, botMessage],
-      isLoading: false,
-      isTyping: false
-    }));
-
-    return;
-  }
-
-  // ✅ VALID USER INFO — NOW CALL BACKEND
-
-  chatApi.setUserInfo(
-    userInfoResponse.name,
-    userInfoResponse.email
-  );
-
-  await chatApi.sendMessage({
-    user_question: state.pendingQuestion || "User Registered",
-    user_info: userInfoResponse
-  });
-
-  const botMessage: ChatMessage = {
-    id: `msg_${Date.now()}_bot`,
-    type: 'bot',
-    content: "Thank you! How can I help you today?",
-    timestamp: new Date()
-  };
-
-  setState(prev => ({
-    ...prev,
-    collectingInfo: false,
-    userInfo: userInfoResponse,
-    messages: [...prev.messages, botMessage],
-    isLoading: false,
-    isTyping: false
-  }));
-
-  return;
-}
-
-    // 🔹 STEP 2: Normal API Flow
     const request: any = {
       user_question: message,
-      user_info: state.userInfo
+      user_session_id: sessionId 
     };
 
-    const response = await chatApi.sendMessage(request);
-    
-    console.log("BACKEND RESPONSE:", response);
+    if (Object.keys(state.userInfo).length > 0) {
+      request.user_info = state.userInfo;
+    }
 
-    let botContent = '';
-    let confidence_score: number | undefined;
-    let case_id: string | undefined;
-
-    setState(prev => {
-      let updatedState = { ...prev };
-
-      switch (response.response_type) {
-        case 'ANSWERED':
-          botContent = response.answer || 'I found an answer for you.';
-          confidence_score = response.confidence_score;
-          updatedState.collectingInfo = false;
-          updatedState.pendingQuestion = undefined;
-          break;
-        
-
-        case 'COLLECT_INFO':
-          botContent = response.message || 'I need some information to help you.';
-          updatedState.collectingInfo = true;
-          updatedState.pendingQuestion = message;
-          break;
-
-        case 'ESCALATED':
-          botContent = response.message || 'Your question has been escalated.';
-          case_id = response.case_id;
-          updatedState.collectingInfo = false;
-          updatedState.pendingQuestion = undefined;
-          break;
-
-        case 'ERROR':
-          botContent = response.message || 'Something went wrong.';
-          updatedState.collectingInfo = false;
-          updatedState.pendingQuestion = undefined;
-          break;
-
-        default:
-          botContent = 'Unexpected response from server.';
-      }
-
-      const botMessage: ChatMessage = {
-        id: `msg_${Date.now()}_bot`,
-        type: 'bot',
-        content: botContent,
-        timestamp: new Date(),
-        confidence_score,
-        case_id
-      };
-
-      return {
-        ...updatedState,
-        messages: [...prev.messages, botMessage].slice(-maxMessages),
-        isLoading: false,
-        isTyping: false,
-        unreadCount: prev.isOpen ? 0 : prev.unreadCount + 1
-      };
+    // 🔥 STREAMING STARTS HERE
+    await chatApi.sendMessage(request, (chunk: string) => {
+      setState(prev => ({
+        ...prev,
+        messages: prev.messages.map(msg =>
+          msg.id === botMessageId
+            ? { ...msg, content: msg.content + chunk }
+            : msg
+        )
+      }));
     });
-
-  } catch (error) {
-
-    const errorMessage: ChatMessage = {
-      id: `msg_${Date.now()}_error`,
-      type: 'bot',
-      content:
-        error instanceof Error
-          ? error.message
-          : 'Sorry, something went wrong. Please try again.',
-      timestamp: new Date()
-    };
 
     setState(prev => ({
       ...prev,
-      messages: [...prev.messages, errorMessage],
+      isLoading: false
+    }));
+
+  } catch (error) {
+    console.error('Streaming failed:', error);
+
+    setState(prev => ({
+      ...prev,
       isLoading: false,
-      hasError: true,
-      isTyping: false
+      hasError: true
     }));
   }
 };
@@ -304,18 +196,14 @@ if (state.collectingInfo) {
     }
 
     // If no structured format, try to parse as comma-separated values
-   if (Object.keys(result).length === 0 && lines.length === 1) {
-  const parts = lines[0].split(',').map(p => p.trim());
-
-  if (parts.length >= 2) {
-    result.name = parts[0];
-    result.email = parts[1];
-  }
-
-  if (parts.length >= 3) {
-    result.organization = parts[2];
-  }
-}
+    if (Object.keys(result).length === 0 && lines.length === 1) {
+      const parts = lines[0].split(',').map(p => p.trim());
+      if (parts.length >= 3) {
+        result.name = parts[0];
+        result.email = parts[1];
+        result.organization = parts[2];
+      }
+    }
 
     return result;
   };

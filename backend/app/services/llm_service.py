@@ -31,6 +31,9 @@ STRICT RULES:
 7.Do NOT include 'Question:' or 'Answer:' labels.\n"
 8.If multiple sentences apply, format as numbered list.\n
 9.Do not add assumptions.
+- Do NOT say 'Based on the context'.
+- Do NOT explain your reasoning.
+- DO NOT guess.
 Do not speculate.
 Do not mention ambiguity unless explicitly in context.
 Keep answers concise and professional.
@@ -53,19 +56,22 @@ def get_answers(history: str, context: str, user_query: str) -> str:
         ))
     ]
 
-    response = chat_model.invoke(messages)
+    full_response = ""
+    
+    # 2. Use the stream method
+    # Note: changed chat_model_stream to chat_model.stream
+    for chunk in chat_model.stream(messages):
+        token = chunk.content
+        if not token:
+            continue
+            
+        clean_token = token.replace('"', '')
+        full_response += clean_token
 
-    answer = response.content.strip().strip('"')
+        # 3. Mid-stream safety check for "High Confidence" hallucination
+        if "high confidence" in full_response.lower():
+            # Stop the current stream and send the fallback message
+            yield "I do not have enough internal information to answer that."
+            return 
 
-    # 🚨 Extra safety layer
-    if answer.lower().startswith("high confidence"):
-        answer = "I do not have enough internal information to answer that."
-
-    return answer
-
-
-def escalation_message() -> str:
-    return (
-        "I’m unable to resolve your issue with the available information. "
-        "Would you like me to raise a support ticket for you?"
-    )
+        yield clean_token

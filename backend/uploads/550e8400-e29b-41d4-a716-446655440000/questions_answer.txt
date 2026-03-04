@@ -1,0 +1,294 @@
+1
+-----------------------------------------------------------------------------
+How to install Chrome HighWire Extension in my laptop? - Yes
+Guide me how to install HighWire Chrome Extension? -yes
+Guide me how to insall Chrome extension? - Not 
+How to install this extension manually? - Not
+You will need to enable Developer mode? - Not 
+
+
+Here is the option to install/download the Chrome HighWire Extension
+Option #1:
+
+1. Make sure you are logged in using your @highwirepress.com google account. The extension is only available to those who have a highwirepress.com google account.
+
+2. Go to: https://chrome.google.com/webstore/detail/highwire/aonplpejmipgeacjdappkbjdkckhgoof and install the extension. 
+
+If you get a message such as "The requested URL was not found on this server. That's all we know.", you are most likely not logged into the chromestore with your highwirepress.com account.
+Go to https://chrome.google.com/webstore/category/extensions
+Make sure in the upper right corner it it has your highwirepress.com account.  If not, click the down arrow and select your highwirepress.com account OR "sign in with another account" and sign in with your Highwirepress.com account
+Once signed in as highwirepress.com, click https://chrome.google.com/webstore/detail/highwire/aonplpejmipgeacjdappkbjdkckhgoof again to install the extension.  
+
+Option #2:
+
+You may also install this extension manually at chrome://extensions/ with this file highwire-chrome-extension-v2.crx.  You will need to enable Developer mode.
+
+
+
+Option #3:
+
+Last option to install is by downloading the zip file directly from github and installing in Chrome manually
+
+download https://github.com/highwire/highwire-chrome-extension
+In chrome go to chrome://extensions and activate the Developer Mode toggle on the upper right
+Click 'Load unpacked' and navigate to the highwire-chrome-extension folder you saved in step 1
+
+
+Feedback to report bugs and feature-requests are welcome. Please open a ticket in DRQUEST (The Drupal team is currently managing this extension). 
+
+For developers who wish to contribute, the repository for this project is here: https://github.com/highwire/highwire-chrome-extension
+
+2
+--------------------------------------------------------------------------------------------------
+what is the process for Internal Escalation Matrix in highwire 
+
+1. Purpose
+This document outlines the internal escalation workflow for Salesforce-related issues requiring support, SYSOPS, engineering, and leadership involvement. It ensures timely resolution, clear ownership, and transparent communication across teams.
+
+2. Scope
+This escalation matrix applies to:
+
+Salesforce case escalations
+
+Support team operations
+
+SYSOPS and Engineering collaboration
+
+Platform leadership involvement for high-priority or cross-team issues
+
+3. Escalation Flow Summary
+
+
+Support Team
+    ↓
+Engineering Team (Support) (with SYSOPS/Engineering if needed)
+    ↓
+Support Lead (with SYSOPS / Engineering Lead if needed)
+    ↓
+Director, Platforms (with EMs/PMs if needed)
+    ↓
+VP, Platform
+   ↓
+SVP, Platform
+
+
+
+4. Roles & Responsibilities
+Support Team
+Logs issues and assigns priority
+
+Provides initial triage and documentation
+
+Routes cases to Support team
+
+Engineering Team (Support)
+Primary owner of incoming escalations
+
+Performs investigation and resolution attempts
+
+Collaborates with SYSOPS/Engineering for technical assistance
+
+Support Lead
+Provides guidance on complex cases
+
+Drives cross-team coordination
+
+Decides when to escalate to Platform leadership
+
+SYSOPS / Engineering Teams
+Offer technical analysis and fixes
+
+Engage EMs/PMs for roadmap-level or systemic issues
+
+Director, Platforms
+Reviews escalated cases requiring leadership oversight
+
+Allocates engineering resources as needed
+
+Advises on technical, operational, or product-level implications
+
+VP, Platform
+Handles high-impact or cross-functional escalations
+
+Communicates risk or delays to executive stakeholders
+
+SVP, Platform
+Final point of escalation
+
+Engages organizational leadership for major service disruptions or strategic decisions
+
+5. Detailed Escalation Matrix
+
+
+Level 1	Support Team	—	Case creation; issue identified	Salesforce Case Queue
+Level 2	Engineering Team (Support)	SYSOPS / Engineering	Technical investigation required	JIRA
+Level 3	Support Lead	SYSOPS / Engineering Lead	Issue unresolved within SLA; requires leadership judgement	JIRA
+Level 4	Director, Platforms	EMs / PMs	Cross-team coordination needed; potential product impact, Unsatisfactory RCA, and High recurrence of the issue	JIRA
+Level 5	VP, Platform	Director / Support Lead	High-impact issue; customer or production risk	JIRA / Direct escalation channel
+Level 6	SVP, Platform	VP / Director	Strategic or business-critical impact	JIRA / Executive communication channels
+6. Escalation Guidelines
+Always include case ID, impact description, and steps taken so far before escalating.
+
+Ensure Slack escalation channels are used for urgent issues.
+
+Escalation should follow the sequence unless severity necessitates skipping levels.
+
+Document decisions in the appropriate system (Jira, Salesforce case notes, or internal logs).
+
+7. Communication Expectations
+Each escalation point must acknowledge receipt within the defined response time.
+
+Updates must be posted until the issue is resolved or ownership is transferred.
+
+Leadership must be informed immediately of issues impacting customers, revenue, or SLAs.
+
+
+
+3
+-------------------------------------------------------------------------------------------------
+HW Intelligent Commerce Configuration Task List
+Ans
+To setup HW Intelligent Commerce, there are a number of items that need to be addressed.
+
+1. Foxycart Setup
+This is done by a Site Developer on the Professional Services Team.
+
+To schedule this work, the Project Manager should create a Project Specific JIRA issue to schedule this work.
+
+Foxycart Stores need to be setup: HW Intelligent Commerce Foxycart configuration 
+
+FoxyCart Store Setup
+
+The Site Developer will setup the Beta (development), QA and Production stores.
+
+ 
+2. Access Control Configuration
+This is done by a Site Developer on the Professional Services Team.
+
+To schedule this work, the Project Manager should create a Salesforce Ticket to schedule this work.
+
+For a new site, Access Control needs to be setup: https://sites.google.com/a/highwire.org/access-control/how-to/create-a-new-ac-webapp
+
+By default, Intelligent Commerce is not enabled on Access Control and needs to be setup: https://sites.google.com/a/highwire.org/access-control/configure-ac-webapp-for-ecom2
+
+The Engineer will setup Development, QA and Production webapps.
+
+Install eCommerce Suite (migrated)
+
+
+
+3. Intelligent Commerce Catalog Setup
+This is done by a Site Developer on the Professional Services Team.
+
+To schedule this work, the Project Manager should create a PLATTRIAGE JIRA issue to schedule this work. If a detailed price list is required, the Pricing Catalog Spreadsheet must be completed and attached to the JIRA issue, e.g. sample Springer Pricing Catalog
+
+Intelligent Commerce Catalog needs to be setup: Intelligent Commerce Catalog Setup
+
+The Intelligent Commerce Platform Engineer will setup the Development, QA and Production catalogs, using equivalent Foxycart Stores and Access Control webapps.
+
+4. Drupal Site Development
+This is done by a Site Developer on the Professional Services Team.
+
+To schedule this work, the Project Manager should create a JIRA issue to schedule this work.
+
+Drupal sites need to be setup: FoxyCart Integration & Configuration (Drupal)
+
+  
+Appendix
+Example Foxycart setup JIRA issue:  CMAJDRU-26 - Data cannot be retrieved due to an unexpected error.
+
+Testing/environment notes: Ecommerce Environments for Testing
+
+Ecom Troubleshooting doc : Troubleshooting 
+
+
+
+4------------------------------
+Content Hosting - JCore
+I want to know Jcore Feature
+
+
+JCore is a modern, intuitive journal-hosting platform designed with both readers and publishers in mind. It provides powerful content ingestion, enrichment and publishing infrastructure for your journal sites, along with custom theming and self-operable tools.
+
+Publisher Benefits:
+
+JCore is strategically designed to deliver an enhanced reading experience and configured specifically to support the goals of our publishers. Designed to build upon HighWire’s strengths in promoting discoverability and user engagement, JCore takes site design at HighWire to a new level. It is extremely flexible and among its many elements offers:
+
+A clean, modern two column design
+Tabbed views to prioritize information
+Space-saving drop-down menus
+More whitespace and slightly increased article text size for improved content readability
+Related content, featured articles, and personalized recommendations that are easily discoverable
+Curated lists of articles with images
+Visual clues and easily identifiable icons to help site navigation
+Article navigation that travels with scrolling
+Increased space for placement of standardized advertisements
+Additional benefits include:
+
+Self-service administration of site features and design configurations
+Vast design customization and tools to support our publishers' goals
+Responsive design to provide users with the optimal device-independent viewing experience
+JCore Example Sites:
+
+Standard JCore Sites:
+http://openres.ersjournals.com (Open Access)
+https://jgs.lyellcollection.org/
+https://navi.ion.org/
+JCore Sites (with customization):
+https://asnjournals.org/
+https://n.neurology.org/
+https://www.pnas.org/
+https://www.bmj.com/
+Preprint servers on JCore:
+https://www.biorxiv.org/
+https://www.medrxiv.org/
+Demo Sites:
+
+http://savm.highwire.org/
+Username: savmdemo
+Password: s@vm?
+Either of the three layouts can be selected using the dropdown on the left.
+Either of the five Color Palettes can be selected using dropdown on the right.
+http://demo.highwire.org
+Username & PW: use ddt credentials
+Demo "Maint" site (the admin site for all JCore and H20 sites):
+
+http://hwmaint.demo.highwire.org/maint/
+Username & PW: use ddt credentials
+Usually if you append /maint to a JCore site, you'll get redirected to the maint page. 
+Key Staff:
+
+Naresh Kumar Singh
+Manages the JCore builds/features/minor-projects
+Renu Chaudhary
+Manages the JCore support cases
+Joshua Routh and Harshit Tiwari
+Manages the JCore strategy and roadmap
+Runs sales demos
+Responds to RFPs
+Chris Graham
+Assessment, estimations, technical functional specs, developing solutions, tech reviewer
+Knowledge of core and custom solutions we've built
+Mentoring to other developers within Jcore team, support and professional services
+Advisory on product level enhancements
+PMO
+Assessment, estimations, and scheduling of minor projects
+Manages many 3rd-party integrations
+High-level knowledge of most HW systems, and institutional knowledge of legacy systems
+Some Important Documents:
+
+JCore Prime Configuration Guide - 2024.docx
+JCore & S3 service architecture 001.pdf
+DSM User Guide_v1.1(07.20.2016) (1).pdf
+JCore - Authentication Mechanisms.pdf
+HighWire_Hosting_Generic_H2OtoJCore.pdf
+JCore-VPAT-December-2023.pdf
+HighWire_Hosting_GA4_Upgrade.pdf
+Consent Manager _ Monsido Guide.pdf
+JCore_Hosting_Roadmap_2023.pptx
+Steps to create a configuration Tag for GA.pdf
+Highwire-site-list - Feb2024.xlsx
+Maximus Application and Architecture Platform Overview (Atom, SASS, A4D).pdf
+HW Platform Architecture.pdf
+JCoreAdminGuide(2024).pdf
+For more details, please refer: JCore and JCore Product Management

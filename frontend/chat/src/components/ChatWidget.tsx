@@ -20,14 +20,16 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   return newId;
 });
   const {
-    apiBaseUrl = 'http://localhost:3000',
-    theme = {},
-    position = { bottom: '20px', right: '20px' },
-    initialMessage = true,
-    userName,
-    maxMessages = 50,
-    typingDelay = 1000
-  } = config;
+  apiBaseUrl = 'http://localhost:3000',
+  botId,
+  organizationId,
+  theme = {},
+  position = { bottom: '20px', right: '20px' },
+  initialMessage = true,
+  userName,
+  maxMessages = 50,
+  typingDelay = 1000
+} = config;
 
   const [state, setState] = useState<ChatWidgetState>({
     isOpen: false,
@@ -43,7 +45,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   });
 
   const [inputValue, setInputValue] = useState('');
-  const [chatApi] = useState(() => new ChatApiService(apiBaseUrl));
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const chatApi = React.useMemo(() => {
+  return new ChatApiService({
+    baseUrl: apiBaseUrl,
+    botId,
+    organizationId
+  });
+}, [apiBaseUrl, botId, organizationId]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -56,12 +65,22 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
     scrollToBottom();
   }, [state.messages, state.isTyping]);
 
-  // Load initial message when widget opens for the first time
   useEffect(() => {
-    if (state.isOpen && initialMessage && state.messages.length === 0) {
-      loadInitialMessage();
-    }
-  }, [state.isOpen]);
+  if (state.isOpen && initialMessage && state.messages.length === 0) {
+    loadInitialMessage();
+  }
+}, [state.isOpen, initialMessage, state.messages.length, chatApi]);
+
+  useEffect(() => {
+  if (state.isOpen && suggestions.length === 0) {
+    const loadSuggestions = async () => {
+      const data = await chatApi.getSuggestions();
+      setSuggestions(data);
+    };
+
+    loadSuggestions();
+  }
+}, [state.isOpen, chatApi, suggestions.length]);
 
   // Focus input when chat opens
   useEffect(() => {
@@ -107,8 +126,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
     }));
   };
 
-const handleSendMessage = async () => {
-  const message = inputValue.trim();
+const handleSendMessage = async (customMessage?: string) => {
+  
+  const message = (customMessage ?? inputValue).trim();
   if (!message || state.isLoading) return;
 
   // 1️⃣ Add user message
@@ -128,13 +148,17 @@ const handleSendMessage = async () => {
     timestamp: new Date()
   };
 
-  setState(prev => ({
+  setState(prev => {
+  const updatedMessages = [...prev.messages, userMessage, botMessage];
+
+  return {
     ...prev,
-    messages: [...prev.messages, userMessage, botMessage],
+    messages: updatedMessages.slice(-maxMessages),
     isLoading: true,
     isTyping: false,
     hasError: false
-  }));
+  };
+});
 
   setInputValue('');
 
@@ -265,6 +289,25 @@ const handleSendMessage = async () => {
               {/* Messages */}
               <div className="flex-1 p-4 h-64 overflow-y-auto bg-gray-50">
                 <div className="space-y-3">
+                  {/* Suggested Questions */}
+{state.userInfo?.name && state.userInfo?.email &&state.messages.filter(m => m.type === "user").length === 0 && suggestions.length > 0 && (
+  <div className="mb-3">
+    <p className="text-xs text-gray-500 mb-2 font-semibold">
+      Suggested Questions
+    </p>
+    <div className="flex flex-wrap gap-2">
+      {suggestions.map((q, index) => (
+        <button
+          key={index}
+          onClick={() => handleSendMessage(q)}
+          className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-full hover:bg-primary-50 hover:border-primary-300 transition"
+        >
+          {q}
+        </button>
+      ))}
+    </div>
+  </div>
+)}
                   {state.messages.map((message) => (
                     <MessageBubble key={message.id} message={message} />
                   ))}
@@ -288,7 +331,7 @@ const handleSendMessage = async () => {
                     maxLength={1000}
                   />
                   <button
-                    onClick={handleSendMessage}
+                    onClick={() => handleSendMessage()}
                     disabled={!inputValue.trim() || state.isLoading}
                     className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                     title="Send message"

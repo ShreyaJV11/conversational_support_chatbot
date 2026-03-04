@@ -5,14 +5,13 @@ import KBUpload from "./pages/KBUpload";
 
 function App() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<KBDashboard />} />
-        <Route path="/kb-upload" element={<KBUpload />} />
-      </Routes>
-    </Layout>
+    <Routes>
+      <Route path="/:botId" element={<Layout />}>
+        <Route index element={<KBDashboard />} />
+        <Route path="kb-upload" element={<KBUpload />} />
+      </Route>
+    </Routes>
   );
 }
 
 export default App;
-

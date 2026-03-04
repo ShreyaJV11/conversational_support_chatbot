@@ -1,67 +1,69 @@
-import os
 import re
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any, Optional
 
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.messages import SystemMessage, HumanMessage
 from pgvector.psycopg2 import register_vector
 
 from app.db.database import get_connection
-from app.services.llm_service import chat_model
+from app.services.llm_service import create_chat_model
 
 
-# ==========================================
-# 🔹 Embedding Model Setup
-# ==========================================
+# ==========================================================
+# DEFAULT CONFIG
+# ==========================================================
 
-EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+DEFAULT_RETRIEVER_CONFIG = {
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "top_k": 5,
+    "domain_threshold": 0.75,
+    "distance_margin": 0.05,
+    "max_chunks": 3,
+    "enable_rewrite": True,
+    "rewrite_max_words": 20,
+    "kb_table": "kb_chunks"
+}
 
-embeddings = HuggingFaceEmbeddings(
-    model_name=EMBEDDING_MODEL_NAME
-)
+
+# ==========================================================
+# EMBEDDING FACTORY
+# ==========================================================
+
+def create_embeddings(model_name: str):
+    return HuggingFaceEmbeddings(model_name=model_name)
 
 
-# ==========================================
-# 🔹 Follow-up Detection (Improved + Safe)
-# ==========================================
+# ==========================================================
+# FOLLOW-UP DETECTION
+# ==========================================================
 
 def is_followup_query(user_query: str) -> bool:
-    """
-    Detect likely follow-up queries:
-    - Contains pronouns
-    - Starts with vague connectors
-    - Short contextual questions
-    """
-
     text = user_query.lower().strip()
 
     pronouns = ["it", "they", "them", "this", "that"]
     vague_starts = ("what", "why", "how", "if", "when", "where")
 
-    pronoun_match = any(
-        re.search(rf"\b{p}\b", text)
-        for p in pronouns
-    )
-
+    pronoun_match = any(re.search(rf"\b{p}\b", text) for p in pronouns)
     vague_start = text.startswith(vague_starts)
-
     short_query = len(text.split()) <= 6
 
     return pronoun_match or vague_start or short_query
 
 
-# ==========================================
-# 🔹 Rewrite Follow-up → Standalone
-# ==========================================
+# ==========================================================
+# FOLLOW-UP REWRITE (Configurable)
+# ==========================================================
 
-def rewrite_question(chat_history: List, user_query: str) -> str:
-    """
-    Rewrite follow-up into standalone using last user + assistant message.
-    Keeps rewrite minimal and safe.
-    """
+def rewrite_question(
+    chat_history: List,
+    user_query: str,
+    bot_config: Dict[str, Any]
+) -> str:
 
     if not chat_history:
         return user_query
+
+    max_words = bot_config.get("rewrite_max_words", 20)
 
     last_user = None
     last_assistant = None
@@ -94,84 +96,88 @@ Follow-up Question:
 {user_query}
 
 Return ONLY the rewritten question.
-Keep it under 20 words.
+Keep it under {max_words} words.
 Do not explain anything.
 """
 
     try:
+        chat_model = create_chat_model(bot_config)
+
         response = chat_model.invoke([
             SystemMessage(content="You rewrite follow-up support questions clearly and minimally."),
             HumanMessage(content=prompt)
         ])
 
-        if not response or not hasattr(response, "content"):
-            return user_query
         rewritten = response.content.strip()
 
-        # Safety guard (avoid hallucinated long rewrite)
-        if len(rewritten.split()) > 20:
+        if len(rewritten.split()) > max_words:
             return user_query
 
-        print(f"🔁 Contextual Rewritten Query: {rewritten}")
         return rewritten
 
-    except Exception as e:
-        print("⚠️ Rewrite failed:", e)
+    except Exception:
         return user_query
 
 
-# ==========================================
-# 🔹 MAIN RETRIEVER
-# ==========================================
+# ==========================================================
+# MAIN RETRIEVER (Fully Configurable)
+# ==========================================================
 
 def retrieve_chunks(
     user_query: str,
-    chat_history: List = None,
-    top_k: int = 5,
-    domain_threshold: float = 0.75,  # Slightly safer
-    distance_margin: float = 0.05
+     bot_id: int,
+    chat_history: Optional[List] = None,
+    bot_config: Optional[Dict[str, Any]] = None
 ) -> Tuple[List[str], bool]:
 
-    if chat_history is None:
-        chat_history = []
+    config = {**DEFAULT_RETRIEVER_CONFIG, **(bot_config or {})}
+    chat_history = chat_history or []
 
     conn = None
     cur = None
 
     try:
         # ----------------------------------
-        # 1️⃣ Rewrite if needed
+        # 1️⃣ Rewrite if enabled
         # ----------------------------------
-        if chat_history and is_followup_query(user_query):
-            user_query = rewrite_question(chat_history, user_query)
+
+        if config["enable_rewrite"] and chat_history and is_followup_query(user_query):
+            user_query = rewrite_question(chat_history, user_query, config)
 
         # ----------------------------------
-        # 2️⃣ Generate embedding
+        # 2️⃣ Create Embeddings Dynamically
         # ----------------------------------
+
+        embeddings = create_embeddings(config["embedding_model"])
         query_vector = embeddings.embed_query(user_query)
 
         if not query_vector:
-            print("❌ Embedding generation failed")
             return [], False
 
         # ----------------------------------
         # 3️⃣ DB Connection
         # ----------------------------------
+
         conn = get_connection()
         register_vector(conn)
         cur = conn.cursor()
 
         # ----------------------------------
-        # 4️⃣ Vector Search
+        # 4️⃣ Vector Search (Bot Scoped)
         # ----------------------------------
+
+        kb_table = config["kb_table"]
+        top_k = config["top_k"]
+
         cur.execute(
-            """
+            f"""
             SELECT chunk_text, embedding <=> %s::vector AS distance
-            FROM kb_chunks
+            FROM {kb_table}
+            WHERE bot_id = %s
             ORDER BY distance ASC
             LIMIT %s;
             """,
-            (query_vector, top_k)
+            (query_vector, bot_id, top_k)
         )
 
         results = cur.fetchall()
@@ -180,24 +186,19 @@ def retrieve_chunks(
             return [], False
 
         best_distance = results[0][1]
-        print(f"📏 Best Match Distance: {best_distance:.4f}")
 
         # ----------------------------------
-        # 5️⃣ Smart Domain Guard
+        # 5️⃣ Domain Guard
         # ----------------------------------
 
-        # Allow slightly relaxed threshold for short contextual queries
-        if len(user_query.split()) <= 8 and best_distance < 0.9:
-            domain_override = True
-        else:
-            domain_override = False
+        domain_threshold = config["domain_threshold"]
+        distance_margin = config["distance_margin"]
 
-        if best_distance > domain_threshold and not domain_override:
-            print("⚠️ Query outside knowledge base domain")
+        if best_distance > domain_threshold:
             return [], False
 
         # ----------------------------------
-        # 6️⃣ Smart Distance Filtering
+        # 6️⃣ Smart Filtering
         # ----------------------------------
 
         filtered_chunks = [
@@ -209,10 +210,11 @@ def retrieve_chunks(
         if not filtered_chunks:
             filtered_chunks = [results[0][0]]
 
-        return filtered_chunks[:3], True
+        max_chunks = config["max_chunks"]
 
-    except Exception as e:
-        print(f"❌ Retrieval Error: {e}")
+        return filtered_chunks[:max_chunks], True
+
+    except Exception:
         return [], False
 
     finally:

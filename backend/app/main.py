@@ -15,10 +15,9 @@ app.add_middleware(
 
 app.include_router(chat.router,prefix="/api")
 app.include_router(kb_upload.router, prefix="/api")
-app.include_router(
-    kb_upload.router,
-    prefix="/api"
-)
+from app.routes import bot
+
+app.include_router(bot.router)
 
 @app.get("/")
 def root():

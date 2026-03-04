@@ -8,6 +8,7 @@ export interface ChatRequest {
     email?: string;
     organization?: string;
   };
+  bot_id?: number;
 }
 
 export interface ChatResponse {
@@ -38,16 +39,23 @@ export interface ChatMessage {
 // Widget Configuration
 export interface ChatWidgetConfig {
   apiBaseUrl?: string;
+
+  // 🔥 ADD THESE TWO
+  botId?: number;
+  organizationId?: string;
+
   theme?: {
     primaryColor?: string;
     backgroundColor?: string;
     textColor?: string;
     borderRadius?: string;
   };
+
   position?: {
     bottom?: string;
     right?: string;
   };
+
   initialMessage?: boolean;
   userName?: string;
   sessionId?: string;

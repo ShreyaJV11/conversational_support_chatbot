@@ -5,15 +5,23 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 load_dotenv()
 
-llm = HuggingFaceEndpoint(
-    repo_id="HuggingFaceH4/zephyr-7b-beta",
-    huggingfacehub_api_token=os.getenv("HF_TOKEN"),
-    task="conversational",
-    temperature=0.0,  # even stricter
-    max_new_tokens=200
-)
 
-chat_model = ChatHuggingFace(llm=llm)
+def create_chat_model(llm_config: dict = None):
+    """
+    Dynamically creates a chat model based on configuration.
+    """
+
+    llm_config = llm_config or {}
+
+    llm = HuggingFaceEndpoint(
+        repo_id=llm_config.get("repo_id", "HuggingFaceH4/zephyr-7b-beta"),
+        huggingfacehub_api_token=os.getenv("HF_TOKEN"),
+        task="conversational",
+        temperature=llm_config.get("temperature", 0.0),
+        max_new_tokens=llm_config.get("max_new_tokens", 200),
+    )
+
+    return ChatHuggingFace(llm=llm)
 
 
 SYSTEM_PROMPT = """
@@ -28,9 +36,9 @@ STRICT RULES:
 4. Do NOT rephrase.
 5. Do NOT add explanations.
 6. Do NOT add confidence scores.
-7.Do NOT include 'Question:' or 'Answer:' labels.\n"
-8.If multiple sentences apply, format as numbered list.\n
-9.Do not add assumptions.
+7. Do NOT include 'Question:' or 'Answer:' labels.
+8. If multiple sentences apply, format as numbered list.
+9. Do not add assumptions.
 - Do NOT say 'Based on the context'.
 - Do NOT explain your reasoning.
 - DO NOT guess.
@@ -42,10 +50,23 @@ I do not have enough internal information to answer that.
 """
 
 
-def get_answers(history: str, context: str, user_query: str) -> str:
+def get_answers(
+    history: str,
+    context: str,
+    user_query: str,
+    llm_config: dict = None
+):
+    """
+    Streams response tokens from LLM.
+    """
+
     # 🚨 Safety check before calling LLM
     if not context or context.strip() == "":
-        return "I do not have enough internal information to answer that."
+        yield "I do not have enough internal information to answer that."
+        return
+
+    # 🔥 Create model dynamically
+    chat_model = create_chat_model(llm_config)
 
     messages = [
         SystemMessage(content=SYSTEM_PROMPT),
@@ -57,21 +78,18 @@ def get_answers(history: str, context: str, user_query: str) -> str:
     ]
 
     full_response = ""
-    
-    # 2. Use the stream method
-    # Note: changed chat_model_stream to chat_model.stream
+
     for chunk in chat_model.stream(messages):
         token = chunk.content
         if not token:
             continue
-            
+
         clean_token = token.replace('"', '')
         full_response += clean_token
 
-        # 3. Mid-stream safety check for "High Confidence" hallucination
+        # 🚨 Mid-stream hallucination safety
         if "high confidence" in full_response.lower():
-            # Stop the current stream and send the fallback message
             yield "I do not have enough internal information to answer that."
-            return 
+            return
 
         yield clean_token

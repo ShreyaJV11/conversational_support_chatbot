@@ -1,16 +1,34 @@
 
 import { ChatRequest, ChatResponse } from '../types';
+ interface ChatApiConfig {
+  baseUrl?: string;
+  botId?: number;
+  organizationId?: string;
+}
+
 
 class ChatApiService {
   private baseUrl: string;
   private sessionId: string;
   private userInfo?: { name: string; email: string };
 
-  constructor(baseUrl: string = 'http://127.0.0.1:8000') {
-    this.baseUrl = baseUrl.replace(/\/$/, '');
-    this.sessionId = this.generateSessionId();
-  }
+  private botId?: number;
+private organizationId?: string;
 
+constructor(config: ChatApiConfig = {}) {
+  const {
+    baseUrl = "http://127.0.0.1:8000",
+    botId=1,
+    organizationId
+  } = config;
+
+  this.baseUrl = baseUrl.replace(/\/$/, "");
+  this.botId = botId;
+  this.organizationId = organizationId;
+
+  this.sessionId = this.generateSessionId();
+}
+ 
   private generateSessionId(): string {
     return `session_${Date.now()}_${Math.random()
       .toString(36)
@@ -65,7 +83,11 @@ async sendMessage(
         user_info: request.user_info || this.userInfo
       };
     }
-
+  if (this.botId) {
+  (chatRequest as any).bot_id = this.botId;}
+  if (this.organizationId) {
+  (chatRequest as any).organization_id = this.organizationId;
+}
     const finalUrl = `${this.baseUrl}/api/chat`;
 
     const response = await fetch(finalUrl, {
@@ -106,7 +128,7 @@ async sendMessage(
 
 async getInitialMessage(): Promise<ChatResponse> {
   try {
-    const finalUrl = `${this.baseUrl}/api/chat/initial-message`;
+    const finalUrl = `${this.baseUrl}/api/chat/initial-message/${this.botId}`;
 
     const response = await fetch(finalUrl, {
       method: "GET"
@@ -126,5 +148,24 @@ async getInitialMessage(): Promise<ChatResponse> {
     };
   }
 }
+async getSuggestions(): Promise<string[]> {
+  try {
+    const finalUrl = `${this.baseUrl}/bot/${this.botId}/suggestions`;
+
+    const response = await fetch(finalUrl, {
+      method: "GET"
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch suggestions");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Suggestions error:", error);
+    return [];
+  }
 }
+}
+
 export default ChatApiService;

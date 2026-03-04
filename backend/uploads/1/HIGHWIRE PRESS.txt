@@ -1,0 +1,13 @@
+HighWire Press is a scholarly publishing technology company that provides digital publishing platforms for academic journals, societies, and university presses.
+
+It helps publishers:
+
+Host and publish research journals
+
+Manage peer review systems
+
+Deliver online articles
+
+Handle subscriptions and access control
+
+Improve search and discoverability

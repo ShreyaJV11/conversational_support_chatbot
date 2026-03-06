@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { User, Bot, CheckCircle, AlertTriangle, ExternalLink } from 'lucide-react';
@@ -7,6 +7,31 @@ import { ChatMessage } from '../types';
 interface MessageBubbleProps {
   message: ChatMessage;
 }
+
+interface DetailDropdownProps {
+  content: string;
+}
+
+const DetailDropdown: React.FC<DetailDropdownProps> = ({ content }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => setOpen(!open)}
+        className="text-blue-600 underline text-xs"
+      >
+        {open ? 'Hide Details' : 'Show Details'}
+      </button>
+      {open && (
+        <div className="mt-1 text-sm prose prose-slate max-w-none border-l-2 border-gray-200 pl-2">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {content}
+          </ReactMarkdown>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const isUser = message.type === 'user';
@@ -23,10 +48,19 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     return 'text-red-600';
   };
 
+  // Split short and detailed answers
+  let shortAnswer = message.content;
+  let detailedAnswer = '';
+  if (isBot && message.content.includes('DETAILED_ANSWER:')) {
+    const parts = message.content.split('DETAILED_ANSWER:');
+    shortAnswer = parts[0].replace('SHORT_ANSWER:', '').trim();
+    detailedAnswer = parts[1].trim();
+  }
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 animate-fade-in`}>
       <div className={`flex max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start gap-2`}>
-        
+
         {/* Avatar */}
         <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
           isUser ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-600'
@@ -37,15 +71,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         {/* Message Container */}
         <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
           <div className={`px-4 py-2 rounded-2xl shadow-sm ${
-            isUser 
-              ? 'bg-indigo-600 text-white rounded-tr-none' 
+            isUser
+              ? 'bg-indigo-600 text-white rounded-tr-none'
               : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'
           }`}>
-            
-            {/* Structured Content Rendering */}
+
+            {/* SHORT_ANSWER */}
             <div className="text-sm leading-relaxed prose prose-slate max-w-none">
               {isBot ? (
-                <ReactMarkdown 
+                <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
                     ul: ({node, ...props}) => <ul className="list-disc ml-4 my-2" {...props} />,
@@ -55,12 +89,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                     a: ({node, ...props}) => <a className="text-blue-600 underline" target="_blank" rel="noreferrer" {...props} />
                   }}
                 >
-                  {message.content}
+                  {shortAnswer}
                 </ReactMarkdown>
               ) : (
-                <p className="whitespace-pre-wrap">{message.content}</p>
+                <p className="whitespace-pre-wrap">{shortAnswer}</p>
               )}
             </div>
+
+            {/* DETAILED_ANSWER Dropdown */}
+            {isBot && detailedAnswer && <DetailDropdown content={detailedAnswer} />}
 
             {/* Metadata (Confidence & Case ID) */}
             {isBot && (message.confidence_score || message.case_id) && (
@@ -69,7 +106,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                   <div className="flex items-center gap-1 text-[10px]">
                     <CheckCircle size={10} className={getConfidenceColor(message.confidence_score)} />
                     <span className={`${getConfidenceColor(message.confidence_score)} font-semibold uppercase tracking-wider`}>
-                      {message.confidence_score >= 0.8 ? 'High Confidence' : 'AI Response'} 
+                      {message.confidence_score >= 0.8 ? 'High Confidence' : 'AI Response'}
                       ({(message.confidence_score * 100).toFixed(0)}%)
                     </span>
                   </div>

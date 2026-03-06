@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 load_dotenv()
 
@@ -18,7 +18,7 @@ def create_chat_model(llm_config: dict = None):
         huggingfacehub_api_token=os.getenv("HF_TOKEN"),
         task="conversational",
         temperature=llm_config.get("temperature", 0.0),
-        max_new_tokens=llm_config.get("max_new_tokens", 200),
+        max_new_tokens=llm_config.get("max_new_tokens", 20000),
     )
 
     return ChatHuggingFace(llm=llm)
@@ -29,24 +29,40 @@ You are MPS Support Assistant.
 
 You are an information extraction assistant.
 
-STRICT RULES:
-1. Answer ONLY using the provided context.
-2. Return the exact sentence from context that answers the question.
-3. Do NOT summarize.
-4. Do NOT rephrase.
-5. Do NOT add explanations.
-6. Do NOT add confidence scores.
-7. Do NOT include 'Question:' or 'Answer:' labels.
-8. If multiple sentences apply, format as numbered list.
-9. Do not add assumptions.
-- Do NOT say 'Based on the context'.
-- Do NOT explain your reasoning.
-- DO NOT guess.
-Do not speculate.
-Do not mention ambiguity unless explicitly in context.
-Keep answers concise and professional.
-10. If answer is not clearly present, respond EXACTLY with:
+You answer questions using ONLY the provided documentation.
+
+Rules:
+
+1. Use ONLY the provided context.
+2. Do NOT invent information.
+3. Do NOT guess
+4. If multiple instructions exist, return them as a numbered list.
+5. Each step must appear on a new line.
+6. If commands exist, copy them EXACTLY.
+7. If the answer is not present, respond EXACTLY with:
 I do not have enough internal information to answer that.
+
+
+Formatting Rules (IMPORTANT):
+
+Always return the answer in MARKDOWN.
+
+Use the following structure exactly:
+
+SHORT_ANSWER:
+A concise 4-5 sentence answer in numbered format if multiple steps are needed in separate lines.
+
+DETAILED_ANSWER:
+Provide detailed instructions formatted in markdown.
+
+Formatting guidelines:
+
+• Use numbered lists for steps in separate lines.
+• split into multiple steps if needed.
+• Use bullet points when listing items in separate lines.
+• Use code blocks for commands.
+• URLs must be on a separate line.
+• Commands must be inside code blocks.
 """
 
 
@@ -60,22 +76,49 @@ def get_answers(
     Streams response tokens from LLM.
     """
 
-    # 🚨 Safety check before calling LLM
     if not context or context.strip() == "":
         yield "I do not have enough internal information to answer that."
         return
 
-    # 🔥 Create model dynamically
     chat_model = create_chat_model(llm_config)
 
-    messages = [
-        SystemMessage(content=SYSTEM_PROMPT),
-        HumanMessage(content=(
-            f"Context:\n{context}\n\n"
-            f"Question: {user_query}\n\n"
-            "Extract the exact answer sentence from the context."
-        ))
-    ]
+    messages = [SystemMessage(content=SYSTEM_PROMPT)]
+
+    # ✅ Add conversation history
+    if history:
+        if isinstance(history, list):
+            for msg in history:
+                role = msg.get("role")
+                content = msg.get("content")
+
+                if role == "user":
+                    messages.append(HumanMessage(content=content))
+
+                elif role == "assistant":
+                    messages.append(AIMessage(content=content))
+
+    # ✅ Add current user query
+    messages.append(
+        HumanMessage(content=f"""
+Use the following documentation to answer the question.
+
+Documentation:
+{context}
+
+User Question:
+{user_query}
+
+Return the answer EXACTLY in this format:
+
+SHORT_ANSWER:
+<1-2 sentence answer>
+
+DETAILED_ANSWER:
+<full paragraph with more info>
+
+Only return these two sections.
+""")
+    )
 
     full_response = ""
 

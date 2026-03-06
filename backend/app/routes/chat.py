@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict
 import re
 import asyncio
+from app.services.salesforce_service import create_salesforce_case
 
 from app.services.retrieval_service import retrieve_chunks
 from app.services.llm_service import get_answers
@@ -47,6 +48,20 @@ def stream_text(text: str):
             await asyncio.sleep(0.003)
     return generator()
 
+
+def split_short_detailed(answer: str):
+    """
+    Splits LLM output into short and detailed parts.
+    """
+    short_answer = answer
+    detailed_answer = None
+
+    if "DETAILED ANSWER:" in answer:
+        parts = answer.split("DETAILED ANSWER:")
+        short_answer = parts[0].replace("SHORT ANSWER:", "").strip()
+        detailed_answer = parts[1].strip()
+
+    return short_answer, detailed_answer
 
 # ==========================================================
 # MAIN CHAT ENDPOINT
@@ -149,14 +164,28 @@ async def chat(request: ChatRequest):
             )
 
         if not chunks:
-            escalation_text = bot_config["escalation_message"]
-
+            escalation_text = (
+                 bot_config["escalation_message"]
+                 + "\n\nWould you like me to create a support ticket for this issue? (yes/no)"
+                 )
+            if request.user_question.lower() in ["yes", "create ticket", "ok", "sure"]:
+                user_name = user.get("name")
+                user_email = user.get("email")
+                case = create_salesforce_case(
+                    subject="Chatbot Escalation",
+                    description="User requested escalation via chatbot",
+                    email=user_email)
+                case_id = case.get("id", "N/A")
+                response_text = f"Your support ticket has been created successfully.\nCase ID: {case_id}"
+                save_message(conversation_id, "assistant", response_text)
+                return StreamingResponse(
+                    stream_text(response_text),     
+                    media_type="text/plain"
+                )    
             save_message(conversation_id, "assistant", escalation_text)
-
             return StreamingResponse(
                 stream_text(escalation_text),
-                media_type="text/plain"
-            )
+                media_type="text/plain")
 
         context_text = "\n".join(chunks)
 
@@ -178,10 +207,16 @@ async def chat(request: ChatRequest):
                 )
             )
 
-            for token in tokens:
-                full_answer += token
-                yield token
+            full_answer = "".join(tokens)
+            short_answer, detailed_answer = split_short_detailed(full_answer)
+            final_answer = short_answer
+            if detailed_answer:
+                final_answer = f"{short_answer}\n\n{detailed_answer}"
+            for char in final_answer:
+                yield char
                 await asyncio.sleep(0.003)
+
+
 
             save_message(conversation_id, "assistant", full_answer)
 

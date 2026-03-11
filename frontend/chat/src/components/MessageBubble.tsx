@@ -63,7 +63,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
         {/* Avatar */}
         <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
-          isUser ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-600'
+          isUser ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600'
         }`}>
           {isUser ? <User size={16} /> : <Bot size={16} />}
         </div>
@@ -72,7 +72,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
           <div className={`px-4 py-2 rounded-2xl shadow-sm ${
             isUser
-              ? 'bg-indigo-600 text-white rounded-tr-none'
+              ? 'bg-emerald-600 text-white rounded-tr-none'
               : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'
           }`}>
 

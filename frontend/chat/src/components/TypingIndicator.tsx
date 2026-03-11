@@ -4,7 +4,7 @@ import { Bot } from 'lucide-react';
 const TypingIndicator: React.FC = () => {
   return (
     <div className="flex justify-start animate-fade-in">
-      <div className="flex items-end space-x-2 max-w-xs">
+      <div className="flex items-end space-x-2 max-w-[85%]">
         {/* Bot Avatar */}
         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center">
           <Bot size={16} />

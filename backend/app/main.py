@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import chat,kb_upload
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="Highwire Bot Backend")
 
@@ -23,8 +24,11 @@ app.include_router(bot.router)
 def root():
     return {"message": "Backend is running 🚀"}
 
+
 @app.get("/health")
 def health():
     return {"status": "healthy"}
 from app.routes import kb_upload
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 

@@ -12,6 +12,12 @@ const API_BASE =
 
 export default function KBDashboard() {
   const { botId } = useParams<{ botId: string }>();
+  const scriptTag = `<script src="http://localhost:8000/static/widget.js" data-bot-id="${botId}"></script>`;
+
+const copyScript = () => {
+  navigator.clipboard.writeText(scriptTag);
+  alert("Script copied!");
+};
 
   const [files, setFiles] = useState<KBFile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,9 +55,18 @@ export default function KBDashboard() {
 
   return (
     <div className="bg-white p-6 rounded shadow-md">
-      <h2 className="text-2xl font-semibold mb-6">
-        Knowledge Base Files (Bot ID: {botId})
-      </h2>
+      <div className="flex justify-between items-center mb-6">
+  <h2 className="text-2xl font-semibold">
+    Knowledge Base Files (Bot ID: {botId})
+  </h2>
+
+  <button
+    onClick={copyScript}
+    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+  >
+    Get Chatbot Script
+  </button>
+</div>
 
       {loading && <p className="text-gray-500">Loading files...</p>}
       {error && <p className="text-red-500">{error}</p>}

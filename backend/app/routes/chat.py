@@ -21,9 +21,7 @@ from app.services.bot_service import get_bot_config
 
 router = APIRouter()
 
-# ==========================================================
-# REQUEST MODEL
-# ==========================================================
+
 
 class ChatRequest(BaseModel):
     user_question: str
@@ -32,9 +30,6 @@ class ChatRequest(BaseModel):
     bot_id: int
 
 
-# ==========================================================
-# HELPERS
-# ==========================================================
 
 def is_valid_email(email: str) -> bool:
     pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
@@ -63,18 +58,14 @@ def split_short_detailed(answer: str):
 
     return short_answer, detailed_answer
 
-# ==========================================================
-# MAIN CHAT ENDPOINT
-# ==========================================================
+
 
 @router.post("/chat")
 async def chat(request: ChatRequest):
 
     try:
 
-        # -----------------------------------------
-        # 1️⃣ Load Bot Config
-        # -----------------------------------------
+        
 
         bot_config = get_bot_config(request.bot_id)
 
@@ -86,9 +77,7 @@ async def chat(request: ChatRequest):
 
         require_registration = bot_config.get("require_registration", True)
 
-        # -----------------------------------------
-        # 2️⃣ Check Session
-        # -----------------------------------------
+        
 
         existing_user = get_user_by_session( request.bot_id,request.user_session_id)
 
@@ -129,7 +118,7 @@ async def chat(request: ChatRequest):
             )
 
         # -----------------------------------------
-        # 3️⃣ Normal Flow
+        # Normal Flow
         # -----------------------------------------
 
         user = existing_user
@@ -147,7 +136,7 @@ async def chat(request: ChatRequest):
         save_message(conversation_id, "user", request.user_question)
 
         # -----------------------------------------
-        # 4️⃣ Retrieval (Bot Scoped)
+        # Retrieval (Bot Scoped)
         # -----------------------------------------
 
         chunks, is_domain = retrieve_chunks(
@@ -190,7 +179,7 @@ async def chat(request: ChatRequest):
         context_text = "\n".join(chunks)
 
         # -----------------------------------------
-        # 5️⃣ Stream LLM (Configurable)
+        # Stream LLM (Configurable)
         # -----------------------------------------
 
         async def stream_wrapper():

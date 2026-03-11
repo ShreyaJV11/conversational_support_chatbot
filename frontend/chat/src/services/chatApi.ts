@@ -15,7 +15,7 @@ class ChatApiService {
   private botId?: number;
 private organizationId?: string;
 
-constructor(config: ChatApiConfig = {}) {
+constructor(config: ChatApiConfig = {},sessionId?: string) {
   const {
     baseUrl = "http://127.0.0.1:8000",
     botId=1,
@@ -26,7 +26,7 @@ constructor(config: ChatApiConfig = {}) {
   this.botId = botId;
   this.organizationId = organizationId;
 
-  this.sessionId = this.generateSessionId();
+  this.sessionId = sessionId ||this.generateSessionId();
 }
  
   private generateSessionId(): string {
@@ -148,6 +148,7 @@ async getInitialMessage(): Promise<ChatResponse> {
     };
   }
 }
+// Inside ChatApiService.ts
 async getSuggestions(): Promise<string[]> {
   try {
     const finalUrl = `${this.baseUrl}/bot/${this.botId}/suggestions`;
@@ -167,5 +168,6 @@ async getSuggestions(): Promise<string[]> {
   }
 }
 }
+
 
 export default ChatApiService;

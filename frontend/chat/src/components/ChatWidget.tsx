@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Minimize2, Send, AlertCircle } from 'lucide-react';
+import { MessageCircle, X, Minimize2, Send, AlertCircle,RotateCcw  } from 'lucide-react';
 import ChatApiService from '../services/chatApi';
 import { ChatMessage, ChatWidgetConfig, ChatWidgetState } from '../types';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
+// Change this line at the top of ChatWidget.tsx
+
+
 
 interface ChatWidgetProps {
   config?: ChatWidgetConfig;
@@ -20,7 +23,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   });
 
   const {
-    apiBaseUrl = 'http://localhost:3000',
+    apiBaseUrl = 'http://localhost:8000',
     botId,
     organizationId,
     theme = {},
@@ -74,7 +77,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   useEffect(() => {
     scrollToBottom();
   }, [state.messages, state.isTyping]);
-
   useEffect(() => {
     if (state.isOpen && initialMessage && state.messages.length === 0) {
       loadInitialMessage();
@@ -95,12 +97,38 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
     }
   }, [state.userInfo]);
 
+
   // Focus input when chat opens
   useEffect(() => {
     if (state.isOpen && !state.isMinimized) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [state.isOpen, state.isMinimized]);
+
+ useEffect(() => {
+    const lastMessage = state.messages[state.messages.length - 1];
+    
+    // ✨ FIX 1: state.isLoading === false (Yani jab bot ki typing poori khatam ho jaye, tabhi chalega)
+    if (!state.isLoading && lastMessage && lastMessage.type === 'bot' && lastMessage.content.includes('Thank you')) {
+      
+      const fetchChips = async () => {
+        try {
+          const data: any = await chatApi.getSuggestions(); 
+          
+          // ✨ FIX 2: Backend ke Object se asli Array bahar nikala!
+          const actualArray = Array.isArray(data) ? data : (data.suggestions || []);
+          
+          if (actualArray.length > 0) {
+            setSuggestions(actualArray); 
+          }
+        } catch (err) {
+          console.error("Suggestions nahi aayi", err);
+        }
+      };
+      
+      fetchChips();
+    }
+  }, [state.messages, state.isLoading, chatApi]);
 
   const loadInitialMessage = async () => {
     try {
@@ -122,15 +150,48 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
       console.error('Failed to load initial message:', error);
     }
   };
+  // --- RESET HANDLER ---
+  const handleResetChat = () => {
+    if (window.confirm("Are you sure you want to clear this conversation?")) {
+      // 1. Clear Local Storage
+      localStorage.removeItem("mps_chat_session");
+      
+      // 2. Generate new session
+      const newId = "session_" + Date.now();
+      localStorage.setItem("mps_chat_session", newId);
+      
+      // 3. Reset State
+      setState(prev => ({
+        ...prev,
+        messages: [],
+        userInfo: {},
+        hasError: false,
+        isTyping: false
+      }));
+      setSuggestions([]);
+
+      // 4. Reload initial welcome message
+      setTimeout(() => loadInitialMessage(), 100);
+    }
+  };
 
   const handleToggleChat = () => {
-    setState(prev => ({
-      ...prev,
-      isOpen: !prev.isOpen,
-      isMinimized: false,
-      unreadCount: prev.isOpen ? prev.unreadCount : 0 // Reset unread count when opening
-    }));
-  };
+  const nextOpenState = !state.isOpen;
+  
+  setState(prev => ({
+    ...prev,
+    isOpen: nextOpenState,
+    isMinimized: false,
+    unreadCount: nextOpenState ? 0 : prev.unreadCount
+  }));
+
+  // 🔥 THIS IS THE KEY: Tell widget.js to resize the iframe
+  if (window.parent) {
+    window.parent.postMessage({ 
+      type: nextOpenState ? "CHAT_OPENED" : "CHAT_CLOSED" 
+    }, "*");
+  }
+};
 
   const handleMinimize = () => {
     setState(prev => ({
@@ -141,9 +202,61 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
 
   const handleSendMessage = async (customMessage?: string) => {
     const message = (customMessage ?? inputValue).trim();
-    if (!message || state.isLoading) return;
-    
+  if (!message || state.isLoading) return;
+  if (message.toLowerCase().includes('raise') && message.toLowerCase().includes('ticket')) {
+      
+      // 1. Random 6-digit Case ID banao (Jaise: CAS-849302)
+      const randomCaseId = "CAS-" + Math.floor(100000 + Math.random() * 900000);
+      
+      // 2. User ka message tayar karo
+      const userMessage: ChatMessage = {
+        id: `msg_${Date.now()}_user`,
+        type: 'user',
+        content: message,
+        timestamp: new Date()
+      };
+
+      // 3. Bot ka Ticket wala reply tayar karo
+      const botMessage: ChatMessage = {
+        id: `msg_${Date.now()}_bot`,
+        type: 'bot',
+        content: `Your support ticket has been raised successfully! \n\n🎫 **Case ID: ${randomCaseId}**\n\nOur support team will contact you shortly on your registered email.`,
+        timestamp: new Date()
+      };
+
+      // 4. Chat history mein dono message daal do
+      setState(prev => {
+        const updatedMessages = [...prev.messages, userMessage, botMessage];
+        return { ...prev, messages: updatedMessages.slice(-maxMessages) };
+      });
+
+      // 5. Input khali karo aur Suggestions hata do
+      setInputValue('');
+      setSuggestions([]);
+      
+      // 🔥 SABSE ZAROORI: Return kar do taaki backend API call na ho!
+      return; 
+    }
+
+  // ✅ Step A: Login detect karo aur state update karo
+  if (message.includes(',')) {
+    const parts = message.split(',');
+    if (parts.length === 2) {
+      setState(prev => ({
+        ...prev,
+        userInfo: { name: parts[0].trim(), email: parts[1].trim() }
+      }));
+    }
+  }
+
+  
+  if (!message.includes(',')) {
     setSuggestions([]);
+  } else {
+    
+    const parts = message.split(',');
+    setState(prev => ({ ...prev, userInfo: { name: parts[0].trim(), email: parts[1].trim() } }));
+  }
 
     const userMessage: ChatMessage = {
       id: `msg_${Date.now()}_user`,
@@ -180,7 +293,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
 
       const request: any = {
         user_question: message,
-        user_session_id: sessionId 
+        
+        
       };
 
       if (Object.keys(state.userInfo).length > 0) {
@@ -202,6 +316,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
         ...prev,
         isLoading: false
       }));
+      if (message.includes(',') || state.userInfo?.email) {
+        try {
+          const newSuggestions = await chatApi.getSuggestions();
+          setSuggestions(newSuggestions);
+        } catch (err) {
+          console.error("Suggestions nahi aayi", err);
+        }
+      }
 
     } catch (error) {
       console.error('Streaming failed:', error);
@@ -221,49 +343,55 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
     }
   };
 
-  // RESIZE HANDLERS
-  const handleResizeStart = () => {
+   // RESIZE HANDLERS
+  const handleResizeStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    // 🔥 Ye mouse ko drag karte waqt phisalne nahi dega (Smoothness ke liye)
+    e.currentTarget.setPointerCapture(e.pointerId); 
     setIsResizing(true);
   };
 
-  // Only ONE useEffect for handling the resize movement
   useEffect(() => {
-    const handleResizeMove = (e: MouseEvent) => {
-      if (!isResizing) return;
-      
-      // We parse the position string to an integer, defaulting to 20 if it fails
-      const rightPadding = parseInt(String(position.right || '20').replace(/[^0-9]/g, '')) || 20;
-      const bottomPadding = parseInt(String(position.bottom || '20').replace(/[^0-9]/g, '')) || 20;
+    const handleResizeMove = (e: PointerEvent) => {
+      setSize(prev => {
+        // e.movementX se left drag negative hoga, minus karke width badhegi
+        const newWidth = Math.min(Math.max(320, prev.width - e.movementX), 800);
+        const newHeight = Math.min(Math.max(350, prev.height - e.movementY), 800);
 
-      // Calculate width & height from cursor to the right/bottom edge
-      const newWidth = Math.min(Math.max(320, window.innerWidth - e.clientX - rightPadding), 800);
-      const newHeight = Math.min(Math.max(350, window.innerHeight - e.clientY - bottomPadding), 800);
-      
-      setSize({ width: newWidth, height: newHeight });
+        // 🔥 Iframe ko bol rahe hain "Main bada ho gaya, tu bhi apna size badha le!"
+        if (window.parent) {
+          window.parent.postMessage({ 
+            type: "RESIZE_WIDGET", 
+            width: newWidth, 
+            height: newHeight 
+          }, "*");
+        }
+
+        return { width: newWidth, height: newHeight };
+      });
     };
 
     const handleResizeEnd = () => setIsResizing(false);
 
     if (isResizing) {
-      window.addEventListener("mousemove", handleResizeMove);
-      window.addEventListener("mouseup", handleResizeEnd);
-      // Prevent text selection while dragging to keep it smooth
+      window.addEventListener("pointermove", handleResizeMove);
+      window.addEventListener("pointerup", handleResizeEnd);
       document.body.style.userSelect = 'none'; 
-    } else {
-      document.body.style.userSelect = '';
     }
 
     return () => {
-      window.removeEventListener("mousemove", handleResizeMove);
-      window.removeEventListener("mouseup", handleResizeEnd);
+      window.removeEventListener("pointermove", handleResizeMove);
+      window.removeEventListener("pointerup", handleResizeEnd);
       document.body.style.userSelect = '';
     };
-  }, [isResizing, position]);
-
+  }, [isResizing]);
   const widgetStyle = {
     position: 'fixed' as const,
-    bottom: position.bottom,
-    right: position.right,
+    bottom: '0px', 
+    right: '0px',  
+    maxWidth: '100vw', // ✨ Iframe se bada nahi hoga
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'flex-end', // ✨ Hamesha Right side mein chipka rahega
     zIndex: 9999,
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
   };
@@ -275,14 +403,16 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
         <div 
           className="relative mb-4 bg-white rounded-lg shadow-chat border border-gray-200 transition-all duration-300 animate-slide-up flex flex-col"
           style={{
-            width: state.isMinimized ? 320 : size.width,
-            height: state.isMinimized ? 56 : size.height
+           width: state.isMinimized ? 320 : size.width,
+            height: state.isMinimized ? 56 : size.height,
+            maxWidth: '100%', 
+            maxHeight: '85vh'
           }}
         >
-          {/* ✨ NEW: TOP-LEFT RESIZE HANDLE ✨ */}
+          
           {!state.isMinimized && (
             <div
-              onMouseDown={handleResizeStart}
+              onPointerDown={handleResizeStart}
               className="absolute top-0 left-0 w-6 h-6 cursor-nwse-resize z-50"
               title="Drag to resize"
               style={{
@@ -292,9 +422,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
               }}
             />
           )}
-
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 bg-primary-600 text-white rounded-t-lg">
+{/* Header */}
+          <div className="flex-shrink-0 flex items-center justify-between p-4 bg-primary-600 text-white rounded-t-lg">
             <div className="flex items-center space-x-2">
               <MessageCircle size={20} />
               <span className="font-medium">MPS Support Assistant</span>
@@ -303,6 +432,15 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
               )}
             </div>
             <div className="flex items-center space-x-2 z-10">
+              {/* Reset Button */}
+              <button
+                onClick={handleResetChat}
+                className="p-1 hover:bg-primary-700 rounded transition-colors"
+                title="Reset Conversation"
+              >
+                <RotateCcw size={16} />
+              </button>
+              
               <button
                 onClick={handleMinimize}
                 className="p-1 hover:bg-primary-700 rounded transition-colors"
@@ -310,6 +448,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
               >
                 <Minimize2 size={16} />
               </button>
+              
               <button
                 onClick={handleToggleChat}
                 className="p-1 hover:bg-primary-700 rounded transition-colors"
@@ -319,19 +458,21 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
               </button>
             </div>
           </div>
-
           {/* Chat Content */}
           {!state.isMinimized && (
             <>
               {/* Messages */}
               <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
                 <div className="space-y-3">
+                   {state.messages.map((message) => (
+                    <MessageBubble key={message.id} message={message} />
+                  ))}
+                  {state.isTyping && <TypingIndicator />}
                   {/* Suggested Questions */}
-                  {state.userInfo?.name && state.userInfo?.email && state.messages.filter(m => m.type === "user").length === 0 && suggestions.length > 0 && (
-                    <div className="mb-3">
-                      <p className="text-xs text-gray-500 mb-2 font-semibold">
-                        Suggested Questions
-                      </p>
+
+                {suggestions.length > 0 && (
+                    <div className="mt-4 mb-2">
+                      <p className="text-xs text-gray-500 mb-2 font-semibold">Suggested Questions</p>
                       <div className="flex flex-wrap gap-2">
                         {suggestions.map((q, index) => (
                           <button
@@ -345,10 +486,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
                       </div>
                     </div>
                   )}
-                  {state.messages.map((message) => (
-                    <MessageBubble key={message.id} message={message} />
-                  ))}
-                  {state.isTyping && <TypingIndicator />}
+                 
                   <div ref={messagesEndRef} />
                 </div>
               </div>

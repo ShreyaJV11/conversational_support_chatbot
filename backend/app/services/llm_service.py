@@ -5,12 +5,10 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 load_dotenv()
 
-
 def create_chat_model(llm_config: dict = None):
     """
     Dynamically creates a chat model based on configuration.
     """
-
     llm_config = llm_config or {}
 
     llm = HuggingFaceEndpoint(
@@ -24,115 +22,97 @@ def create_chat_model(llm_config: dict = None):
     return ChatHuggingFace(llm=llm)
 
 
-SYSTEM_PROMPT = """
-You are MPS Support Assistant.
+#rewriting queryyy
+def rewrite_query(user_query, history, llm_config=None):
+    chat_model = create_chat_model(llm_config)
+    history_summary = ""
+    if history and isinstance(history, list):
+        history_summary = "\n".join([f"{m['role']}: {m['content']}" for m in history[-3:]])
 
-You are an information extraction assistant.
-
-You answer questions using ONLY the provided documentation.
-
-Rules:
-
-1. Use ONLY the provided context.
-2. Do NOT invent information.
-3. Do NOT guess
-4. If multiple instructions exist, return them as a numbered list.
-5. Each step must appear on a new line.
-6. If commands exist, copy them EXACTLY.
-7. If the answer is not present, respond EXACTLY with:
-I do not have enough internal information to answer that.
+    prompt = f"""Given the chat history and the latest question, rewrite it into a 
+    standalone technical search query for a documentation database.
+    History: {history_summary}
+    Question: {user_query}
+    Search Query:"""
+    
+    response = chat_model.invoke([HumanMessage(content=prompt)])
+    return response.content.strip()
 
 
-Formatting Rules (IMPORTANT):
-
-Always return the answer in MARKDOWN.
-
-Use the following structure exactly:
-
-SHORT_ANSWER:
-A concise 4-5 sentence answer in numbered format if multiple steps are needed in separate lines.
-
-DETAILED_ANSWER:
-Provide detailed instructions formatted in markdown.
-
-Formatting guidelines:
-
-• Use numbered lists for steps in separate lines.
-• split into multiple steps if needed.
-• Use bullet points when listing items in separate lines.
-• Use code blocks for commands.
-• URLs must be on a separate line.
-• Commands must be inside code blocks.
-"""
-
-
-def get_answers(
-    history: str,
-    context: str,
-    user_query: str,
-    llm_config: dict = None
-):
-    """
-    Streams response tokens from LLM.
-    """
-
-    if not context or context.strip() == "":
-        yield "I do not have enough internal information to answer that."
-        return
+def get_answers(history, context, user_query, llm_config=None):
+    # Fix 1: Set a reasonable token limit and force temperature to 0.0.
+    if llm_config is None:
+        llm_config = {"max_new_tokens": 1024, "temperature": 0.0}
+    else:
+        llm_config["max_new_tokens"] = 1024 
+        llm_config["temperature"] = 0.0 
 
     chat_model = create_chat_model(llm_config)
 
-    messages = [SystemMessage(content=SYSTEM_PROMPT)]
+    
+    optimized_system_prompt = """You are the MPS Support Assistant.
+- Answer ONLY using the provided documentation.
+- If the information is not present in the documentation, respond ONLY with:
+  I do not have enough internal information to answer that.
 
-    # ✅ Add conversation history
-    if history:
-        if isinstance(history, list):
-            for msg in history:
-                role = msg.get("role")
-                content = msg.get("content")
+- Do NOT use prior knowledge.
+- Do NOT guess or infer information.
+- Do NOT add external examples.
+- Do NOT mention things like "not mentioned in documentation".
 
-                if role == "user":
-                    messages.append(HumanMessage(content=content))
-
-                elif role == "assistant":
-                    messages.append(AIMessage(content=content))
-
-    # ✅ Add current user query
-    messages.append(
-        HumanMessage(content=f"""
-Use the following documentation to answer the question.
-
-Documentation:
-{context}
-
-User Question:
-{user_query}
-
-Return the answer EXACTLY in this format:
+Return the response STRICTLY in the following format:
 
 SHORT_ANSWER:
-<1-2 sentence answer>
+A short 1–2 sentence answer.
 
 DETAILED_ANSWER:
-<full paragraph with more info>
+A more detailed explanation using bullet points or numbered steps if necessary.Use code blocks for commands.
 
-Only return these two sections.
-""")
+Rules:
+- Always start with SHORT_ANSWER:
+- Then provide DETAILED_ANSWER:
+- Do not add any other sections.
+- Do not use markdown headers like ###.
+- Do not use HTML tags like <details>.
+- Do not repeat SHORT_ANSWER at the end.
+"""
+
+    messages = [SystemMessage(content=optimized_system_prompt)]
+
+    # Add History
+    if history and isinstance(history, list):
+        for msg in history:
+            role = msg.get("role")
+            content = msg.get("content")
+            if role == "user":
+                messages.append(HumanMessage(content=content))
+            elif role == "assistant":
+                messages.append(AIMessage(content=content))
+
+    # Fix 3: Removed the conflicting formatting rules from the HumanMessage
+    messages.append(
+        HumanMessage(content=f"""DOCUMENTATION:
+{context}
+
+USER QUESTION:
+{user_query}
+
+INSTRUCTION: 
+Apply the ### SHORT_ANSWER and <details> structure to the documentation above. Do not add any text outside this structure.""")
     )
 
     full_response = ""
-
     for chunk in chat_model.stream(messages):
         token = chunk.content
         if not token:
             continue
-
-        clean_token = token.replace('"', '')
-        full_response += clean_token
-
-        # 🚨 Mid-stream hallucination safety
-        if "high confidence" in full_response.lower():
-            yield "I do not have enough internal information to answer that."
-            return
-
-        yield clean_token
+        
+        
+        banned_phrases = ["Note:", "(Code block", "[No detailed", "Detailed steps", "(Details","Incorrect answers:",
+        "If the documentation does not",
+        "this will not work"]
+        if any(phrase in token for phrase in banned_phrases):
+            break
+            
+        full_response += token
+        yield token

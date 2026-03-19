@@ -116,3 +116,20 @@ Apply the ### SHORT_ANSWER and <details> structure to the documentation above. D
             
         full_response += token
         yield token
+def detect_ticket_intent(user_message, llm_config=None):
+
+    chat_model = create_chat_model(llm_config)
+
+    prompt = f"""
+Determine if the user wants to create a support ticket.
+
+User message: "{user_message}"
+
+Reply ONLY with YES or NO.
+"""
+
+    response = chat_model.invoke([HumanMessage(content=prompt)])
+
+    result = response.content.strip()
+
+    return "YES" in result.upper()

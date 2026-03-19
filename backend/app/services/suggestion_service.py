@@ -48,5 +48,6 @@ def get_suggestions(bot_id: int):
         return []
 
     finally:
-        cur.close()
-        conn.close()
+        # Ye bahut zaroori hai!
+        if cur: cur.close()
+        if conn: conn.close()

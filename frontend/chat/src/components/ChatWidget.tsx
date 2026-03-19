@@ -203,40 +203,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   const handleSendMessage = async (customMessage?: string) => {
     const message = (customMessage ?? inputValue).trim();
   if (!message || state.isLoading) return;
-  if (message.toLowerCase().includes('raise') && message.toLowerCase().includes('ticket')) {
-      
-      // 1. Random 6-digit Case ID banao (Jaise: CAS-849302)
-      const randomCaseId = "CAS-" + Math.floor(100000 + Math.random() * 900000);
-      
-      // 2. User ka message tayar karo
-      const userMessage: ChatMessage = {
-        id: `msg_${Date.now()}_user`,
-        type: 'user',
-        content: message,
-        timestamp: new Date()
-      };
-
-      // 3. Bot ka Ticket wala reply tayar karo
-      const botMessage: ChatMessage = {
-        id: `msg_${Date.now()}_bot`,
-        type: 'bot',
-        content: `Your support ticket has been raised successfully! \n\n🎫 **Case ID: ${randomCaseId}**\n\nOur support team will contact you shortly on your registered email.`,
-        timestamp: new Date()
-      };
-
-      // 4. Chat history mein dono message daal do
-      setState(prev => {
-        const updatedMessages = [...prev.messages, userMessage, botMessage];
-        return { ...prev, messages: updatedMessages.slice(-maxMessages) };
-      });
-
-      // 5. Input khali karo aur Suggestions hata do
-      setInputValue('');
-      setSuggestions([]);
-      
-      // 🔥 SABSE ZAROORI: Return kar do taaki backend API call na ho!
-      return; 
-    }
+  
 
   // ✅ Step A: Login detect karo aur state update karo
   if (message.includes(',')) {

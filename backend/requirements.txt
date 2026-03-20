@@ -9,3 +9,5 @@ langchain-huggingface
 sentence-transformers
 pgvector
 pgvector[psycopg2]
+PyJWT
+redis 

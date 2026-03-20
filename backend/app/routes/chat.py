@@ -315,9 +315,9 @@ Case ID: {case_id}
         )
 
     except Exception as e:
-
+        import traceback
+        traceback.print_exc()
         print(f"Error: {e}")
-
         return StreamingResponse(
             stream_text("Internal server error."),
             media_type="text/plain"

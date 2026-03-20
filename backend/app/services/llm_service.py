@@ -1,26 +1,18 @@
 import os
 from dotenv import load_dotenv
-from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
+from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 load_dotenv()
 
 def create_chat_model(llm_config: dict = None):
-    """
-    Dynamically creates a chat model based on configuration.
-    """
     llm_config = llm_config or {}
-
-    llm = HuggingFaceEndpoint(
-        repo_id=llm_config.get("repo_id", "HuggingFaceH4/zephyr-7b-beta"),
-        huggingfacehub_api_token=os.getenv("HF_TOKEN"),
-        task="conversational",
+    return ChatGroq(
+        model=llm_config.get("model", "llama-3.1-8b-instant"),
         temperature=llm_config.get("temperature", 0.0),
-        max_new_tokens=llm_config.get("max_new_tokens", 20000),
+        max_tokens=llm_config.get("max_new_tokens", 1024),
+        api_key=os.getenv("GROQ_API_KEY")
     )
-
-    return ChatHuggingFace(llm=llm)
-
 
 #rewriting queryyy
 def rewrite_query(user_query, history, llm_config=None):
@@ -50,7 +42,7 @@ def get_answers(history, context, user_query, llm_config=None):
     chat_model = create_chat_model(llm_config)
 
     
-    optimized_system_prompt = """You are the MPS Support Assistant.
+    optimized_system_prompt = """You are the Highwire Support Assistant.
 - Answer ONLY using the provided documentation.
 - If the information is not present in the documentation, respond ONLY with:
   I do not have enough internal information to answer that.

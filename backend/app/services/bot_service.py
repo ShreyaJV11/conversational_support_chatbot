@@ -9,8 +9,8 @@ def get_bot_config(bot_id: int):
         "memory_limit": 6,
         "retriever_config": {},
         "llm_config": {
-            "repo_id": "HuggingFaceH4/zephyr-7b-beta",
+            "model": "llama-3.1-8b-instant",
             "temperature": 0.0,
-            "max_new_tokens": 200
+            "max_new_tokens": 1024
         }
     }

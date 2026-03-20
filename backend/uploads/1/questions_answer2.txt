@@ -1,0 +1,507 @@
+Question: 1) How to Restart the VLE Loader for Gardners
+-------------------------------------------
+Information
+* The loader is a java webapp which poll the /mnt/smb/store/upload directory for files and loads sets of files: (<isbn>.pdf, <isbn>.xml, <isbn>.jpg)
+* There is a bash script called phoenix_watchdog which is used to look after the loader webapp.
+See (https://jira.semantico.com/browse/GAR-90)
+(https://semantico.basecamphq.com/projects/7900742-online-ebook-reader/posts/62468979/)
+Its main purpose is to
+
+Check if the loader webapp has fallen over, and restart it if it hasn't.
+IMPORTANT: If you try to stop the loader webapp while the bash script is still running,
+the bash script will automatically restart the loader webapp and clean out files
+in the /mnt/smb/store/[upload|processing|error] directories!!
+Throttle the number of files which are placed in the mnt/smb/store/upload directory
+It does this by asking the customer to load the files into the /mnt/smb/store/import directory (not the upload directory).
+The bash script checks how many files are in the upload and processing directories and copies files from the import directory
+into the upload directory.
+Throttle back the number of file in upload/processing if the disk space goes through the roof.
+This happens when JPedal starts creating enormous temp files. See RT ticket 20426.
+Move pdf/xml/jpgs into error directory if they are deemed to be locking up loader threads. E.g take way too long.
+Can be configured to pre-flight pdf's by re-generating them with iText. (See RT ticket: 20767)
+The pre-flighting is done using the "regenerator" project in garders git on the master branch.
+Read the creation and usage in: regenerator/src/main/java/com/semantico/gardners/preprocessor/Regenerator.java
+The generated jar file is placed on the live loader at: /mnt/smb/loader_watchdog/lib/regenerator-0.0.3-jar-with-dependencies.jar
+Currently considering replacing some jpedal created page images with ones created by imagemagick, as some graphic novels
+do not give good rendering of the colours.
+Move errant files out of the processing directory and into the error directory if they have failed.
+* The loader has no knowledge of the bash script. It just polls the /mnt/smb/store/upload directory.
+* Note that the bash script is intended as a medium term solution.
+Ideally work on Brill BRC project will provide time to update the loader webapp to remove the need for any bash script.
+* The bash script is only implemented on the live loader machine.
+* The bash script is backed up in source control in svn with puppet files at: cust_gar/trunk/files/gbr/phoenix_loader
+Check if the loader is running and Check if the bash script is running
+
+Log on to the live loader:
+ssh cspgarldr11a.gar.semcs.net
+Check if the loader is already running
+ps -ef | grep gbr-loader
+...If it is running, you should get something like this, showing that the java container is running the loader:
+
+gbr 13954 1 40 Sep03 ? 9-05:04:49 /opt/semantico/sre/tc7j7-89370/java/bin/java -Djava.util.logging.config.file=/opt/semantico/slot/gbr-loader/1/sitecode/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager -Xmx3g -XX:MaxPermSize=256m -Dsun.net.inetaddr.ttl=60 -Dorg.apache.jasper.runtime.BodyContentImpl.LIMIT_BUFFER=true -Djava.net.preferIPv4Stack=true -server -XX:+UseParNewGC -Druntime.properties=/etc/semantico/instance/gbr-loader/1/runtime.properties -Dlocator.properties.path=/etc/semantico/instance/gbr-loader/1/locator.properties -Dsite.reference_url= -Dsite.static_hostname=static.gbr.gar.semcs.net -Dcassandrafs.url= -XX:ErrorFile=/opt/semantico/tmp/hs_err_pid.log -Dsun.java2d.noddraw=true -Djava.endorsed.dirs=/opt/semantico/sre/tc7j7-89370/tomcat/endorsed -classpath /opt/semantico/sre/tc7j7-89370/tomcat/bin/bootstrap.jar:/opt/semantico/sre/tc7j7-89370/tomcat/bin/tomcat-juli.jar -Dcatalina.base=/opt/semantico/slot/gbr-loader/1/sitecode -Dcatalina.home=/opt/semantico/sre/tc7j7-89370/tomcat -Djava.io.tmpdir=/opt/semantico/slot/gbr-loader/1/sitecode/temp org.apache.catalina.startup.Bootstrap start
+Check if the watchdog bash script is running
+ps -ef | grep phoenix_watchdog
+
+...If it is running you should get something like the following:
+
+root 11138 1 0 Sep03 ? 00:03:25 bash ./phoenix_watchdog
+Stop the Bash Script
+Log on to the live loader and navigate to the bash script
+cd /mnt/smb/loader_watchdog/ tail -f nohup.out
+Open another terminal window and navigate to the bash script
+cd /mnt/smb/loader_watchdog/
+Check which process it is
+ps -ef | grep phoenix_watchdog | grep bash
+Kill the relevant process using the process number
+sudo kill <pid>
+Check that the bash script has stopped
+ps -ef | grep phoenix_watchdog | grep bash
+Stop loader webapp
+!! IMPORTANT: Make sure the phoenix_watchdog script has been stopped !!
+
+Log on to the loader machine, and set up a tail on the log file.
+tail -f /opt/semantico/slot/gbr-loader/1/sitecode/logs/catalina.out
+Open up another terminal and shut down the loader webapp
+sudo /etc/init.d/semantico-gbr-loader-1 stop
+Start loader webapp
+!! IMPORTANT: Make sure the phoenix_watchdog script has been stopped !!
+
+Log on to the loader machine, and set up a tail on the log file.
+tail -f /opt/semantico/slot/gbr-loader/1/sitecode/logs/catalina.out
+Open up another terminal and start the loader webapp
+sudo /etc/init.d/semantico-gbr-loader-1 start
+Start Bash script
+!! IMPORTANT: Make sure the loader webapp is already running !!
+
+Set up a tail on the output of the bash script
+tail -f /mnt/smb/loader_watchdog/nohup.out
+Start up another terminal and navigate to the loader_watchdog directory
+
+!! IMPORTANT: The bash script only works if run from this location !!
+
+cd /mnt/smb/loader_watchdog
+
+Double check the script isn't already running. The following should give no results
+ps -ef | grep phoenix_watchdog | grep bash
+
+Run a sudo command. This is just to make sure you have been asked for your password. The actual bash start command is a set to run in the background and may fail if you don't do this
+sudo ls
+
+Start the bash script
+sudo nohup bash phoenix_watchdog &
+
+You should see the nohup.out tail terminal ouputting details.
+
+Note that restarting the bash script will mean that the list of files to process will be regenerated. So it will cause all files still in the import directory to be reloaded.
+
+
+Question: 2 How to restart Fragr
+-------------------------------------------------------------------------------------
+We may need to at times restart Fragr if the Fragr repository is corrupt. These are not regular occurrences. The issues can be faced across any of our publishers that use Fragr. Fragr service is located on only 1 node.
+
+This guide was written as we had issues with MHE Fragr. The specific issue was the that "Do You Know" widget of the MHE AS site was not refreshing with new content and investigation revealed that it was because of a corrupt repository. This was found out by using the Chrome app "Check My Links" (Step 5a. of Restart Steps)
+
+
+Before performing any restarts - please back up the Fragr database.
+
+Backup Steps:
+
+On cspmhpweb03yb - backup the Fragr database with the command:
+curl http://localhost:26102/fragment.zip > fragments.zip
+Stop Fragr on the server
+/etc/init.d/semantico-as-fragr-1 stop
+Rename the data directory and recreate it
+mv /opt/semantico/slot/as-fragr/1/data /opt/semantico/slot/as-fragr/1/data.old
+mkdir /opt/semantico/slot/as-fragr/1/data
+chown fragr:fragr /opt/semantico/slot/as-fragr/1/data
+chmod 755 /opt/semantico/slot/as-fragr/1/data
+
+Check the status the of Fragr after stop
+/etc/init.d/semantico-as-fragr-1 status
+Restart Fragr
+/etc/init.d/semantico-as-fragr-1 start
+Check the status the of Fragr after stop
+/etc/init.d/semantico-as-fragr-1 status
+Restart Steps:
+
+Stop Fragr on the server
+/etc/init.d/semantico-as-fragr-1 stop
+Restart Fragr
+/etc/init.d/semantico-as-fragr-1 start
+Restore the backup
+curl --upload-file fragments.zip --header "Content-type: application/zip" http://localhost:26102/fragment.zip
+Check the status the of Fragr after stop
+/etc/init.d/semantico-as-fragr-1 status
+On the front end you can run a "link checker" on the homepage once it's done loading to check that all links resolve correctly
+If you don't have link checker application, download it from https://chrome.google.com/webstore/search/check%20my%20links?hl=en-GB, its called "Check My Links".
+
+
+How to rollback Fragr 
+Stop Fragr on the server
+/etc/init.d/semantico-as-fragr-1 stop
+Rename the data directory back
+mv /opt/semantico/slot/as-fragr/1/data /opt/semantico/slot/as-fragr/1/data.failed
+mv /opt/semantico/slot/as-fragr/1/data.old /opt/semantico/slot/as-fragr/1/data
+
+Start Fragr
+/etc/init.d/semantico-as-fragr-1 start
+Check the status the of Fragr after stop
+/etc/init.d/semantico-as-fragr-1 status
+On the front end you can run a "link checker" on the homepage once it's done loading to check that all links resolve correctly
+If you don't have link checker application, download it from https://chrome.google.com/webstore/search/check%20my%20links?hl=en-GB, its called "Check My Links".
+
+
+Question: 3 How to stop and start Frontend Services
+--------------------------------------------------------
+We may need to at times restart Frontend if the there are issues with saving on the front end site. These are not regular occurrences. There are 2 nodes for frontend and both nodes need to be restarted when issue arises.
+
+This guide was written as we had issues with MHE Fragr. The specific issue was the that "Do You Know" widget of the MHE AS site was not refreshing with new content and investigation revealed that it was because of a corrupt repository. This was found out by using the Chrome app "Check My Links" (Step 5a. of Restart Steps)
+
+How to restart Frontend
+Before performing any restarts - please back up the Fragr database.
+
+Backup Steps:
+
+On cspmhpweb03yb - backup the Fragr database with the command:
+curl http://localhost:26102/fragment.zip > fragments.zip
+Stop Fragr on the server
+/etc/init.d/semantico-as-fragr-1 stop
+Rename the data directory and recreate it
+mv /opt/semantico/slot/as-fragr/1/data /opt/semantico/slot/as-fragr/1/data.old
+mkdir /opt/semantico/slot/as-fragr/1/data
+chown fragr:fragr /opt/semantico/slot/as-fragr/1/data
+chmod 755 /opt/semantico/slot/as-fragr/1/data
+
+Check the status the of Fragr after stop
+/etc/init.d/semantico-as-fragr-1 status
+Restart Fragr
+/etc/init.d/semantico-as-fragr-1 start
+Check the status the of Fragr after stop
+/etc/init.d/semantico-as-fragr-1 status
+Restart Steps:
+
+Stop Fragr on the server
+/etc/init.d/semantico-as-fragr-1 stop
+Restart Fragr
+/etc/init.d/semantico-as-fragr-1 start
+Restore the backup
+curl --upload-file fragments.zip --header "Content-type: application/zip" http://localhost:26102/fragment.zip
+Check the status the of Fragr after stop
+/etc/init.d/semantico-as-fragr-1 status
+On the front end you can run a "link checker" on the homepage once it's done loading to check that all links resolve correctly
+If you don't have link checker application, download it from https://chrome.google.com/webstore/search/check%20my%20links?hl=en-GB, its called "Check My Links".
+
+
+How to rollback Fragr 
+Stop Fragr on the server
+/etc/init.d/semantico-as-fragr-1 stop
+Rename the data directory back
+mv /opt/semantico/slot/as-fragr/1/data /opt/semantico/slot/as-fragr/1/data.failed
+mv /opt/semantico/slot/as-fragr/1/data.old /opt/semantico/slot/as-fragr/1/data
+
+Start Fragr
+/etc/init.d/semantico-as-fragr-1 start
+Check the status the of Fragr after stop
+/etc/init.d/semantico-as-fragr-1 status
+On the front end you can run a "link checker" on the homepage once it's done loading to check that all links resolve correctly
+If you don't have link checker application, download it from https://chrome.google.com/webstore/search/check%20my%20links?hl=en-GB, its called "Check My Links".
+
+
+
+
+Question 4: how setup Sigma Solr 
+------------------------------------------
+expand...
+Setup instructions differ for OSX and Linux, due to the way docker only runs inside a linux environment.
+
+Docker overview
+Docker is a way of packaging up applications along with their dependencies & file-system, for deployment on Linux. It differs from virtual-machines in that it does not use a whole operating-system to separate out containers, it uses the host OS and it's kernel.
+
+Dockerfiles.
+A Dockerfile is a description of how to build a docker container. There are many pre-built docker container images and Dockerfiles on docker hub.
+
+Dockerfiles can extend other docker files. We have used this mechanism in order to use a stock Docker image for Solr and insert extra configuration files into it.
+
+OSX Guide
+Follow the guide using docker on OSX here: http://docs.docker.com/mac/step_one/
+Optional: 
+Get the Nginx exercise working, to learn about running, listing, stopping and removing containers
+Stop after the part where you do `docker stop web && docker rm web`
+There is a bit more information about setting up port forwarding on this useful blog post:
+http://viget.com/extend/how-to-use-docker-on-os-x-the-missing-guide
+Read from "Problem #1: Port Forwarding"
+The dockerhost hosts entry is useful.
+Follow the common instructions sections "building the sigma-solr image" and "opening postgres to the network"
+run docker run -p 8983:8983 --name solr -e RDS_HOSTNAME=$(ipconfig getifaddr en0) sigma-solr
+The solr server is now available on dockerhost:8983 (or the IP address returned by running boot2docker ip if you didn't set up dockerhost in the viget port forwarding guide above)
+You can use docker ps to view details including the port mappings of running containers
+To port forward localhost to boo2docker using Virtualbox, go to boot2docker > settings > network > port forwarding and add a new rule for host IP 0.0.0.0, host port 8983, guest port 8983 (no restart required)
+Common instructions
+Building the sigma-solr image
+Checkout the sigma-solr project from gitlab. http://gitlab.semantico.net/sigma-solr
+Go to the sigma solr directory and run `docker build -t sigma-solr .` ( including the . at the end so that it can fidn the DockerFile )
+This builds the docker image and labels it 'sigma-solr' for use later.
+Opening postgres to the network
+You need to allow ingress to postgres from the docker container, which works as if it was just another networked machine.
+
+Locate your postgres data directory
+psql -U postgres
+SHOW data_directory;
+Go to the directory and edit pg_hba.conf
+append host all all 192.168.0.0/16 trust
+In the same directory edit postgresql.conf
+change listen_addresses='localhost' to listen_addresses='*' (and UNCOMMENT THE LINE if it is commented)
+Restart postgres
+This can be tricky depending on how you installed.. can always restart the computer.
+Homebrew users might be able to do launchctl stop homebrew.mxcl.postgresql && launchctl start homebrew.mxcl.postgresql
+
+
+
+
+
+
+
+
+
+
+
+5. Sigma Solr setup
+
+---------------------------------------------------------------------------------------------------
+Current setup instructions
+Clone the project: https://github.com/highwire/sigma-solr
+Open the script build.sh
+Comment out the line "test_ebextensions .ebextensions/ || exit" using a # - this is used for our deployments as a pre-flight check
+Run Solr using sh build.sh -r
+This starts the solr server on the default port (5000), and it will continue to update its index from sigma-db.
+Development Setup on Remote Database Server
+Because the solr index includes customer information it must not be run locally. Instead it should be run on the same host as the remote database server.
+Setup Instructions
+Note that this setup could be improved. At present it involves modifying one of the files in sigma-solr.
+Clone the github repository
+git clone sigma-solr
+Install required software
+sudo yum install perl-YAML java-1.8.0-openjdk-devel
+Port 5000 is not open between the bunker and Highwire offices so you'll need to run Solr on port 5722. The Postgres database server on your bunker box also runs on a non-standard port. This requires a couple of modifications to build.sh and dataimport-curl.sh. When time allows I'll make a changes so that you don't need to change these files. The RDS_PORT change shown below depends upon having PGPORT set up in your environment.
+# build.sh
+ 
+-SOLR_PORT=5000
++SOLR_PORT=5722
+  
+-RDS_PORT=5432
++RDS_PORT=${PGPORT}
+ 
+# dataimport-curl.sh
+ 
+-SOLR_HOST=http://localhost:5000
++SOLR_HOST=http://localhost:5722
+The sigma-domain-webapp needs to know how to connect to the Solr server. Set
+SOLR_HOST=<SOLR_HOST>:5722
+as a tomcat environment variable where <SOLR_HOST> is the hostname of your bunker server.
+Docker instructions (legacy)
+The docker mechanism should still work but is not actively maintained. It requires many more steps than the build script way
+NOTE: Docker for Mac or windows shortcuts most of these instructions
+ Click here to expand...
+Setup instructions differ for OSX and Linux, due to the way docker only runs inside a linux environment.
+Docker overview
+Docker is a way of packaging up applications along with their dependencies & file-system, for deployment on Linux. It differs from virtual-machines in that it does not use a whole operating-system to separate out containers, it uses the host OS and it's kernel.
+Dockerfiles.
+A Dockerfile is a description of how to build a docker container. There are many pre-built docker container images and Dockerfiles on docker hub.
+Dockerfiles can extend other docker files. We have used this mechanism in order to use a stock Docker image for Solr and insert extra configuration files into it.
+OSX Guide
+•	Follow the guide using docker on OSX here: http://docs.docker.com/mac/step_one/
+•	Optional: 
+•	Get the Nginx exercise working, to learn about running, listing, stopping and removing containers
+•	Stop after the part where you do `docker stop web && docker rm web`
+•	There is a bit more information about setting up port forwarding on this useful blog post:
+•	http://viget.com/extend/how-to-use-docker-on-os-x-the-missing-guide
+•	Read from "Problem #1: Port Forwarding"
+•	The dockerhost hosts entry is useful.
+•	Follow the common instructions sections "building the sigma-solr image" and "opening postgres to the network"
+•	run docker run -p 8983:8983 --name solr -e RDS_HOSTNAME=$(ipconfig getifaddr en0) sigma-solr
+•	The solr server is now available on dockerhost:8983 (or the IP address returned by running boot2docker ip if you didn't set up dockerhost in the viget port forwarding guide above)
+•	You can use docker ps to view details including the port mappings of running containers
+•	To port forward localhost to boo2docker using Virtualbox, go to boot2docker > settings > network > port forwarding and add a new rule for host IP 0.0.0.0, host port 8983, guest port 8983 (no restart required)
+Common instructions
+Building the sigma-solr image
+•	Checkout the sigma-solr project from gitlab. http://gitlab.semantico.net/sigma-solr
+•	Go to the sigma solr directory and run `docker build -t sigma-solr .` ( including the . at the end so that it can fidn the DockerFile )
+•	This builds the docker image and labels it 'sigma-solr' for use later.
+Opening postgres to the network
+You need to allow ingress to postgres from the docker container, which works as if it was just another networked machine.
+•	Locate your postgres data directory
+•	psql -U postgres
+•	SHOW data_directory;
+•	Go to the directory and edit pg_hba.conf
+•	append host all all 192.168.0.0/16 trust
+•	In the same directory edit postgresql.conf
+•	change listen_addresses='localhost' to listen_addresses='*' (and UNCOMMENT THE LINE if it is commented)
+•	Restart postgres
+•	This can be tricky depending on how you installed.. can always restart the computer.
+•	Homebrew users might be able to do launchctl stop homebrew.mxcl.postgresql && launchctl start homebrew.mxcl.postgresql
+
+Question 6. Restart Marklogic Process
+--------------------------------------------------------------------------------------------------------------------
+Step-by-step guide
+MarkLogic cluster consist of the following servers:
+marklogic-prod-1.highwire.org
+marklogic-prod-2.highwire.org
+marklogic-prod-3.highwire.org
+marklogic-prod-4.highwire.org
+marklogic-prod-5.highwire.org
+The Atom services connects to the MarkLogic cluster through the http server on wavmbe148
+http://wavmbe148.highwire.org/balancer-manager
+Whether restarting just a portion of the cluster or the whole thing, restart in this order
+1.	Stop http on wavmbe148
+a.	Using an opstool machine as user netsite modulectl atom pause apache
+b.	OR on wavmbe148 sudo /etc/init.d highwire-apache stop
+2.	Stop the MarkLogic process on marklogic-prod-1. 
+a.	sudo /etc/init.d/MarkLogic stop
+3.	Stop the data-node(s) on marklogic-prod-[2-5]
+a.	sudo /etc/init.d/MarkLogic stop
+4.	Start the data-node(s) on marklogic-prod-[2-5]
+a.	sudo /etc/init.d/MarkLogic start
+5.	Wait a minute or two, then "Start the MarkLogic process on marklogic-prod-1".
+a.	sudo /etc/init.d/MarkLogic start
+6.	It may take a couple minutes for MarkLogic to come back to life. There are two ways to check. Either method requires login with the 'admin' user. See Teampass for credentials
+a.	Use the MarkLogic query interface on  http://marklogic-prod-1.highwire.org:8000/qconsole/  and asked ML to show '/svc.atom' (this is populated by default). Press the Run button below the query window. Secondarily you can replace svc.atom with '/biorxiv.atom'. Either should return XML output.
+b.	AND/OR check the MarkLogic Admin interface http://marklogic-prod-1.highwire.org:8001/database-summary.xqy?section=database. The status of every database should be 'available.'
+7.	Start http on wavmbe148
+a.	Using an opstool machine as user netsite modulectl atom resume apache
+b.	OR on wavmbe148 sudo /etc/init.d highwire-apache start
+NOTE: a restart of atom-cache's varnish is necessary if ML crashed or restart
+ssh -t atom-cache.highwire.org sudo /etc/init.d/varnish restart
+
+Question 7: H10 Site Restart
+----------------------------------------------------------------------------------------------------------
+
+start a jserv1 hwmaint H10 service:
+•	ssh to opstool-01
+•	sudo /opt/scripts/H10/H10_restart [jcode]
+•	Example: sudo H10_restart.sh tropmed
+Monthly restart for memory leak issue:
+Restarting hwmaint24 -  44, 53 - 56 Note: (no hwmaint28, 29, 40, 43, 45, 55 (no sgr sites) )
+•	(/highwire/prodsofts/Pisa/scripts/stopsite -m <hwmaint24>
+•	(/highwire/prodsofts/Pisa/scripts/startsite -m <hwmaint24>
+./startsite for a list of options, whether to restart all apache on a machine or just restart a jcode that fails to come up.
+usage: stopsite [options]  journal journal2 journal3 ... journalN
+stopsite [options] -m machine [machine2 ... machineN]
+stopsite [options] -a
+stops the specified journal site(s) from any machine.
+options:
+-h this help blurb
+-d stop the dev server (default is prod)
+-a stops all sites on all machines
+-m stops all sites on the specified machine(s)
+-e use a perl regular expression to specify journal sites
+-v verbose mode, spits out more info
+-f force restart
+-lsof use lsof to scan for processes still bound to ports
+-apache only work on the HTTPD process
+-jserv only work on the jserv processes
+-seq restart only the jserv for the given number (e.g., 1, 2-3)
+-nojit disable the Just In Time compiler
+-altvm execute the alternate JVM
+--debug execute JNDI debugger on the specified port
+--profile execute OptimizeIt Profiler on the specified port
+--tdebug execute OptimizeIt Thread Debugger on the specified port
+-null-logs clear the jserv logs before restarting
+•	For hwmaint55, no sgr sites restart ( restart individual site, only restart those found in: grep -i hwmaint55 /sites/MASTER_CONF.conf | grep -v sgr ):
+ajnradmin
+ddaaa:H10
+gsladmin:H10
+iijaltinv:H10
+iijderiv:H10
+iijetfind:H10
+iijfixinc:H10
+iijindinv:H10
+iijinvest:H10
+iijournals:H10
+iijpormgmt:H10
+iijpracapp:H10
+iijpriveq:H10
+iijretire:H10
+iijspecial:H10
+iijstrfin:H10
+iijtrade:H10
+iijtrading:H10
+iijturnmgmt:H10
+iijwealthmgmt:H10
+jimmunoladmin
+jimmunoladmin:H10
+sctm:H10
+ecs:H10
+
+•	For hwmaint36, 37, 38, 39, 54, 55 (it seems that restartsite script needs longer sleep time, sites just wouldn't start back up. Need a full stopsite and startsite)
+
+Question: 8 How to: Create New H10 domain
+--------------------------------------------------------------------
+
+Overview
+
+With the new H10 setup, sites will now flow through the hw-bigivcmp-c4 F5 hw-a10-prod-c2 A10 routed mode cluster.  Using this setup, the F5 A10 will NAT from a single public IP address per hwmaint server to a single internal IP address that Apache 1.3 can use to bind to the site properly.  This procedure will show how to choose an hwmaint server, bind the site to the proper internal IP address and update the F5 A10 to route the requests to the proper internal IP address.
+Procedure
+Choose a hwmaint server
+•	Look at this google doc with the current IP mappings.  There is a separate sheet for each hwmaint server.
+•	For hwmaint75 Please use this link https://adimps-my.sharepoint.com/:x:/g/personal/kumar_pradeep_highwirepress_com/EdsgVd73H49OoJjzk4s7NfkBfwOUxz-AbOWD7p0ZSOgmUQ?rtime=xZ-s7_gX20g
+•	Look for any other hwmaint/H10 sites that are on the same domain as the new one being requested.  Try to keep publishers grouped together on the same hwmaint server.
+•	If this is a new publisher choose an hwmaint server that has available interfaces.
+•	If this is a new publisher and it is expected for them to have a lot of new sites (more than 10) ask Mark/Jeremy if a new hwmaint server might be appropriate.
+•	Make a note of the server and internal IP
+Assign hwmaint server
+•	In this google doc (same as above) enter the jcode in Column A and the public DNS name in Column B
+•	Make note of the "eth" device in Column C
+•	In IPAM VLAN3655 Set the description of the IP to the public DNS name and change to Tag to "Used"
+•	Update the ifcfg-eth0:## file on the hwmaint server to assign the highwire.org DNS hostname to it
+ssh hwmaint70.highwire.org
+cd /etc/sysconfig/network-scripts
+vi ifcfg-eth0:89
+ 
+ 
+HOSTNAME=hwmaint.<jcode>.highwire.org
+•	
+•	NOTE: If the setup is performed on a reclaimed IP (from a decommed H10 site) you will need to restart the interface on the HWmaint server. I will add this as a step on the decom doc also but if you find your setup is correct and PS are getting errors akin to "cannot bind socket", the interface needs restarted!
+Setup Mapping in the F5
+We've moved load balancing from the F5's to the A10's - See below for A10 instructions
+ Click here to expand...
+Setup Mapping in the A10
+•	Log into the "Prod Routed" mode A10 cluster (https://hw-a10-prod-c2.highwire.org) using your highwire.local username/password
+•	Navigate to Shared Objects → Class Lists
+•	Click the hwmaint##_map class list name for the hwmaint server you chose
+•	Find the IP in the list you assigned and change "Available#" in the Sting column to the public DNS name of the site
+•	Click the red save floppy disk icon in the last column
+•	Click the green "Update" button at the bottom
+•	Save the config change to the A10 startup config (the yellow floppy disk save icon in the top-right of the blue menu bar)
+•	Add private vs public IP Mapping at A10 cluster (https://hw-a10-prod-c2.highwire.org) using your highwire.local username/password, ADC → IP Source NAT → Static NAT
+Add to DNS
+•	Add the highwire.org DNS name to our DNS
+•	Add the <hwmaint|admincenter>.<jcode>.highwire.org DNS entry
+•	Also add the reverse IP DNS PTR record for the internal IP assigned
+•	See Adding/Updating/Deleting DNS entries
+•	Add the public DNS CNAME record
+•	CNAME should be used for the public DNS record.  This way in the event of an IP change or DR event, we can more easily update the 100s of sites to point to the correct IP
+•	Example: hwmaint.ucpjnls.ucpress.edu. 300 IN CNAME hwmaint69.highwire.org. 
+•	Check to see if we manage DNS for this domain:
+•	whois $domain
+•	if it returns, carl.ns.cloudflare.com and yolada.ns.cloudflare.com for the Name Servers:
+•	Proceed with Updating DNS Adding/Updating/Deleting DNS entries
+•	If It is not managed by HighWire add the CNAME to the ticket and state that the publisher must add this to their DNS.
+Current hwmaint public IP mappings
+hwmaint69 -> 104.232.27.9
+hwmaint70 -> 104.232.27.10
+hwmaint71 -> 104.232.27.11
+hwmaint72 -> 104.232.27.12
+hwmaint73 -> 104.232.27.13
+hwmaint74 -> 104.232.27.14
+hwmaint75 -> 104.232.27.15
+hwmaint77 -> 104.232.27.17
+
+Provide the following information to the JD requesting the site
+•	internal DNS name to be used for BindAddress
+•	example: hwmaint.<jcode>.highwire.org
+•	hwmaint server selected for the site
+•	example: hwmaint73.highwire.org
+•	Public DNS entry required if HighWire doesn't control the DNS
+
+
+

@@ -88,11 +88,21 @@ def get_user_by_session(bot_id: int, session_id: str):
 # CONVERSATION FUNCTIONS
 # ==========================================================
 
-def get_or_create_conversation(user_id: int, bot_id: int) -> int:
+def get_or_create_conversation(user_id: int, bot_id: int, force_new: bool = False) -> int:
     conn = get_connection()
     try:
         cur = conn.cursor()
-
+        # ADD THIS: if force_new, close old conversations first
+        if force_new:
+            cur.execute(
+                """
+                UPDATE conversations
+                SET status = 'closed'
+                WHERE user_id = %s AND bot_id = %s AND status = 'active'
+                """,
+                (user_id, bot_id)
+            )
+            conn.commit()
         cur.execute(
             """
            SELECT id FROM conversations
@@ -126,17 +136,17 @@ def get_or_create_conversation(user_id: int, bot_id: int) -> int:
         conn.close()
 
 
-def save_message(conversation_id: int, role: str, content: str):
+def save_message(conversation_id: int, role: str, content: str, category: str = None):
     conn = get_connection()
     try:
         cur = conn.cursor()
 
         cur.execute(
             """
-            INSERT INTO messages (conversation_id, role, content)
-            VALUES (%s, %s, %s)
+            INSERT INTO messages (conversation_id, role, content, category)
+            VALUES (%s, %s, %s, %s)
             """,
-            (conversation_id, role, content)
+            (conversation_id, role, content,category)
         )
 
         cur.execute(

@@ -1,7 +1,7 @@
 import os
 import hashlib
 from typing import Dict, Any, Optional
-
+from app.services.llm_service import detect_category
 from langchain_community.document_loaders import TextLoader
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -157,13 +157,15 @@ def ingest_file(
 
             vector = embeddings.embed_query(chunk_text)
 
+            chunk_category = detect_category(chunk_text)
+
             cur.execute(
                 f"""
                 INSERT INTO {kb_chunks_table}
-                (chunk_text, chunk_hash, embedding, kb_file_id, bot_id)
-                VALUES (%s, %s, %s, %s, %s);
+                (chunk_text, chunk_hash, embedding, kb_file_id, bot_id, category)
+                VALUES (%s, %s, %s, %s, %s, %s);
                 """,
-                (chunk_text, chunk_hash, vector, kb_file_id, bot_id)
+                (chunk_text, chunk_hash, vector, kb_file_id, bot_id, chunk_category)
             )
 
             inserted_chunks += 1

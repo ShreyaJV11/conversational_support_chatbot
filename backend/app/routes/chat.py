@@ -8,7 +8,7 @@ import asyncio
 from app.services.auth_service import verify_jwt_token, check_rate_limit, create_jwt_token
 from app.services.salesforce_service import create_salesforce_case
 from app.services.retrieval_service import retrieve_chunks
-from app.services.llm_service import get_answers, detect_ticket_intent
+from app.services.llm_service import get_answers, detect_ticket_intent, detect_category
 from app.services.memory_service import (
     get_or_create_user,
     get_or_create_conversation,
@@ -53,6 +53,107 @@ def split_short_detailed(answer: str):
 
     return short_answer, detailed_answer
 
+def detect_smalltalk(query: str):
+    import re
+    # Normalize: lowercase, remove punctuation
+    cleaned = re.sub(r'[^\w\s]', '', query.lower().strip())
+
+    greetings = ["hi", "hello", "hey", "good morning", "good afternoon",
+                 "good evening", "whats up", "howdy", "hiya", "hi there",
+                 "hello there", "hey there"]
+    
+    closings = ["bye", "goodbye", "see you", "good night", "goodnight",
+                "lets stop", "cya", "see ya", "take care", "talk later"]
+    
+    gratitude = ["thanks", "thank you", "thx", "thank u", "thanks a lot",
+                 "many thanks", "much appreciated", "cheers"]
+    
+    apologies = ["sorry", "my bad", "apologies", "apology", "i apologize",
+                 "excuse me", "pardon"]
+    
+    casual = ["okay", "ok", "alright", "sure", "cool", "got it", "noted",
+              "i see", "makes sense", "sounds good", "fine", "understood"]
+
+    for phrase in greetings:
+        if cleaned == phrase or cleaned.startswith(phrase):
+            return "greeting"
+    
+    for phrase in closings:
+        if cleaned == phrase or cleaned.startswith(phrase):
+            return "closing"
+    
+    for phrase in gratitude:
+        if cleaned == phrase or phrase in cleaned:
+            return "gratitude"
+    
+    for phrase in apologies:
+        if cleaned == phrase or cleaned.startswith(phrase):
+            return "apology"
+    
+    for phrase in casual:
+        if cleaned == phrase or cleaned.startswith(phrase):
+            return "casual"
+    
+    return None
+
+
+SMALLTALK_RESPONSES = {
+    "greeting": [
+        "Hello! How can I assist you today?",
+        "Hi there! What can I help you with?",
+        "Hey! How can I help you today?"
+    ],
+    "closing": [
+        "Goodbye! Feel free to reach out anytime.",
+        "Take care! I'm here whenever you need help.",
+        "Good night! Don't hesitate to come back if you need anything."
+    ],
+    "gratitude": [
+        "You're welcome! Let me know if you need anything else.",
+        "Happy to help! Is there anything else I can assist you with?",
+        "Glad I could help! Feel free to ask if you have more questions."
+    ],
+    "apology": [
+        "No worries at all! How can I assist you further?",
+        "That's completely fine! What can I help you with?",
+        "No problem at all. How can I help?"
+    ],
+    "casual": [
+        "Got it! How can I help you next?",
+        "Alright, let me know what you need.",
+        "Sure! What would you like to know?"
+    ]
+}
+
+
+import random
+
+def get_smalltalk_response(smalltalk_type: str) -> str:
+    responses = SMALLTALK_RESPONSES.get(smalltalk_type, ["How can I help you?"])
+    return random.choice(responses)
+
+def detect_category(query: str) -> str:
+    query_lower = query.lower()
+
+    if any(word in query_lower for word in ["chrome", "extension", "install", "developer mode", "github", "crx"]):
+        return "chrome_extension"
+
+    if any(word in query_lower for word in ["escalat", "jira", "salesforce case", "support lead", "sysops", "vp", "svp", "director"]):
+        return "escalation_process"
+
+    if any(word in query_lower for word in ["foxycart", "ecommerce", "commerce", "catalog", "drupal", "access control", "pricing"]):
+        return "ecommerce_setup"
+
+    if any(word in query_lower for word in ["jcore", "journal hosting", "publisher", "j-core", "maint", "demo site"]):
+        return "jcore_platform"
+
+    if any(word in query_lower for word in ["h10", "restart", "hwmaint", "stopsite", "startsite", "jserv", "ssh", "memory leak"]):
+        return "site_operations"
+
+    if any(word in query_lower for word in ["highwire", "mps", "platform", "ingestion", "discoverability", "hosting"]):
+        return "platform_overview"
+
+    return "general"
 
 @router.post("/chat")
 async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)):
@@ -123,7 +224,7 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
                 request.user_session_id
             )
 
-            get_or_create_conversation(user_id, request.bot_id)
+            get_or_create_conversation(user_id, request.bot_id, force_new=True)
 
             token = create_jwt_token(email)
 
@@ -167,13 +268,24 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
         )
 
         user_msg = request.user_question.lower()
+        # ---------------- SMALLTALK HANDLING ----------------
+        smalltalk_type = detect_smalltalk(request.user_question)
+        if smalltalk_type:
+            return StreamingResponse(
+                stream_text(get_smalltalk_response(smalltalk_type)),
+                media_type="text/plain"
+            )
 
         # ---------------- SMART TICKET INTENT ----------------
 
         if detect_ticket_intent(request.user_question):
             if history_rows:
                 last_role, last_msg = history_rows[-1]
-                if last_role == "assistant" and "describe your issue" in last_msg.lower():
+                if last_role == "assistant" and (
+                    "describe your issue" in last_msg.lower() or
+                    "site name or system affected" in last_msg.lower() or
+                    "how long has this issue" in last_msg.lower()
+                ):
                     pass
                 else:
                      save_message(
@@ -192,7 +304,22 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
 
             last_role, last_msg = history_rows[-1]
 
+            # STEP 1: User just described their issue → ask for site name
             if last_role == "assistant" and "describe your issue" in last_msg.lower():
+                save_message(conversation_id, "user", request.user_question)
+                reply = "Thank you. What is the site name or system affected?"
+                save_message(conversation_id, "assistant", reply)
+                return StreamingResponse(stream_text(reply), media_type="text/plain")
+
+            # STEP 2: User just gave site name → ask for duration
+            if last_role == "assistant" and "site name or system affected" in last_msg.lower():
+                save_message(conversation_id, "user", request.user_question)
+                reply = "How long has this issue been occurring?"
+                save_message(conversation_id, "assistant", reply)
+                return StreamingResponse(stream_text(reply), media_type="text/plain")
+
+            # STEP 3: User just gave duration → now create the ticket
+            if last_role == "assistant" and "how long has this issue" in last_msg.lower():
 
                 if not email_from_token:
                     return StreamingResponse(
@@ -208,45 +335,54 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
                         media_type="text/plain"
                     )
 
-                # ---------------- FIXED RATE LIMIT ----------------
-
+                # ---------------- RATE LIMIT ----------------
                 try:
                     check_rate_limit(user_email)
-                except HTTPException  as e:
+                except HTTPException as e:
                     error_msg = e.detail
-
                     save_message(conversation_id, "assistant", error_msg)
+                    return StreamingResponse(stream_text(error_msg), media_type="text/plain")
 
-                    return StreamingResponse(
-                        stream_text(error_msg),
-                        media_type="text/plain"
-                    )
+                # Retrieve collected details from history
+                # Get last 6 messages which covers exactly the ticket flow:
+                # [user: issue] [bot: site?] [user: site] [bot: duration?]
+                recent = get_recent_messages(conversation_id, limit=6)
+                
+                # Filter to only the last 6 messages ticket flow
+                ticket_user_messages = [m[1] for m in recent if m[0] == "user"]
+                issue_desc = ticket_user_messages[-2] if len(ticket_user_messages) >= 2 else "N/A"
+                site_name  = ticket_user_messages[-1] if len(ticket_user_messages) >= 1 else "N/A"
+                duration   = request.user_question
 
                 case = create_salesforce_case(
                     subject="Chatbot Technical Escalation",
-                    description=request.user_question,
+                    description=f"Issue: {issue_desc}\nSite: {site_name}\nDuration: {duration}",
                     email=user_email,
                     chat_history=history_text
                 )
 
                 case_id = case.get("id", "N/A")
+                ticket_category = detect_category(issue_desc)
+                response_text = f"""Your support ticket has been created successfully.
 
-                response_text = f"""
-Your support ticket has been created successfully.
+--------------------------------
+Case ID  : {case_id}
+Name     : {user.get("name")}
+Email    : {user_email}
+User ID  : {user.get("id")}
+Issue    : {issue_desc}
+Site     : {site_name}
+Duration : {duration}
+Category : {ticket_category}
+--------------------------------"""
 
-Case ID: {case_id}
-"""
-
+                save_message(conversation_id, "user", request.user_question)
                 save_message(conversation_id, "assistant", response_text)
-
-                return StreamingResponse(
-                    stream_text(response_text),
-                    media_type="text/plain"
-                )
+                return StreamingResponse(stream_text(response_text), media_type="text/plain")
 
         # ---------------- SAVE USER MESSAGE ----------------
-
-        save_message(conversation_id, "user", request.user_question)
+        question_category = detect_category(request.user_question)
+        save_message(conversation_id, "user", request.user_question, category=question_category)
 
         # ---------------- RAG RETRIEVAL ----------------
 
@@ -306,7 +442,7 @@ Case ID: {case_id}
                 yield char
                 await asyncio.sleep(0.003)
 
-            save_message(conversation_id, "assistant", full_answer)
+            save_message(conversation_id, "assistant", full_answer, category=question_category)
 
         return StreamingResponse(
             stream_wrapper(),

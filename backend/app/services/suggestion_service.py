@@ -1,4 +1,7 @@
 from app.db.database import get_connection
+from app.services.llm_service import create_chat_model
+from langchain_core.messages import SystemMessage, HumanMessage
+import json
 
 def get_suggestions(bot_id: int):
     conn = get_connection()
@@ -13,41 +16,35 @@ def get_suggestions(bot_id: int):
         """, (bot_id,))
 
         rows = cur.fetchall()
-        suggestions = []
+        #suggestions = []
 
-        for row in rows:
-            text = row[0]
-            lines = text.split("\n")
+        if not rows:
+            return []
 
-            for line in lines:
-                clean_line = line.strip()
+        combined_text = "\n\n".join([row[0] for row in rows])
+        chat_model = create_chat_model({})
 
-                # Skip empty lines
-                if not clean_line:
-                    continue
+        response = chat_model.invoke([
+            SystemMessage(content="""Return ONLY a valid JSON array of 3 short support questions.
+No explanation, no markdown, no extra text.
+Example: ["How do I reset my password?", "How do I contact support?", "What is JCore?"]"""),
+            HumanMessage(content=f"Generate 3 suggested questions from this:\n\n{combined_text}")
+        ])
 
-                # Only keep lines with question mark
-                if "?" in clean_line:
+        text = response.content.strip()
+        text = text.replace("```json", "").replace("```", "").strip()
+        start = text.find("[")
+        end = text.rfind("]") + 1
+        if start == -1 or end == 0:
+            return []
 
-                    # Remove "- Yes", "- Not", etc.
-                    clean_line = clean_line.split("?")[0] + "?"
-
-                    if clean_line not in suggestions:
-                        suggestions.append(clean_line)
-
-                if len(suggestions) >= 5:
-                    break
-
-            if len(suggestions) >= 5:
-                break
-
-        return suggestions
+        suggestions = json.loads(text[start:end])
+        return [s for s in suggestions if isinstance(s, str)][:3]
 
     except Exception as e:
         print("Suggestion Error:", e)
         return []
 
     finally:
-        # Ye bahut zaroori hai!
         if cur: cur.close()
         if conn: conn.close()

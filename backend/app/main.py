@@ -7,20 +7,16 @@ import jwt
 
 # Routes import
 from app.routes import chat, kb_upload, bot
-
-# Yeh values auth_service.py se match honi chahiye
+from app.routes.graph import router as graph_router
 SECRET_KEY = "k3J9@xP!92kLm#Q7zA1$D5"
 ALGORITHM = "HS256"
 
 app = FastAPI(title="Highwire Bot Backend")
-
-# 1. THE TOKEN ENDPOINT (Swagger isi ko call karta hai)
 @app.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     # Dummy login for HighwirePress testing
     if form_data.username == "admin" and form_data.password == "highwire123":
         expire = datetime.utcnow() + timedelta(minutes=60)
-        # 'sub' key zaroori hai kyunki verify_jwt_token isi ko read karta hai
         payload = {
             "sub": "admin@highwirepress.com", 
             "exp": expire
@@ -46,6 +42,7 @@ app.add_middleware(
 app.include_router(chat.router, prefix="/api")
 app.include_router(kb_upload.router, prefix="/api")
 app.include_router(bot.router)
+app.include_router(graph_router, prefix="/api")
 
 @app.get("/")
 def root():

@@ -64,8 +64,10 @@ Rules:
 - Always start with SHORT_ANSWER:
 - Then provide DETAILED_ANSWER:
 - Do not add any other sections.
-- Do not use markdown headers like ###.
-- Do not use HTML tags like <details>.
+- Never use HTML tags like <details>, <summary>, <ul>, <li>, <code>
+- Never use markdown headers like ###
+- Only use - for bullet points
+- Only use ``` for code blocks
 - Do not repeat SHORT_ANSWER at the end.
 """
 
@@ -125,3 +127,30 @@ Reply ONLY with YES or NO.
     result = response.content.strip()
 
     return "YES" in result.upper()
+
+
+def detect_category(user_query: str, llm_config=None) -> str:
+    chat_model = create_chat_model(llm_config)
+
+    prompt = f"""Classify the following support question into exactly ONE of these categories:
+
+- chrome_extension: Questions about installing or using the HighWire Chrome Extension
+- escalation_process: Questions about escalation matrix, Salesforce cases, JIRA, support levels
+- ecommerce_setup: Questions about HW Intelligent Commerce, Foxycart, Access Control, Drupal
+- jcore_platform: Questions about JCore features, configuration, sites, key staff
+- site_operations: Questions about H10 restarts, hwmaint servers, stopsite/startsite scripts
+- platform_overview: Questions about HighWire Press, MPS, journal hosting, general platform
+- general: Any question that doesn't fit the above categories
+
+User question: "{user_query}"
+
+Reply with ONLY the category name, nothing else. No explanation."""
+
+    try:
+        response = chat_model.invoke([HumanMessage(content=prompt)])
+        category = response.content.strip().lower()
+        valid = ["chrome_extension", "escalation_process", "ecommerce_setup",
+                 "jcore_platform", "site_operations", "platform_overview", "general"]
+        return category if category in valid else "general"
+    except Exception:
+        return "general"

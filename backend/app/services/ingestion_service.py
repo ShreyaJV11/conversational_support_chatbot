@@ -1,7 +1,7 @@
 import os
 import hashlib
 from typing import Dict, Any, Optional
-
+from app.services.llm_service import detect_category
 from langchain_community.document_loaders import TextLoader
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -77,7 +77,13 @@ def ingest_file(
     embeddings = create_embeddings(config["embedding_model"])
 
     # ------------------------------------------------------
-    # 4️⃣ DB Connection
+    # 4️⃣ Detect Category ONCE per file (not per chunk)
+    # ------------------------------------------------------
+
+    file_category = detect_category(full_text[:500])
+
+    # ------------------------------------------------------
+    # 5️⃣ DB Connection
     # ------------------------------------------------------
 
     conn = get_connection()
@@ -93,7 +99,7 @@ def ingest_file(
     try:
 
         # --------------------------------------------------
-        # 5️⃣ Prevent Duplicate File (by hash + bot_id)
+        # 6️⃣ Prevent Duplicate File (by hash + bot_id)
         # --------------------------------------------------
 
         cur.execute(
@@ -115,7 +121,7 @@ def ingest_file(
             }
 
         # --------------------------------------------------
-        # 6️⃣ Insert File Record
+        # 7️⃣ Insert File Record
         # --------------------------------------------------
 
         cur.execute(
@@ -131,7 +137,7 @@ def ingest_file(
         kb_file_id = cur.fetchone()[0]
 
         # --------------------------------------------------
-        # 7️⃣ Insert Chunks
+        # 8️⃣ Insert Chunks (reuse file_category for all)
         # --------------------------------------------------
 
         for chunk in chunks:
@@ -160,10 +166,10 @@ def ingest_file(
             cur.execute(
                 f"""
                 INSERT INTO {kb_chunks_table}
-                (chunk_text, chunk_hash, embedding, kb_file_id, bot_id)
-                VALUES (%s, %s, %s, %s, %s);
+                (chunk_text, chunk_hash, embedding, kb_file_id, bot_id, category)
+                VALUES (%s, %s, %s, %s, %s, %s);
                 """,
-                (chunk_text, chunk_hash, vector, kb_file_id, bot_id)
+                (chunk_text, chunk_hash, vector, kb_file_id, bot_id, file_category)
             )
 
             inserted_chunks += 1
@@ -173,7 +179,8 @@ def ingest_file(
         return {
             "file_name": file_name,
             "chunks_inserted": inserted_chunks,
-            "chunks_skipped": skipped_chunks
+            "chunks_skipped": skipped_chunks,
+            "category": file_category
         }
 
     except Exception as e:

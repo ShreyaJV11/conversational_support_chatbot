@@ -1,53 +1,92 @@
 from app.db.database import get_connection
 
-def get_suggestions(bot_id: int):
+import json
+import logging
+from app.db.database import get_connection
+from app.services.llm_service import create_chat_model
+from langchain_core.messages import SystemMessage, HumanMessage
+
+logger = logging.getLogger(__name__)
+
+def get_suggestions(bot_id: int, step: str = None):
     conn = get_connection()
     cur = conn.cursor()
 
     try:
         cur.execute("""
-            SELECT chunk_text
-            FROM kb_chunks
-            WHERE bot_id = %s
+            SELECT chunk_text 
+            FROM kb_chunks 
+            WHERE bot_id = %s 
             LIMIT 15;
         """, (bot_id,))
-
         rows = cur.fetchall()
-        suggestions = []
 
-        for row in rows:
-            text = row[0]
-            lines = text.split("\n")
+        if not rows:
+            return []
 
-            for line in lines:
-                clean_line = line.strip()
+        combined_text = "\n\n".join([row[0] for row in rows])
 
-                # Skip empty lines
-                if not clean_line:
-                    continue
+        chat_model = create_chat_model({
+            "max_new_tokens": 100,
+            "temperature": 0.2
+        })
 
-                # Only keep lines with question mark
-                if "?" in clean_line:
+        # 🔥 CHANGE ONLY THIS PART (PROMPT BASED ON STEP)
 
-                    # Remove "- Yes", "- Not", etc.
-                    clean_line = clean_line.split("?")[0] + "?"
+        if step == "issue":
+            prompt = (
+                "Return ONLY a valid JSON array of 3 short PROBLEM statements.\n"
+                "These should describe issues a user might face.\n"
+                "No explanation.\n"
+                "Example: [\"Site down\", \"Login failed\", \"Payment error\"]"
+            )
 
-                    if clean_line not in suggestions:
-                        suggestions.append(clean_line)
+        elif step == "site":
+            prompt = (
+                "Return ONLY a valid JSON array of 3 system/site names.\n"
+                "These should be environments or systems.\n"
+                "No explanation.\n"
+                "Example: [\"Production\", \"Staging\", \"Mobile App\"]"
+            )
 
-                if len(suggestions) >= 5:
-                    break
+        elif step == "duration":
+            prompt = (
+                "Return ONLY a valid JSON array of 3 time durations.\n"
+                "These should represent how long an issue exists.\n"
+                "No explanation.\n"
+                "Example: [\"Just started\", \"Since 1 hour\", \"Since today\"]"
+            )
 
-            if len(suggestions) >= 5:
-                break
+        else:
+            # normal chat mode
+            prompt = (
+                "Return ONLY a valid JSON array of 3 short SUPPORT QUESTIONS.\n"
+                "No explanation.\n"
+                "Example: [\"Restart site\", \"Check logs\", \"Fix login issue\"]"
+            )
 
-        return suggestions
+        response = chat_model.invoke([
+            SystemMessage(content=prompt),
+            HumanMessage(content=f"Generate suggestions from this:\n\n{combined_text}")
+        ])
+
+        text = response.content.strip()
+        text = text.replace("```json", "").replace("```", "").strip()
+
+        start = text.find("[")
+        end = text.rfind("]") + 1
+
+        if start == -1 or end == 0:
+            return []
+
+        suggestions = json.loads(text[start:end])
+
+        return [str(s) for s in suggestions][:3]
 
     except Exception as e:
-        print("Suggestion Error:", e)
+        logger.error(f"get_suggestions error: {e}")
         return []
 
     finally:
-        # Ye bahut zaroori hai!
         if cur: cur.close()
         if conn: conn.close()

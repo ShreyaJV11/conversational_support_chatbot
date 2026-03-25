@@ -20,7 +20,29 @@ from app.services.memory_service import (
     link_session_to_user
 )
 from app.services.bot_service import get_bot_config
+TICKET_STEPS = ["issue", "duration", "site", "confirm"]
 
+def get_ticket_step(history_rows):
+    if not history_rows:
+        return None
+
+    last_role, last_msg = history_rows[-1]
+
+    if last_role != "assistant":
+        return None
+
+    msg = last_msg.lower()
+
+    if "describe your issue" in msg:
+        return "issue"
+    elif "since when" in msg or "how long" in msg:
+        return "duration"
+    elif "which site" in msg or "system affected" in msg:
+        return "site"
+    elif "confirm?" in msg:   # ✅ ADD THIS
+        return "confirm"
+
+    return None
 router = APIRouter()
 
 
@@ -81,6 +103,181 @@ def _get_query_based_suggestions(bot_id: int, user_query: str, answer: str) -> l
             user_query=user_query,
             step=None
         )
+def extract_ticket_data(history_rows):
+    data = {"issue": None, "duration": None, "site": None}
+
+    last_question = None
+
+    for role, msg in history_rows:
+        if role == "assistant":
+            last_question = msg.lower()
+
+        elif role == "user" and last_question:
+
+            if "describe your issue" in last_question:
+                data["issue"] = msg
+
+            elif "since when" in last_question or "how long" in last_question:
+                data["duration"] = msg
+
+            elif "which site" in last_question or "system affected" in last_question:
+                data["site"] = msg
+
+    return data
+def handle_ticket_flow(
+    request,
+    conversation_id,
+    history_rows,
+    user,
+    email_from_token,
+    category
+):
+    step = get_ticket_step(history_rows)
+
+    # ── START FLOW ─────────────────────
+    if not step:
+        msg = (
+            "Sure, I can help you raise a support ticket.\n\n"
+            "Please describe your issue."
+        )
+
+        save_message(conversation_id, "assistant", msg, category)
+
+        return StreamingResponse(
+            stream_text(msg),
+            media_type="text/plain",
+            headers={
+                "X-Suggestions": json.dumps(
+                    get_suggestions(request.bot_id,request.user_question, step="issue")
+                )
+            }
+        )
+
+    # ── STEP 1: ISSUE ──────────────────
+    if step == "issue":
+        save_message(conversation_id, "user", request.user_question, category)
+
+        msg = "Since when are you facing this issue?"
+        save_message(conversation_id, "assistant", msg, category)
+
+        return StreamingResponse(
+            stream_text(msg),
+            media_type="text/plain",
+            headers={
+                "X-Suggestions": json.dumps(
+                    get_suggestions(request.bot_id, request.user_question,step="duration")
+                )
+            }
+        )
+
+    # ── STEP 2: DURATION ───────────────
+    if step == "duration":
+        save_message(conversation_id, "user", request.user_question, category)
+
+        msg = "Which site or system is affected?"
+        save_message(conversation_id, "assistant", msg, category)
+
+        return StreamingResponse(
+            stream_text(msg),
+            media_type="text/plain",
+            headers={
+                "X-Suggestions": json.dumps(
+                    get_suggestions(request.bot_id, request.user_question,step="site")
+                )
+            }
+        )
+
+    # ── STEP 3: SITE → CREATE TICKET ───
+    # ── STEP 3: SITE → CONFIRM ───
+    if step == "site":
+        save_message(conversation_id, "user", request.user_question, category)
+        ticket_data = extract_ticket_data(
+            history_rows + [("user", request.user_question)]
+            )
+        msg = (
+             "Here’s your ticket summary:\n"
+               f"- Issue: {ticket_data['issue']}\n"
+               f"- Duration: {ticket_data['duration']}\n"
+               f"- System: {ticket_data['site']}\n\n"
+               "Confirm? (Yes/No)"
+    )
+
+        save_message(conversation_id, "assistant", msg, category)
+
+        return StreamingResponse(
+        stream_text(msg),
+        media_type="text/plain",
+        headers={
+            "X-Suggestions": json.dumps(["Yes", "No"])
+        }
+    )
+        # ── STEP 4: CONFIRM → CREATE ───
+    if step == "confirm":
+        save_message(conversation_id, "user", request.user_question, category)
+
+        user_input = request.user_question.lower().strip()
+
+        if user_input in ["yes", "y"]:
+            if not email_from_token:
+                return StreamingResponse(
+                stream_text("You must be logged in to create a ticket."),
+                media_type="text/plain"
+            )
+
+            user_email = user.get("email")
+
+            try:
+                check_rate_limit(user_email)
+            except HTTPException as e:
+                return StreamingResponse(
+                    stream_text(e.detail),
+                    media_type="text/plain"
+                      )
+
+            history_text = "\n".join(
+                 [f"{r[0]}: {r[1]}" for r in history_rows]
+                 )
+
+            case = create_salesforce_case(
+                subject="Chatbot Support Ticket",
+                description=history_text,
+                email=user_email,
+                chat_history=history_text
+                )
+
+            case_id = case.get("id", "N/A")
+
+            msg = f"✅ Your support ticket has been created.\n\nCase ID: {case_id}"
+
+            save_message(conversation_id, "assistant", msg, category)
+
+            return StreamingResponse(
+                stream_text(msg),
+                media_type="text/plain",
+                headers={"X-Suggestions": "[]"}
+                )
+
+        elif user_input in ["no", "n"]:
+            msg = "Okay, let's restart. Please describe your issue again."
+            save_message(conversation_id, "assistant", msg, category)
+
+            return StreamingResponse(
+                 stream_text(msg),
+                 media_type="text/plain",
+                 headers={
+                      "X-Suggestions": json.dumps(
+                           get_suggestions(request.bot_id, request.user_question, step="issue")
+                           )
+                             }
+                             )
+
+        else:
+            msg = "Please reply with Yes or No."
+            return StreamingResponse(
+                stream_text(msg),
+                media_type="text/plain",
+                headers={"X-Suggestions": json.dumps(["Yes", "No"])}
+                )
 @router.post("/chat")
 async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)):
 
@@ -194,74 +391,24 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
                 elif "describe your issue"          in msg_lower: current_step = "issue"
 
         is_ticket_intent = detect_ticket_intent(request.user_question)
+        ticket_step = get_ticket_step(history_rows)
+        if is_ticket_intent or ticket_step:
+            return handle_ticket_flow(
+                 request,
+                 conversation_id,
+                 history_rows,
+                 user,
+                 email_from_token,
+                 category
+    )
 
         # ── TICKET INTENT GUARD ───────────────────────────────────────────────
 
-        if is_ticket_intent:
-            if history_rows:
-                last_role, last_msg = history_rows[-1]
-                if last_role == "assistant" and "describe your issue" in last_msg.lower():
-                    pass  # allow — user is now describing their issue
-                else:
-                    ticket_prompt = "Please describe your issue first."
-                    save_message(conversation_id, "assistant", ticket_prompt,category)
-                    # Suggestions: issue-type chips to help them describe the problem
-                    suggestions_json = json.dumps(get_suggestions(request.bot_id,user_query=request.user_question,step="issue"))
-                    return StreamingResponse(
-                        stream_text(ticket_prompt),
-                        media_type="text/plain",
-                        headers={
-                            "X-Suggestions":    suggestions_json,
-                            "X-Accel-Buffering": "no",
-                        }
-                    )
+        
 
         # ── TICKET CREATION ───────────────────────────────────────────────────
 
-        if history_rows:
-            last_role, last_msg = history_rows[-1]
-
-            if last_role == "assistant" and "describe your issue" in last_msg.lower():
-
-                if not email_from_token:
-                    return StreamingResponse(
-                        stream_text("You must be logged in to create a support ticket."),
-                        media_type="text/plain"
-                    )
-
-                user_email = user.get("email")
-                if user_email != email_from_token:
-                    return StreamingResponse(
-                        stream_text("Your email does not match the authorized account."),
-                        media_type="text/plain"
-                    )
-
-                try:
-                    check_rate_limit(user_email)
-                except HTTPException as e:
-                    error_msg = e.detail
-                    save_message(conversation_id, "assistant", error_msg,category)
-                    return StreamingResponse(
-                        stream_text(error_msg),
-                        media_type="text/plain"
-                    )
-
-                case    = create_salesforce_case(
-                    subject="Chatbot Technical Escalation",
-                    description=request.user_question,
-                    email=user_email,
-                    chat_history=history_text
-                )
-                case_id       = case.get("id", "N/A")
-                response_text = f"Your support ticket has been created successfully.\n\nCase ID: {case_id}"
-
-                save_message(conversation_id, "assistant", response_text,category)
-                return StreamingResponse(
-                    stream_text(response_text),
-                    media_type="text/plain",
-                    headers={"X-Suggestions": "[]"}
-                )
-
+        
         # ── SAVE USER MESSAGE ─────────────────────────────────────────────────
         
         save_message(conversation_id, "user", request.user_question,category)
@@ -294,7 +441,7 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
             )
             save_message(conversation_id, "assistant", escalation_text,category)
             # Ticket flow starting — show issue-type chips
-            suggestions_json = json.dumps(get_suggestions(request.bot_id, step="issue"))
+            suggestions_json = json.dumps(get_suggestions(request.bot_id,request.user_question, step="issue"))
             return StreamingResponse(
                 stream_text(escalation_text),
                 media_type="text/plain",

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # CONSTANTS
 # ---------------------------------------------------------------------------
 
-DEFAULT_REPO_ID      = "HuggingFaceH4/zephyr-7b-beta"
+DEFAULT_REPO_ID      = "mistralai/Mistral-7B-Instruct-v0.2"
 DEFAULT_TEMPERATURE  = 0.0
 DEFAULT_MAX_TOKENS   = 512
 EMAIL_MAX_TOKENS     = 300

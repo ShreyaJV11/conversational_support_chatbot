@@ -27,8 +27,6 @@ class ChatApiService {
     this.organizationId = organizationId;
 
     this.sessionId = sessionId || this.generateSessionId();
-
-    // Load token if already stored
     this.authToken = localStorage.getItem("chat_token") || undefined;
   }
 
@@ -38,21 +36,19 @@ class ChatApiService {
       .substring(2, 9)}`;
   }
 
-  // STEP 1 — Set user info manually
   setUserInfo(name: string, email: string) {
     this.userInfo = { name, email };
   }
 
   async sendMessage(
     request: ChatRequest | string,
-    onChunk: (text: string) => void
+    onChunk: (text: string, suggestions?: string[]) => void
   ): Promise<void> {
     try {
       let chatRequest: ChatRequest;
 
-      // If user typed "name,email"
+      // --- Registration / Name,Email Handling ---
       if (typeof request === "string" && request.includes(",")) {
-
         const parts = request.split(",");
 
         if (parts.length === 2) {
@@ -66,15 +62,13 @@ class ChatApiService {
             user_session_id: this.sessionId,
             user_info: this.userInfo
           };
-
         } else {
           throw new Error("Invalid name,email format");
         }
       }
 
-      // Normal string message
+      // --- Normal Message Handling ---
       else if (typeof request === "string") {
-
         chatRequest = {
           user_question: request,
           user_session_id: this.sessionId,
@@ -82,9 +76,8 @@ class ChatApiService {
         };
       }
 
-      // Structured request
+      // --- Structured Object Handling ---
       else {
-
         chatRequest = {
           ...request,
           user_session_id: request.user_session_id || this.sessionId,
@@ -92,6 +85,7 @@ class ChatApiService {
         };
       }
 
+      // Inject Bot ID and Org ID if present
       if (this.botId) {
         (chatRequest as any).bot_id = this.botId;
       }
@@ -115,26 +109,40 @@ class ChatApiService {
         throw new Error("Backend connection failed");
       }
 
-      // If backend returns JSON (registration response with token)
+      // HEADER suggestions
+      const suggestionsHeader = response.headers.get("X-Suggestions");
+      let suggestions: string[] = [];
+
+      if (suggestionsHeader) {
+        try {
+          suggestions = JSON.parse(suggestionsHeader);
+        } catch (e) {
+          console.error("Failed to parse suggestions header:", e);
+          suggestions = suggestionsHeader.includes("|") ? suggestionsHeader.split("|") : [];
+        }
+      }
+
       const contentType = response.headers.get("content-type");
 
+      // JSON response
       if (contentType && contentType.includes("application/json")) {
-
         const data = await response.json();
 
-        // Save JWT token
         if (data.token) {
           this.authToken = data.token;
           localStorage.setItem("chat_token", data.token);
         }
 
+        const finalSuggestions = data.suggestions || suggestions;
+
         if (data.message) {
-          onChunk(data.message);
+          onChunk(data.message, finalSuggestions);
         }
 
         return;
       }
 
+      // Streaming response
       if (!response.body) {
         throw new Error("Streaming not supported by backend");
       }
@@ -142,29 +150,29 @@ class ChatApiService {
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
 
-      // Streaming response
       while (true) {
         const { done, value } = await reader.read();
-
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-
-        onChunk(chunk);
+        onChunk(chunk, []);
       }
 
+      // emit header suggestions
+      if (suggestions.length > 0) {
+        onChunk("", suggestions);
+      }
+
+      
+
     } catch (error) {
-
       console.error("Chat API streaming error:", error);
-
       onChunk("\n⚠ Backend connection issue. Please check server.");
     }
   }
 
   async getInitialMessage(): Promise<ChatResponse> {
-
     try {
-
       const finalUrl = `${this.baseUrl}/api/chat/initial-message/${this.botId}`;
 
       const response = await fetch(finalUrl, {
@@ -178,7 +186,6 @@ class ChatApiService {
       return await response.json();
 
     } catch (error) {
-
       console.error("Initial message error:", error);
 
       return {
@@ -188,11 +195,10 @@ class ChatApiService {
     }
   }
 
-  async getSuggestions(): Promise<string[]> {
-
+  // 🔴 FIXED (same logic, just added userQuery support)
+  async getSuggestions(userQuery: string): Promise<string[]> {
     try {
-
-      const finalUrl = `${this.baseUrl}/bot/${this.botId}/suggestions`;
+      const finalUrl = `${this.baseUrl}/bot/${this.botId}/suggestions?user_query=${encodeURIComponent(userQuery)}`;
 
       const response = await fetch(finalUrl, {
         method: "GET"
@@ -202,12 +208,11 @@ class ChatApiService {
         throw new Error("Failed to fetch suggestions");
       }
 
-      return await response.json();
+      const data = await response.json();
+      return data.suggestions || [];
 
     } catch (error) {
-
       console.error("Suggestions error:", error);
-
       return [];
     }
   }

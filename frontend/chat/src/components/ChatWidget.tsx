@@ -83,19 +83,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
     }
   }, [state.isOpen, initialMessage, state.messages.length, chatApi]);
 
-  useEffect(() => {
-    if (state.userInfo?.name && state.userInfo?.email) {
-      const loadSuggestions = async () => {
-        try {
-          const data = await chatApi.getSuggestions();
-          setSuggestions(data);
-        } catch (err) {
-          console.error("Suggestions error", err);
-        }
-      };
-      loadSuggestions();
-    }
-  }, [state.userInfo]);
+  
 
 
   // Focus input when chat opens
@@ -105,30 +93,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
     }
   }, [state.isOpen, state.isMinimized]);
 
- useEffect(() => {
-    const lastMessage = state.messages[state.messages.length - 1];
-    
-    // ✨ FIX 1: state.isLoading === false (Yani jab bot ki typing poori khatam ho jaye, tabhi chalega)
-    if (!state.isLoading && lastMessage && lastMessage.type === 'bot' && lastMessage.content.includes('Thank you')) {
-      
-      const fetchChips = async () => {
-        try {
-          const data: any = await chatApi.getSuggestions(); 
-          
-          // ✨ FIX 2: Backend ke Object se asli Array bahar nikala!
-          const actualArray = Array.isArray(data) ? data : (data.suggestions || []);
-          
-          if (actualArray.length > 0) {
-            setSuggestions(actualArray); 
-          }
-        } catch (err) {
-          console.error("Suggestions nahi aayi", err);
-        }
-      };
-      
-      fetchChips();
-    }
-  }, [state.messages, state.isLoading, chatApi]);
+ 
 
   const loadInitialMessage = async () => {
     try {
@@ -268,16 +233,24 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
         request.user_info = state.userInfo;
       }
 
-      await chatApi.sendMessage(request, (chunk: string) => {
-        setState(prev => ({
-          ...prev,
-          messages: prev.messages.map(msg =>
-            msg.id === botMessageId
-              ? { ...msg, content: msg.content + chunk }
-              : msg
-          )
-        }));
-      });
+      await chatApi.sendMessage(
+  request,
+  (chunk: string, incomingSuggestions?: string[]) => {
+    setState(prev => ({
+      ...prev,
+      messages: prev.messages.map(msg =>
+        msg.id === botMessageId
+          ? { ...msg, content: msg.content + chunk }
+          : msg
+      )
+    }));
+
+    // ✅ HANDLE SUGGESTIONS HERE
+    if (incomingSuggestions && incomingSuggestions.length > 0) {
+      setSuggestions(incomingSuggestions);
+    }
+  }
+);
 
       setState(prev => ({
         ...prev,
@@ -285,8 +258,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
       }));
       if (message.includes(',') || state.userInfo?.email) {
         try {
-          const newSuggestions = await chatApi.getSuggestions();
-          setSuggestions(newSuggestions);
+          
+         
         } catch (err) {
           console.error("Suggestions nahi aayi", err);
         }

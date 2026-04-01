@@ -12,6 +12,7 @@ def get_suggestions(bot_id: int):
             SELECT chunk_text
             FROM kb_chunks
             WHERE bot_id = %s
+            ORDER BY RANDOM()
             LIMIT 15;
         """, (bot_id,))
 

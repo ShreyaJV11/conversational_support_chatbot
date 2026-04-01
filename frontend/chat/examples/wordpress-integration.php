@@ -69,11 +69,11 @@ class MPS_Chatbot_Widget {
             script.onload = function() {
                 if (window.ChatbotWidget) {
                     window.ChatbotWidget.init(<?php echo json_encode($config); ?>);
-                    console.log('✅ MPS Support Chatbot loaded for WordPress');
+                    console.log('✅ HighwirePress Support Chatbot loaded for WordPress');
                 }
             };
             script.onerror = function() {
-                console.error('❌ Failed to load MPS Support Chatbot');
+                console.error('❌ Failed to load HighwirePress Support Chatbot');
             };
             document.head.appendChild(script);
         })();

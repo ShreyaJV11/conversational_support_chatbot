@@ -13,7 +13,7 @@ const TypingIndicator: React.FC = () => {
         {/* Typing Animation */}
         <div className="bg-white border border-gray-200 rounded-lg rounded-bl-none px-4 py-3 shadow-sm">
           <div className="flex items-center space-x-1">
-            <div className="text-gray-500 text-sm mr-2">MPS Assistant is typing</div>
+            <div className="text-gray-500 text-sm mr-2">HighwirePress Assistant is typing</div>
             <div className="flex space-x-1">
               <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
               <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>

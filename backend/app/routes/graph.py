@@ -4,7 +4,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
-from app.services.graph_service import create_email_draft
+from app.services.graph_service import create_email_draft, get_unread_emails, create_draft_reply, process_emails
 
 router = APIRouter()
 
@@ -35,3 +35,22 @@ def create_draft(request: DraftRequest):
         resolution_summary=request.resolution_summary
     )
     return result
+
+@router.get("/graph/unread")
+def fetch_unread():
+    return get_unread_emails()
+
+class ReplyRequest(BaseModel):
+    message_id:str
+    reply_body:str
+
+@router.post("/graph/reply-draft")
+def reply_draft(request:ReplyRequest):
+    return create_draft_reply(
+        message_id=request.message_id,
+        reply_html=request.reply_body
+    )
+
+@router.get("/graph/process-emails")
+def process_all_emails():
+    return process_emails()

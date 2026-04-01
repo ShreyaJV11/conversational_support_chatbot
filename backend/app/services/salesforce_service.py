@@ -10,7 +10,7 @@ SALESFORCE_TOKEN = os.getenv("SF_TOKEN")
 
 def create_salesforce_case(subject: str, description: str, email: str, chat_history: str = ""):
     """
-    Creates a polished Salesforce case for HighwirePress MPS support.
+    Creates a polished Salesforce case for HighwirePress support.
     """
     # 1. Check if config exists
     if not SALESFORCE_INSTANCE or not SALESFORCE_TOKEN:
@@ -20,9 +20,9 @@ def create_salesforce_case(subject: str, description: str, email: str, chat_hist
     url = f"{SALESFORCE_INSTANCE}/services/data/v59.0/sobjects/Case"
 
     # 2. Polished Description with History (Legal & Polished requirement)
-    # Support agent ko sab kuch ek hi jagah dikhna chahiye
+    # Support agent has to see everything in one place
     full_description = (
-        f"--- MPS SUPPORT REQUEST ---\n"
+        f"--- HighwirePress SUPPORT REQUEST ---\n"
         f"User Email: {email}\n"
         f"Issue Summary: {description}\n\n"
         f"--- RECENT CHAT LOGS ---\n"
@@ -37,7 +37,7 @@ def create_salesforce_case(subject: str, description: str, email: str, chat_hist
 
     # 3. Professional Payload
     payload = {
-        "Subject": f"[MPS Support] {subject}", # Professional prefix
+        "Subject": f"[HighwirePress Support] {subject}", # Professional prefix
         "Description": full_description,
         "SuppliedEmail": email,
         "Origin": "Chatbot",

@@ -8,6 +8,7 @@ import jwt
 # Routes import
 from app.routes import chat, kb_upload, bot
 from app.routes.graph import router as graph_router
+from app.services.graph_service import process_emails
 SECRET_KEY = "k3J9@xP!92kLm#Q7zA1$D5"
 ALGORITHM = "HS256"
 
@@ -53,3 +54,20 @@ def health():
     return {"status": "healthy"}
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+import threading 
+import time
+from app.services.graph_service import process_emails
+def background_worker():
+    while True:
+        try:
+            print("🔄 Checking for new emails ...")
+            result=process_emails()
+            print(f"✅ Email processing result: {result}")
+        except Exception as e:
+            print(f"❌ Error in background worker: {e}")
+        time.sleep(180)
+@app.on_event("startup")
+def start_background_worker():
+    print("🚀 Starting background email polling processor ...")
+    threading.Thread(target=background_worker,daemon=True).start()

@@ -14,11 +14,11 @@ interface ChatWidgetProps {
 
 const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   const [sessionId] = useState(() => {
-    const existing = localStorage.getItem("mps_chat_session");
+    const existing = localStorage.getItem("highwirepress_chat_session");
     if (existing) return existing;
 
     const newId = "session_" + Date.now();
-    localStorage.setItem("mps_chat_session", newId);
+    localStorage.setItem("highwirepress_chat_session", newId);
     return newId;
   });
 
@@ -154,11 +154,11 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   const handleResetChat = () => {
     if (window.confirm("Are you sure you want to clear this conversation?")) {
       // 1. Clear Local Storage
-      localStorage.removeItem("mps_chat_session");
+      localStorage.removeItem("highwirepress_chat_session");
       
       // 2. Generate new session
       const newId = "session_" + Date.now();
-      localStorage.setItem("mps_chat_session", newId);
+      localStorage.setItem("highwirepress_chat_session", newId);
       
       // 3. Reset State
       setState(prev => ({
@@ -393,7 +393,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
           <div className="flex-shrink-0 flex items-center justify-between p-4 bg-primary-600 text-white rounded-t-lg">
             <div className="flex items-center space-x-2">
               <MessageCircle size={20} />
-              <span className="font-medium">MPS Support Assistant</span>
+              <span className="font-medium">HighwirePress Support Assistant</span>
               {state.hasError && (
                 <AlertCircle size={16} className="text-yellow-300" />
               )}

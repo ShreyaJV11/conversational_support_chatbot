@@ -83,6 +83,27 @@ def get_user_by_session(bot_id: int, session_id: str):
         cur.close()
         conn.close()
 
+def get_or_create_organization(domain:str,organization_name:str)->int:
+    conn=get_connection()
+    try:
+        cur=conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO organizations (domain,organization_name)
+            VALUES (%s, %s)
+            ON CONFLICT (domain)
+            DO UPDATE SET organization_name=EXCLUDED.organization_name
+            RETURNING id
+            """,
+(domain,organization_name)
+        )
+        org_id=cur.fetchone()[0]
+        conn.commit()
+        return org_id
+    finally:
+        cur.close()
+        conn.close()
+
 
 # ==========================================================
 # CONVERSATION FUNCTIONS

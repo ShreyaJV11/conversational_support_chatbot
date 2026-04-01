@@ -15,9 +15,11 @@ from app.services.memory_service import (
     save_message,
     get_recent_messages,
     get_user_by_session,
-    link_session_to_user
+    link_session_to_user,
+    get_or_create_organization
 )
 from app.services.bot_service import get_bot_config
+from app.services.suggestion_service import get_suggestions
 
 router = APIRouter()
 
@@ -211,6 +213,11 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
                     stream_text("Please provide a valid email address."),
                     media_type="text/plain"
                 )
+
+            email_domain = email.split("@")[1]
+            org_name = email_domain.split(".")[0].capitalize()
+
+            get_or_create_organization(email_domain, org_name)
 
             user_id = get_or_create_user(
                 request.bot_id,

@@ -27,8 +27,8 @@ def test_bot(name, email, query, scenario_name):
 
 if __name__ == "__main__":
     # Test User Details
-    user_email = "bhai_tester@mps.com"
-    user_name = "Bhai"
+    user_email = "user_tester@highwirepress.com"
+    user_name = "user"
 
     # 1. Technical Question (RAG Test)
     test_bot(user_name, user_email, "Who is Naresh Kumar Singh?", "Initial Technical Query")

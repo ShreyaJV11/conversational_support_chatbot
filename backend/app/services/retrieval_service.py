@@ -16,8 +16,8 @@ from app.services.llm_service import create_chat_model
 DEFAULT_RETRIEVER_CONFIG = {
     "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
     "top_k": 5,
-    "domain_threshold": 0.75,
-    "distance_margin": 0.05,
+    "domain_threshold": 0.85,
+    "distance_margin": 0.10,
     "max_chunks": 3,
     "enable_rewrite": True,
     "rewrite_max_words": 20,

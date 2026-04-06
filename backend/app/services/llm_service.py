@@ -2,7 +2,7 @@ import os
 import re
 import logging
 from dotenv import load_dotenv
-from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
+from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from functools import lru_cache
 from typing import Optional
@@ -17,16 +17,16 @@ logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # CONSTANTS
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------create----------------------
 
-DEFAULT_REPO_ID      = "mistralai/Mistral-7B-Instruct-v0.2"
+DEFAULT_REPO_ID      = "llama-3.1-8b-instant"
 DEFAULT_TEMPERATURE  = 0.0
-DEFAULT_MAX_TOKENS   = 512
+DEFAULT_MAX_TOKENS   = 2048
 EMAIL_MAX_TOKENS     = 300
 EMAIL_TEMPERATURE    = 0.2
-HISTORY_WINDOW       = 3   # last N turns for answer context
-REWRITE_WINDOW       = 1   # FIX: only last 1 turn for query rewriting (prevents context bleed)
-MAX_PHRASE_REPEATS   = 2   # FIX: max times a phrase can repeat before cutting off stream
+HISTORY_WINDOW       = 3
+REWRITE_WINDOW       = 1
+MAX_PHRASE_REPEATS   = 2
 
 FALLBACK_RESPONSE    = "I do not have enough internal information to answer that."
 
@@ -59,7 +59,6 @@ BANNED_PHRASES = [
     "this will not work",
 ]
 
-# FIX: Phrases that indicate the model is looping/hallucinating if repeated too often
 REPETITION_GUARD_PHRASES = [
     "DRQUEST",
     "If the",
@@ -67,6 +66,43 @@ REPETITION_GUARD_PHRASES = [
     "report through",
     "does not provide",
 ]
+
+TICKET_INTENT_KEYWORDS = [
+    "create a ticket", "open a ticket", "raise a ticket", "submit a ticket",
+    "create ticket", "open ticket", "raise ticket", "submit ticket",
+    "log a ticket", "log ticket", "file a ticket", "file ticket",
+    "create a case", "open a case", "raise a case", "submit a case",
+    "need help", "report an issue", "report issue", "escalate",
+    "support request", "raise an issue", "raise issue",
+]
+
+CATEGORY_KEYWORDS: dict[str, list[str]] = {
+    "chrome_extension": [
+        "chrome", "extension", "crx", "developer mode", "load unpacked",
+        "highwire extension", "browser extension", "chrome://extensions",
+    ],
+    "jcore_platform": [
+        "jcore", "j-core", "publishing platform", "article discovery",
+        "user engagement", "jcore prime", "jcore configuration",
+    ],
+    "ecommerce_setup": [
+        "ecommerce", "e-commerce", "shop", "payment", "checkout",
+        "store", "purchase", "subscription", "billing",
+    ],
+    "site_operations": [
+        "site down", "outage", "deploy", "deployment", "server",
+        "site name", "production", "staging", "environment", "hosting",
+        "fragr", "restart", "semantico", "h10", "hwmaint",
+    ],
+    "escalation_process": [
+        "escalate", "escalation", "ticket", "support case", "drquest",
+        "raise issue", "report issue", "open case",
+    ],
+    "platform_overview": [
+        "highwire", "platform", "overview", "architecture", "maximus",
+        "what is highwire", "highwire press",
+    ],
+}
 
 
 # ---------------------------------------------------------------------------
@@ -78,29 +114,41 @@ def _create_chat_model_cached(
     repo_id: str,
     temperature: float,
     max_new_tokens: int,
-) -> ChatHuggingFace:
-    hf_token = os.getenv("HF_TOKEN")
-    if not hf_token:
-        raise EnvironmentError("HF_TOKEN is not set in environment variables.")
+) -> ChatGroq:
+    groq_key = os.getenv("GROQ_API_KEY")
+    if not groq_key:
+        raise EnvironmentError("GROQ_API_KEY is not set.")
 
     logger.info(f"Initializing model: {repo_id} (temp={temperature}, max_tokens={max_new_tokens})")
 
-    llm = HuggingFaceEndpoint(
-        repo_id=repo_id,
-        huggingfacehub_api_token=hf_token,
-        task="conversational",
+    return ChatGroq(
+        model=repo_id,
         temperature=temperature,
-        max_new_tokens=max_new_tokens,
+        max_tokens=max_new_tokens,
+        api_key=groq_key,
     )
-    return ChatHuggingFace(llm=llm)
 
 
-def create_chat_model(llm_config: Optional[dict] = None) -> ChatHuggingFace:
+def create_chat_model(llm_config: Optional[dict] = None) -> ChatGroq:
     cfg = llm_config or {}
+
+    repo_id     = cfg.get("repo_id", DEFAULT_REPO_ID)
+    temperature = float(cfg.get("temperature", DEFAULT_TEMPERATURE))
+    max_tokens  = int(cfg.get("max_new_tokens", DEFAULT_MAX_TOKENS))
+    GROQ_SUPPORTED = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "mixtral-8x7b-32768"]
+    if repo_id not in GROQ_SUPPORTED:
+        logger.warning(f"create_chat_model: unsupported model '{repo_id}', overriding to llama-3.1-8b-instant")
+        repo_id = DEFAULT_REPO_ID
+
+
+    if max_tokens < 500:
+        logger.warning(f"create_chat_model: max_tokens={max_tokens} too low, overriding to {DEFAULT_MAX_TOKENS}")
+        max_tokens = DEFAULT_MAX_TOKENS
+
     return _create_chat_model_cached(
-        repo_id=cfg.get("repo_id", DEFAULT_REPO_ID),
-        temperature=float(cfg.get("temperature", DEFAULT_TEMPERATURE)),
-        max_new_tokens=int(cfg.get("max_new_tokens", DEFAULT_MAX_TOKENS)),
+        repo_id=repo_id,
+        temperature=temperature,
+        max_new_tokens=max_tokens,
     )
 
 
@@ -109,10 +157,6 @@ def create_chat_model(llm_config: Optional[dict] = None) -> ChatHuggingFace:
 # ---------------------------------------------------------------------------
 
 def clean_context(context: str) -> str:
-    """
-    Remove noise from retrieved documentation before sending to the model.
-    Drops banned patterns, very short lines, and duplicates.
-    """
     if not context or not context.strip():
         logger.warning("clean_context received empty context.")
         return ""
@@ -122,16 +166,12 @@ def clean_context(context: str) -> str:
 
     for line in context.split("\n"):
         line = line.strip()
-
         if not line or len(line) < 3:
             continue
-
         if any(p in line.lower() for p in CONTEXT_BANNED_PATTERNS):
             continue
-
         if line in seen:
             continue
-
         seen.add(line)
         cleaned_lines.append(line)
 
@@ -145,9 +185,6 @@ def clean_context(context: str) -> str:
 # ---------------------------------------------------------------------------
 
 def clean_final_output(text: str) -> str:
-    """
-    Remove unwanted words/phrases from model output using word-boundary regex.
-    """
     for pattern in OUTPUT_REMOVE_PATTERNS:
         text = re.sub(pattern, "", text)
     return text.strip()
@@ -158,39 +195,22 @@ def clean_final_output(text: str) -> str:
 # ---------------------------------------------------------------------------
 
 def enforce_format(output: str) -> str:
-    """
-    Ensure model output strictly follows SHORT_ANSWER / DETAILED_ANSWER format.
-    Returns FALLBACK_RESPONSE if format is missing or malformed.
-
-    FIX: Previously crashed with 'not enough values to unpack' when the model
-         returned only SHORT_ANSWER: without DETAILED_ANSWER: (e.g. when it
-         responded with the fallback sentence mid-stream and was cut off).
-         Now handles each section independently so a missing DETAILED_ANSWER
-         section returns FALLBACK_RESPONSE cleanly instead of raising.
-    """
     output = output.strip()
 
     has_short    = "SHORT_ANSWER:" in output
     has_detailed = "DETAILED_ANSWER:" in output
 
-    # If neither section present, check for plain fallback text then return
     if not has_short and not has_detailed:
         logger.warning("enforce_format: both sections missing.")
         return FALLBACK_RESPONSE
 
     try:
-        # Anchor to first SHORT_ANSWER: occurrence
         if has_short:
             output = "SHORT_ANSWER:" + output.split("SHORT_ANSWER:")[-1]
 
-        # FIX: split safely — if DETAILED_ANSWER: is missing, parts will have len==1
-        #      Original code did: short_raw, detailed_raw = output.split(..., 1)
-        #      which raises ValueError when there's only 1 element.
         parts = output.split("DETAILED_ANSWER:", 1)
 
         if len(parts) == 1:
-            # Only SHORT_ANSWER present — extract it and return fallback
-            # (model was truncated or gave a one-liner without details)
             short_part = parts[0].replace("SHORT_ANSWER:", "").strip()
             if short_part:
                 logger.warning("enforce_format: DETAILED_ANSWER missing; returning short only.")
@@ -201,11 +221,15 @@ def enforce_format(output: str) -> str:
         short_part    = short_raw.replace("SHORT_ANSWER:", "").strip()
         detailed_part = detailed_raw.strip()
 
-        if not short_part or not detailed_part:
-            logger.warning("enforce_format: empty SHORT or DETAILED section.")
-            return FALLBACK_RESPONSE
+        if not has_short and not has_detailed:
+            logger.warning("Format missing → using raw output")
+            return (
+                 "SHORT_ANSWER:\n"
+                   + output[:200]  # first part as short
+                   + "\n\nDETAILED_ANSWER:\n"
+                   + output
+                     )
 
-        # Deduplicate lines while preserving order
         seen: set[str] = set()
         cleaned_lines = []
         for line in detailed_part.split("\n"):
@@ -231,14 +255,11 @@ def enforce_format(output: str) -> str:
 # ---------------------------------------------------------------------------
 
 def _build_history_messages(history: Optional[list], window: int = HISTORY_WINDOW) -> list:
-    """
-    Convert raw history dicts to LangChain message objects.
-    Limits to last `window` turns (default: HISTORY_WINDOW).
-    FIX: accepts window param so rewrite vs answer can use different limits.
-    """
     messages = []
     if not history or not isinstance(history, list):
         return messages
+
+    last_role = None
 
     for msg in history[-window:]:
         role    = msg.get("role", "").lower()
@@ -246,43 +267,36 @@ def _build_history_messages(history: Optional[list], window: int = HISTORY_WINDO
 
         if not content:
             continue
+        if role not in ("user", "assistant"):
+            continue
+        if role == last_role:
+            continue
 
         if role == "user":
             messages.append(HumanMessage(content=content))
+            last_role = "user"
         elif role == "assistant":
             messages.append(AIMessage(content=content))
-        else:
-            logger.debug(f"_build_history_messages: skipping unknown role '{role}'")
+            last_role = "assistant"
+
+    if messages and not isinstance(messages[0], HumanMessage):
+        messages = messages[1:]
 
     return messages
 
 
+# ---------------------------------------------------------------------------
+# TOPIC INJECTION
+# ---------------------------------------------------------------------------
 
 def _inject_topic_from_history(user_query: str, history: Optional[list]) -> str:
-    """
-    When rewrite_query fails or returns a bloated result, extract the last
-    meaningful topic word from history and inject it in place of pronouns.
-
-    Example:
-      history last assistant msg: "JCore is a publishing platform..."
-      user_query: "who manages it"
-      result:     "who manages JCore"
-
-    This is a cheap string operation — no LLM call needed.
-    """
     if not history or not isinstance(history, list):
         return user_query
 
-    # Find the last assistant message
     last_topic = None
     for msg in reversed(history):
         if msg.get("role") == "assistant":
             content = msg.get("content", "")
-            # Extract first capitalised word that looks like a product/platform name
-            # (longer than 3 chars, not a common sentence-starter)
-            # Skip only generic sentence-starter words, NOT product names.
-            # "jcore" and "highwire" must NOT be skipped — they are the exact
-            # topics we want to inject into follow-up queries like "who manages it".
             SKIP_WORDS = {
                 "the", "this", "that", "there", "their", "these", "those",
                 "with", "from", "into", "also", "both", "each", "more",
@@ -298,7 +312,6 @@ def _inject_topic_from_history(user_query: str, history: Optional[list]) -> str:
                 ):
                     last_topic = cleaned
                     break
-            # If nothing found with above heuristic, fall back to first noun-like word
             if not last_topic:
                 for word in words:
                     cleaned = word.strip(".,;:()")
@@ -313,7 +326,6 @@ def _inject_topic_from_history(user_query: str, history: Optional[list]) -> str:
         logger.warning("_inject_topic_from_history: no topic found in history, returning original query.")
         return user_query
 
-    # Replace trailing pronouns in the query
     PRONOUN_REPLACEMENTS = {
         " it": f" {last_topic}",
         " its": f" {last_topic}'s",
@@ -340,25 +352,13 @@ def rewrite_query(
     history: Optional[list],
     llm_config: Optional[dict] = None,
 ) -> str:
-    """
-    Rewrite a user query into a standalone technical search query,
-    resolving references using recent history.
-
-    FIX 1: Uses REWRITE_WINDOW (1 turn) instead of HISTORY_WINDOW (3 turns)
-            to prevent prior topic context bleeding into the rewritten query.
-    FIX 2: Skip rewrite entirely if the query has no pronouns / ambiguous refs
-            (e.g. "what is jcore?" is already standalone — rewriting it caused
-            the model to inject previous context and produce a bloated query like
-            "Could you please provide more information about what jcore is in the
-            context of the given conversation..." which then retrieved wrong chunks).
-    """
     if not user_query or not user_query.strip():
         logger.warning("rewrite_query: received empty query.")
         return ""
 
-    # FIX 2: if query contains no pronouns that need resolving, skip the LLM call
     PRONOUN_TRIGGERS = {"it", "its", "they", "them", "their", "this", "that", "he", "she", "those", "these"}
-    query_words = set(user_query.lower().split())
+    clean_query = re.sub(r'[^\w\s]', '', user_query.lower())
+    query_words = set(clean_query.split())
     if not query_words & PRONOUN_TRIGGERS:
         logger.info(f"rewrite_query: no pronouns detected, skipping rewrite for '{user_query}'")
         return user_query
@@ -367,7 +367,6 @@ def rewrite_query(
 
     history_summary = ""
     if history and isinstance(history, list):
-        # FIX 1: was history[-HISTORY_WINDOW:] — using only last 1 turn now
         history_summary = "\n".join(
             f"{m['role']}: {m['content']}" for m in history[-REWRITE_WINDOW:]
         )
@@ -387,7 +386,6 @@ def rewrite_query(
         response  = chat_model.invoke([HumanMessage(content=prompt)])
         rewritten = response.content.strip().rstrip("?").strip()
 
-        # Safety: if rewrite is suspiciously long (model rambled), use topic injection
         if len(rewritten) > len(user_query) * 4:
             logger.warning(f"rewrite_query: rewrite too long ({len(rewritten)} chars), injecting topic.")
             return _inject_topic_from_history(user_query, history)
@@ -396,7 +394,6 @@ def rewrite_query(
         return rewritten or user_query
     except Exception as e:
         logger.error(f"rewrite_query error: {e}")
-        # FIX: on any error, still try topic injection rather than returning bare query
         return _inject_topic_from_history(user_query, history)
 
 
@@ -428,9 +425,11 @@ SHORT_ANSWER:
 One or two sentences directly answering the question.
 
 DETAILED_ANSWER:
-1. First step or detail
-2. Second step or detail
-3. Continue as needed
+Include ALL relevant steps, commands, URLs, and explanations from the documentation.
+- Minimum 4 points. Maximum 10 points.
+- Each point must be a complete sentence.
+- Include exact commands, file paths, or URLs exactly as they appear in the documentation.
+- Do NOT summarise — extract full detail.
 
 RULES:
 - Always begin with SHORT_ANSWER:
@@ -439,7 +438,6 @@ RULES:
 - Do not repeat the question.
 - Stop immediately after DETAILED_ANSWER content.
 """
-
 
 
 # ---------------------------------------------------------------------------
@@ -452,16 +450,6 @@ def get_answers(
     user_query: str,
     llm_config: Optional[dict] = None,
 ):
-    """
-    Generate a structured answer from documentation context.
-    Streams tokens, then yields the final cleaned + formatted response.
-
-    FIX 1: Removed the bug where config["max_new_tokens"] and config["temperature"]
-            were set from llm_config then immediately overwritten with defaults.
-    FIX 2: enforce_format + clean_final_output now applied to the full response.
-    FIX 3: Repetition guard added to catch looping model output mid-stream.
-    FIX 4: History window uses HISTORY_WINDOW (not REWRITE_WINDOW) for answer context.
-    """
     if not user_query or not user_query.strip():
         yield FALLBACK_RESPONSE
         return
@@ -471,22 +459,18 @@ def get_answers(
         yield FALLBACK_RESPONSE
         return
 
-    # FIX 1: was overwriting llm_config values with defaults unconditionally
     config = {
         "max_new_tokens": DEFAULT_MAX_TOKENS,
         "temperature": DEFAULT_TEMPERATURE,
         **(llm_config or {}),
     }
-    # REMOVED the two lines that re-set max_new_tokens and temperature after merging
 
     chat_model = create_chat_model(config)
     context    = clean_context(context)
 
     messages = [SystemMessage(content=SYSTEM_PROMPT)]
-    # FIX 4: pass window explicitly so answer uses full HISTORY_WINDOW
     messages.extend(_build_history_messages(history, window=HISTORY_WINDOW))
-    # FIX: Zephyr-7b frequently ignores format rules in the system prompt alone.
-    # Repeating the format requirement directly in the user message forces compliance.
+
     FORMAT_REMINDER = (
         "\n\nCRITICAL RULES — follow exactly:\n"
         "1. Use ONLY information from the DOCUMENTATION above.\n"
@@ -517,14 +501,12 @@ def get_answers(
             if not token:
                 continue
 
-            # Existing banned phrase check
             if any(phrase in token for phrase in BANNED_PHRASES):
                 logger.warning(f"get_answers: banned phrase hit, stopping stream.")
                 break
 
             full_response += token
 
-            # FIX 3: repetition guard — stop if any guard phrase appears too many times
             if any(
                 full_response.count(phrase) > MAX_PHRASE_REPEATS
                 for phrase in REPETITION_GUARD_PHRASES
@@ -533,8 +515,8 @@ def get_answers(
                 break
 
         logger.info("get_answers: streaming complete, applying format enforcement.")
+        logger.info(f"RAW OUTPUT ({len(full_response)} chars):\n{full_response}")
 
-        # FIX 2: apply format enforcement and output cleaning on full response
         final = enforce_format(full_response)
         final = clean_final_output(final)
 
@@ -549,31 +531,10 @@ def get_answers(
 # TICKET INTENT DETECTION
 # ---------------------------------------------------------------------------
 
-# Keyword-based ticket intent detection — no LLM call needed.
-# This avoids burning HuggingFace quota on a simple classification task
-# that a small keyword set handles reliably.
-TICKET_INTENT_KEYWORDS = [
-    "create a ticket", "open a ticket", "raise a ticket", "submit a ticket",
-    "create ticket", "open ticket", "raise ticket", "submit ticket",
-    "log a ticket", "log ticket", "file a ticket", "file ticket",
-    "create a case", "open a case", "raise a case", "submit a case",
-    "need help", "report an issue", "report issue", "escalate",
-    "support request", "raise an issue", "raise issue",
-]
-
-
 def detect_ticket_intent(
     user_message: str,
     llm_config: Optional[dict] = None,
 ) -> bool:
-    """
-    Returns True if the user's message indicates intent to create a support ticket.
-
-    FIX: Replaced LLM call with fast keyword matching.
-         The original LLM call fired on EVERY message, consuming HuggingFace
-         quota and causing 503 errors under load. Keyword matching is instant,
-         free, and accurate enough for this binary classification task.
-    """
     if not user_message or not user_message.strip():
         return False
 
@@ -587,18 +548,25 @@ def detect_ticket_intent(
 # EMAIL REPLY GENERATION
 # ---------------------------------------------------------------------------
 
-EMAIL_SYSTEM_PROMPT = """You are a professional and helpful MPS Support Assistant.
+EMAIL_SYSTEM_PROMPT = """You are a professional MPS Support Engineer.
 
-Write a clear, human-like email reply.
+Write a clean and concise support email.
 
-RULES:
+STRICT RULES:
+- Answer ONLY using the provided documentation/context
+- Do NOT use prior knowledge or assumptions
+- Do NOT add information that is not present in the documentation
+- If the answer is not available, say:
+  "The requested information is not available in the current documentation."
+
 - Start with "Hello,"
-- Directly answer the user's question if the answer is available
-- Be concise and natural (no robotic phrases)
-- Do NOT say "we will get back to you" if you already answered
-- Only mention support team if answer is NOT available
-- Avoid unnecessary formal phrases like "we appreciate your patience"
-- Keep it within 5–6 lines
+- Maximum 5–6 lines total
+- If steps exist, format as numbered list (1, 2, 3)
+- Each step on a new line
+- Do NOT repeat information
+- Do NOT include sections like "Resolution" or "Next Steps"
+- Do NOT explain everything — be concise
+- Sound like a human engineer, not documentation
 
 End with:
 Regards,
@@ -610,9 +578,6 @@ def generate_email_reply(
     email_body: str,
     llm_config: Optional[dict] = None,
 ) -> str:
-    """
-    Generate a professional, empathetic email reply for a customer support request.
-    """
     if not email_subject or not email_body:
         logger.warning("generate_email_reply: missing subject or body.")
         return "Error: email subject and body are required."
@@ -637,50 +602,7 @@ def generate_email_reply(
 # CATEGORY DETECTION
 # ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# CATEGORY KEYWORD MAP
-# ---------------------------------------------------------------------------
-# Keyword-based category detection — no LLM call needed.
-# Replaces the previous LLM classifier that consumed quota on every message
-# and caused 503 errors. Each entry maps a category to its trigger keywords.
-
-CATEGORY_KEYWORDS: dict[str, list[str]] = {
-    "chrome_extension": [
-        "chrome", "extension", "crx", "developer mode", "load unpacked",
-        "highwire extension", "browser extension", "chrome://extensions",
-    ],
-    "jcore_platform": [
-        "jcore", "j-core", "publishing platform", "article discovery",
-        "user engagement", "jcore prime", "jcore configuration",
-    ],
-    "ecommerce_setup": [
-        "ecommerce", "e-commerce", "shop", "payment", "checkout",
-        "store", "purchase", "subscription", "billing",
-    ],
-    "site_operations": [
-        "site down", "outage", "deploy", "deployment", "server",
-        "site name", "production", "staging", "environment", "hosting",
-    ],
-    "escalation_process": [
-        "escalate", "escalation", "ticket", "support case", "drquest",
-        "raise issue", "report issue", "open case",
-    ],
-    "platform_overview": [
-        "highwire", "platform", "overview", "architecture", "maximus",
-        "what is highwire", "highwire press",
-    ],
-}
-
-
 def detect_category(user_query: str, llm_config: Optional[dict] = None) -> str:
-    """
-    Classify the user query into a predefined support category using keywords.
-
-    FIX: Replaced LLM call (max_tokens=15) with keyword matching.
-         The log showed 'Initializing model... max_tokens=15' on every message,
-         burning HuggingFace quota for a task that simple keywords handle well.
-         Falls back to 'general' if no keywords match.
-    """
     if not user_query:
         return "general"
 

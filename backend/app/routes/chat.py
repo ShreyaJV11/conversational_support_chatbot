@@ -9,7 +9,14 @@ import json
 from app.services.auth_service import verify_jwt_token, check_rate_limit, create_jwt_token
 from app.services.salesforce_service import create_salesforce_case
 from app.services.retrieval_service import retrieve_chunks
-from app.services.llm_service import get_answers, detect_ticket_intent, rewrite_query, detect_category
+# 🚀 UPGRADE: Imported semantic_query_router
+from app.services.llm_service import (
+    get_answers, 
+    detect_ticket_intent, 
+    rewrite_query, 
+    detect_category,
+    semantic_query_router
+)
 from app.services.suggestion_service import get_suggestions
 from app.services.memory_service import (
     get_or_create_user,
@@ -418,9 +425,14 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
         # Rewrite query to resolve pronouns ("it", "they", etc.) before retrieval
         standalone_query = rewrite_query(request.user_question, history_dicts)
 
+        # 🚀 UPGRADE 1: Classify Query (Support vs Codebase)
+        target_category = semantic_query_router(standalone_query)
+
+        # 🚀 UPGRADE 2: Pass Target Category to Retriever
         chunks, is_domain = retrieve_chunks(
             user_query=standalone_query,
             bot_id=request.bot_id,
+            target_category=target_category,
             chat_history=history_rows,
             bot_config=bot_config.get("retriever_config", {})
         )
@@ -448,8 +460,6 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
                 headers={"X-Suggestions": suggestions_json}
             )
 
-        context_text = "\n".join(chunks)
-
         # ── LLM RESPONSE ──────────────────────────────────────────────────────
 
         # Run LLM before opening the stream so suggestions can be computed from
@@ -458,7 +468,7 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
             lambda: list(
                 get_answers(
                     history_dicts,
-                    context_text,
+                    chunks, # 🚀 UPGRADE 3: Pass raw List of Dicts, NOT joined text
                     standalone_query,
                     bot_config.get("llm_config", {})
                 )

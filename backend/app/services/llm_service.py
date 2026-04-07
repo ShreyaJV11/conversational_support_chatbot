@@ -1,11 +1,12 @@
 import os
 import re
+import json
 import logging
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from functools import lru_cache
-from typing import Optional
+from typing import Optional, List, Dict, Union
 
 load_dotenv()
 
@@ -17,9 +18,10 @@ logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # CONSTANTS
-# -----------------------------------------------------create----------------------
+# ---------------------------------------------------------------------------
 
 DEFAULT_REPO_ID      = "llama-3.1-8b-instant"
+CODE_REPO_ID         = "llama-3.3-70b-versatile" # 🚀 UPGRADE: Heavy model for code
 DEFAULT_TEMPERATURE  = 0.0
 DEFAULT_MAX_TOKENS   = 2048
 EMAIL_MAX_TOKENS     = 300
@@ -135,9 +137,10 @@ def create_chat_model(llm_config: Optional[dict] = None) -> ChatGroq:
     repo_id     = cfg.get("repo_id", DEFAULT_REPO_ID)
     temperature = float(cfg.get("temperature", DEFAULT_TEMPERATURE))
     max_tokens  = int(cfg.get("max_new_tokens", DEFAULT_MAX_TOKENS))
+    
     GROQ_SUPPORTED = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "mixtral-8x7b-32768"]
     if repo_id not in GROQ_SUPPORTED:
-        logger.warning(f"create_chat_model: unsupported model '{repo_id}', overriding to llama-3.1-8b-instant")
+        logger.warning(f"create_chat_model: unsupported model '{repo_id}', overriding to {DEFAULT_REPO_ID}")
         repo_id = DEFAULT_REPO_ID
 
 
@@ -150,6 +153,53 @@ def create_chat_model(llm_config: Optional[dict] = None) -> ChatGroq:
         temperature=temperature,
         max_new_tokens=max_tokens,
     )
+
+
+# ---------------------------------------------------------------------------
+# 🚀 UPGRADE 1: SEMANTIC QUERY ROUTER
+# ---------------------------------------------------------------------------
+
+def semantic_query_router(user_query: str) -> str:
+    """
+    Uses a fast Groq model to classify if the query is for CODE or SUPPORT.
+    """
+    router_model = create_chat_model({"repo_id": "llama-3.1-8b-instant", "temperature": 0.0})
+    
+    prompt = """Analyze the user query. Is it asking about codebase/programming logic, or operational support/troubleshooting?
+    Respond ONLY with a valid JSON object: {"category": "codebase"} OR {"category": "support"}
+    """
+    try:
+        response = router_model.invoke([
+            SystemMessage(content=prompt),
+            HumanMessage(content=user_query)
+        ])
+        
+        # Clean up in case the LLM adds markdown backticks
+        clean_json = response.content.replace("```json", "").replace("```", "").strip()
+        decision = json.loads(clean_json)
+        return decision.get("category", "support")
+    except Exception as e:
+        logger.error(f"Router failed, defaulting to support: {e}")
+        return "support"
+
+
+# ---------------------------------------------------------------------------
+# 🚀 UPGRADE 2: SOURCE FORMATTER
+# ---------------------------------------------------------------------------
+
+def format_attributed_context(retrieved_chunks: Union[List[Dict], str]) -> str:
+    """Transforms DB dictionaries into LLM-friendly text with URLs."""
+    if isinstance(retrieved_chunks, str):
+        return retrieved_chunks # Fallback if passed a plain string
+
+    formatted = ""
+    for i, chunk in enumerate(retrieved_chunks, 1):
+        formatted += (
+            f"[SOURCE {i} | {chunk.get('source_system', 'internal')}]\n"
+            f"{chunk.get('text', '')}\n"
+            f"[URL: {chunk.get('source_url', 'No URL')}]\n\n"
+        )
+    return formatted
 
 
 # ---------------------------------------------------------------------------
@@ -398,55 +448,45 @@ def rewrite_query(
 
 
 # ---------------------------------------------------------------------------
-# SYSTEM PROMPT
+# 🚀 UPGRADE 3: STRICT SYSTEM PROMPTS
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """You are the MPS Support Assistant.
+SUPPORT_SYSTEM_PROMPT = """You are the MPS Support Assistant.
 
 STRICT RULES:
-- Answer ONLY using the provided DOCUMENTATION below.
+- Answer ONLY using the provided DOCUMENTATION.
 - Do NOT use prior knowledge or training data.
-- Do NOT invent names, people, teams, or organisations.
-- Do NOT guess or infer anything not explicitly stated in the DOCUMENTATION.
 - If the DOCUMENTATION does not contain the answer, respond ONLY with the fallback.
-- Never truncate URLs — always include them in full.
+- CITATION RULE: Every technical step must cite its source exactly like this: [Source: <URL>]
 
-ANTI-HALLUCINATION RULE (critical):
-If you cannot find the answer word-for-word or concept-for-concept in the
-DOCUMENTATION, do NOT attempt to answer. Write the fallback sentence below.
-Do NOT name any person, team, or organisation unless they appear in the DOCUMENTATION.
-
-FALLBACK (copy exactly when answer is not in documentation):
+FALLBACK:
 I do not have enough internal information to answer that.
 
-FORMAT (MANDATORY — no exceptions):
-
+FORMAT:
 SHORT_ANSWER:
-One or two sentences directly answering the question.
+<one or two sentences>
 
 DETAILED_ANSWER:
-Include ALL relevant steps, commands, URLs, and explanations from the documentation.
-- Minimum 4 points. Maximum 10 points.
-- Each point must be a complete sentence.
-- Include exact commands, file paths, or URLs exactly as they appear in the documentation.
-- Do NOT summarise — extract full detail.
+1. <step one> [Source: https://...]
+2. <step two> [Source: https://...]
+"""
 
-RULES:
-- Always begin with SHORT_ANSWER:
-- Always follow with DETAILED_ANSWER:
-- No markdown headers (###), no HTML tags, no extra sections.
-- Do not repeat the question.
-- Stop immediately after DETAILED_ANSWER content.
+CODE_SYSTEM_PROMPT = """You are a Senior Principal Software Engineer at MPS.
+
+STRICT RULES:
+- Answer the coding question using ONLY the provided CODEBASE DOCUMENTATION.
+- Do not invent functions or classes that don't exist in the context.
+- CITATION RULE: Whenever explaining logic or fixing bugs, cite the file URL: [Source: <URL>]
 """
 
 
 # ---------------------------------------------------------------------------
-# ANSWER GENERATION (WITH STREAMING)
+# ANSWER GENERATION (WITH DYNAMIC ROUTING & STREAMING)
 # ---------------------------------------------------------------------------
 
 def get_answers(
     history: Optional[list],
-    context: str,
+    context: Union[List[Dict], str], # 🚀 Updated to expect List of Dicts
     user_query: str,
     llm_config: Optional[dict] = None,
 ):
@@ -454,38 +494,49 @@ def get_answers(
         yield FALLBACK_RESPONSE
         return
 
-    if not context or not context.strip():
+    if not context:
         logger.warning("get_answers: empty context received.")
         yield FALLBACK_RESPONSE
         return
 
+    # 🚦 1. Semantic Routing & Model Selection
+    route_decision = semantic_query_router(user_query)
+    
+    if route_decision == "codebase":
+        active_prompt = CODE_SYSTEM_PROMPT
+        model_id = CODE_REPO_ID # Uses 70b model for code
+        logger.info("🚦 ROUTER: Routing to CODEBASE expert (Llama 3.3 70B)")
+    else:
+        active_prompt = SUPPORT_SYSTEM_PROMPT
+        model_id = DEFAULT_REPO_ID # Uses 8b model for support
+        logger.info("🚦 ROUTER: Routing to SUPPORT expert (Llama 3.1 8B)")
+
     config = {
         "max_new_tokens": DEFAULT_MAX_TOKENS,
         "temperature": DEFAULT_TEMPERATURE,
+        "repo_id": model_id, # Inject the dynamically chosen model
         **(llm_config or {}),
     }
 
     chat_model = create_chat_model(config)
-    context    = clean_context(context)
+    
+    # 🔗 2. Format Context with Attribution
+    formatted_context = format_attributed_context(context)
+    clean_ctx = clean_context(formatted_context)
 
-    messages = [SystemMessage(content=SYSTEM_PROMPT)]
+    messages = [SystemMessage(content=active_prompt)]
     messages.extend(_build_history_messages(history, window=HISTORY_WINDOW))
 
     FORMAT_REMINDER = (
-        "\n\nCRITICAL RULES — follow exactly:\n"
-        "1. Use ONLY information from the DOCUMENTATION above.\n"
-        "2. Do NOT invent or assume any names, people, or organisations.\n"
-        "3. If the answer is not explicitly in the DOCUMENTATION, write ONLY:\n"
-        "   I do not have enough internal information to answer that.\n"
-        "\n"
-        "Your response MUST use this exact format:\n"
-        "SHORT_ANSWER:\n<one or two sentences from the documentation>\n\n"
-        "DETAILED_ANSWER:\n1. <first detail>\n2. <second detail>\n..."
+        "\n\nCRITICAL RULES:"
+        "\n1. Answer ONLY from documentation."
+        "\n2. Cite your sources inline using [Source: <URL>]."
     )
+    
     messages.append(
         HumanMessage(
             content=(
-                f"DOCUMENTATION:\n{context}"
+                f"DOCUMENTATION:\n{clean_ctx}"
                 f"\n\nQUERY:\n{user_query}"
                 f"{FORMAT_REMINDER}"
             )
@@ -513,14 +564,10 @@ def get_answers(
             ):
                 logger.warning("get_answers: repetition guard triggered, stopping stream.")
                 break
+            
+            yield token
 
-        logger.info("get_answers: streaming complete, applying format enforcement.")
-        logger.info(f"RAW OUTPUT ({len(full_response)} chars):\n{full_response}")
-
-        final = enforce_format(full_response)
-        final = clean_final_output(final)
-
-        yield final
+        logger.info("get_answers: streaming complete.")
 
     except Exception as e:
         logger.error(f"get_answers error: {e}")

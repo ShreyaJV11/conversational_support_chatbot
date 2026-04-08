@@ -12,6 +12,7 @@ import os
 import requests
 from app.services.retrieval_service import retrieve_chunks
 from app.services.llm_service import get_answers
+from app.db.database import get_connection
 import re
 from dotenv import load_dotenv 
 

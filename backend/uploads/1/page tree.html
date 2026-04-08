@@ -1,0 +1,2108 @@
+ACC eCommerce Challenge
+Skip to end of metadata
+Created by Michael Frederickson, last modified by Chris Graham on May 04, 2018
+Go to start of metadata
+Requirements Docs:
+
+SSO:
+https://docs.google.com/document/d/10Mr69fbw7aZTiUCR7Qwe85avQWiKVQG8nFtmbe-o3sk
+
+eCommerce:
+https://drive.google.com/file/d/0B1lWygTwVBHlZ1lDUlFXOXdFYUE
+
+Stage sites with prod eComm AND Prod AC:
+JACC: aacj.stage.highwire.org:
+JIMG:jimg.stage.highwire.org
+JINT: jint.stage.highwire.org
+JHF: jhf.stage.highwire.org
+
+JCEP: jcep.stage.highwire.org - added/updated Aug, 9 2017
+
+BTR: btr.stage.highwire.org - Do Not need to test, this is an OA site and will not have eCommerce
+
+Stage site with dev eComm AND dev AC:
+
+JACC: http://jnl-accj_ecommerce_sso_mm.auto-drupal-stage-web04.highwire.org/
+
+JCEP: http://jcep-ecommerce-sso-mm.stage.highwire.org/
+
+JHF: http://jhf-ecommerce-sso-mm.stage.highwire.org/
+
+Hip Chat Room:
+ACC Dev / QA
+
+
+
+Production Users:
+
+TestPhil Test-Mickelson, BAO
+
+UN/PW:  pmickelson@test.org / test123
+
+
+
+TestRickie Test-Fowler, MD
+
+UN/PW: rfowler@test.edu / test123
+
+
+
+TestHunter Test-Mahan, MD
+
+UN/PW: hmahan@mytest.org / test123
+
+
+
+TestErnie Test-Els, MED
+
+UN/PW: eels1@testing.com / test123
+
+
+
+TestBubba Test-Watson, BCPS
+
+UN/PW: bwatson1@test.gov / test123
+
+
+
+Dev Users:
+
+elainep456 / elainep456
+
+
+
+E-Commerce (Production)
+
+Drupal:
+Admin → Highwire → Service Settings:
+Ecommerce Catalog: Production 2.0
+Ecommerce SaveSession: Production 2.0
+Admin → Foxycart:
+Your Foxycart Subdomain: acc.ecommerce.highwire.org
+Your Foxycart API key: Kne6CsWcAzNW4JLW
+Foxycart
+Current settings should not be changed (for brevity).
+IMPORTANT: Post QA/UAT, store URL will need changing to http://www.onlinejacc.org/ to allow shared cookie domain with production URLs
+
+
+E-Commerce (Dev)
+
+Drupal:
+
+Admin → Highwire → Service Settings:
+Ecommerce Catalog: Development 2.0
+Ecommerce SaveSession: Development 2.0
+Admin → Foxycart:
+Your Foxycart Subdomain: accbeta.ecommerce.highwire.org
+Your Foxycart API key: PcF3bPGpQmLAbUiH
+
+
+TICKET/ISSUE STATUS
+
+
+
+PASSED QA/DONE
+
+JCORE-2931 - Verified Closed; This issue has not been observed on test sites since switching to shared domain (Description: ACC - Log out from one journal site, error displays on checkout on another journal)
+
+JCORE-2920 - Passed QA; Since ACC regression will be completed on feature branch I have retested this ticket now just for the save session dropping when closing the browser and this has passed QA (Description: Ecommerce - saveSession fails when foxycart session not yet created on SSO auto login)
+
+ECOMSUITE-874 - Passed QA; Planned for release in e-commerce v2.4 service release on Wednesday 9th August duringmaintenance window (5AM PST). (Description: IWA: Cart duplication when switching between IWA journals)
+
+JCORE-2868 - Passed QA; I have observed the error today on http://aacj.stage.highwire.org/ site. Can you let me know how to proceed with this please, I am not sure if I should switch branch to test JCORE-2868 PR first or if these test sites should remain on ACC ecomm feature branch and JCORE-2868 PR will be merged to ACC ecomm feature branch. (Description: Foxycart - Errors listed on acc sites)
+
+2868 merge to feature branch
+JCORE-2984 - Passed QA; Assigned to Steve Cousins. Replicated and verified still valid on new test sites
+
+Steve/Eric to work through this
+Michael/Sean to identify if showstopper
+Will be fixed by ecomm service update to deploy on 9 August
+MF - Probably a showstopper
+Description: items remain in cart after purchase is made on second journal
+08/10 - Passed QA retest following ecomm production services update
+
+JCORE-2927 - Passed QA; Assigned to Todd. Replicated and verified still valid on new test sites, fix for this issue is ready for QA in Sluggo release (SHASTA-2401). Can you let me know how to proceed with this please. Should I test SHASTA-2401 on a fresh clone of acc sites?
+
+2401 merge to feature branch
+Friday Aug 4 - Code fix to address QA fail. Merged to Batman-Ecom-Feature branch, ready to retest.
+Description: ACC - After log out and browse cache clear - user still gets logged in on click of any challenge link
+JCORE-2989 - Passed QA 
+
+Description Calling savesession more than once when switching between sites. Resolved by configuration setting a common cookie domain
+
+
+IN PROGRESS
+
+JCORE-2985 - Open; Assigned to Steve Cousins. Replicated and verified still valid on new test sites
+
+Steve/Eric to work through this
+Michael/Sean to identify if showstopper
+MF - Not a showstopper
+Description: ACC - Log out from journal displays not authorized message
+
+JCORE-2928 - Open; Assigned to Steve Cousins. Replicated and verified still valid on new test sites
+
+Steve/Eric to work through this
+Michael/Sean to identify if showstopper
+MF - While not great, this is not a showstopper
+Description: ACC - AC Error Missing Authorization Item
+
+
+Change email issue -   Document a procedure for a the work around  - Delete old user
+
+Paul to write up a document to allow support to handle
+Issue to address via the application in a future version: ECOMSUITE-961
+HW Intelligent Commerce Support Knowledge Base
+Michael to work with Joe to get a ticket in the ecomm queue
+
+I have updated a user email address and got the following error when proceed to checkout (No session info available for session id 'vcmnles5uk5agndsolf0f9bhk7', publisher 'acc')
+FROM: elainep456 / elainep456   elaine@mcc.com
+TO: elainep456 / elainep456   elaine@mcctest.com
+Paul - please run your fix against this information and I will try to log in again and see if a new user record is created
+Executed the following: DELETE FROM foxycart_customer WHERE email='elaine@mcc.com' AND publisher='acc' LIMIT 1;
+Logged in via SSO with no login errors. Went to checkout with no session errors. So, the solution above addresses the change email address issue.
+
+
+Deployment Steps
+Here are the ACC full deployment steps for ecommerce:
+
+BEFORE CODE DEPLOYMENT
+1. SMART - Update foxycart subdomain and api key on production instance
+
+Kne6CsWcAzNW4JLW
+acc.ecommerce.highwire.org
+2. SMART - Rebuild settings.php
+
+3. Site UI - Ecommerce Catalog and Savesession should be Prod 2.0 (could be update hook)
+
+DEPLOYMENT
+4. SMART - Deploy core repos (HW & WR)
+
+HW - Batman-Ecom-Feature 
+WR - 7.x-1.x-stable
+5. SMART - Deploy Site repo (7.x-1.x-stable)
+
+POST DEPLOYMENT
+6. Site UI - Make sure /admin/foxycart 'always show my cart link' is set (this could be added via update hook)
+7. Site UI - Make sure /admin/foxycart 'external login url' is set (this could be added via update hook)
+
+
+
+
+
+
+Release Process
+Eric Bouska to update ecomm branch with stable
+Luke to Merge ACC Phase 2 branch into stable
+https://github.com/highwire/drupal-pub-acc/pull/153
+Luke to test merged code on copy of production site
+http://jnl-accj_stage_ecom_test.auto-drupal-stage-web03.highwire.org/ (copy of onlinejacc.org)
+Luke to send list of manual configurations needed in production
+Eric Bouska to review list of manual configurations, add cookie domain setting if necessary
+11:30 AM Pacific on Aug 16:
+We will use the ACC DEV/QA room in HipChat to coordinate
+Michael gives the go-ahead
+Eric and Luke configure sites in SMART, deploy new code onto sites
+Eric and Luke confirm manual configurations are in place on production sites
+Eric, Luke, Michael do visual sanity test on the sites, does everything look right?
+Niamh will run through post-release QA of the features on production sites
+Niamh relays results to Michael and Sean
+Michael and Sean send all-clear to publisher.
+
+AC/ Ecomm Regression
+Publishers/Journal Sites that will be included in scope of testing
+
+
+
+ERS
+
+https://smart.highwire.org/site/ersjnls - portal-ersjnls_stage_ecommreg_ks.auto-drupal-stage-web04.highwire.org
+
+https://smart.highwire.org/site/ersbk - bk-ersbk_stage_ecommreg_ks.auto-drupal-stage-web02.highwire.org
+
+
+
+IWA
+
+https://smart.highwire.org/site/ppiwawio - jnl-ppiwawio_stage_ecommreg_ks.auto-drupal-stage-web02.highwire.org
+
+https://smart.highwire.org/site/ppiwawpt - jnl-ppiwawpt_ecommreg_ks.auto-drupal-stage-web03.highwire.org
+
+https://smart.highwire.org/site/iwajnls - jnl-iwajnls_stage_ecommreg_ks.auto-drupal-stage-web03.highwire.org
+
+
+
+Portland Press
+
+https://smart.highwire.org/site/ppbiochemj - jnl-ppbiochemj_stage_ecommreg_ks.auto-drupal-stage-web03.highwire.org
+
+https://smart.highwire.org/site/ppbiost - jnl-ppbiost_stage_ecommreg_ks.auto-drupal-stage-web02.highwire.org
+
+https://smart.highwire.org/site/ppclinsci - jnl-ppclinsci_stage_ecommreg_ks.auto-drupal-stage-web02.highwire.org
+
+
+
+ACC
+
+https://smart.highwire.org/site/accj - jnl-accj_stage_ecommreg_ks.auto-drupal-stage-web03.highwire.org
+
+https://smart.highwire.org/site/jcep - jnl-jcep_stage_ecommreg_ks.auto-drupal-stage-web02.highwire.org
+
+https://smart.highwire.org/site/btr-201609 - jnl-btr_stage_ecommreg_ks.auto-drupal-stage-web02.highwire.org
+
+
+
+BMJ
+
+https://smart.highwire.org/site/heartjnl - jnl-heartjnl_stage_ecommreg_qa.auto-drupal-stage-web03.highwire.org
+
+https://smart.highwire.org/site/annrheumdis - jnl-annrheumdis_stage_ecommreg_ks.auto-drupal-stage-web02.highwire.org
+
+https://smart.highwire.org/site/bjsports - jnl-bjsports_stage_ecommreg_ks.auto-drupal-stage-web02.highwire.org
+
+https://smart.highwire.org/site/instance/bmjopen - jnl-bmjopen_stage_ecommreg_ks.auto-drupal-stage-web04.highwire.org
+
+
+AAP
+
+https://smart.highwire.org/site/pediatrics - need to clone
+
+https://smart.highwire.org/site/aapbk - need to clone
+
+https://smart.highwire.org/site/aap-portal - need to clone
+
+https://smart.highwire.org/site/pedsinreview - need to clone
+
+
+
+AAAS
+
+advances    https://smart.highwire.org/site/instance/advances-batman-sm  -  http://advancesbatman.stage.highwire.org/
+
+immunology    https://smart.highwire.org/site/instance/immunology-batman-sm  -  http://immunologybatman.stage.highwire.org/
+
+robotics    https://smart.highwire.org/site/instance/roboticsbatman-sm -   http://roboticsbatman.stage.highwire.org/
+
+scitransmed    https://smart.highwire.org/site/instance/scitransmed-batman-sm -   http://scitransmedbatman.stage.highwire.org
+
+sigtrans    https://smart.highwire.org/site/instance/sigtrans-batman-sm  -  http://sigtransbatman.stage.highwire.org/
+
+sci  https://smart.highwire.org/site/sci - need to clone
+
+
+
+ACC LIVE STAGE SITES
+
+
+
+hwdev.onlinejacc.org
+hwdev.electrophysiology.onlinejacc.org
+hwdev.imaging.onlinejacc.org
+hwdev.interventions.onlinejacc.org
+hwdev.heartfailure.onlinejacc.org
+hwdev.basictranslational.onlinejacc.org 
+
+IP = 104.232.27.106
+
+
+Skip to end of metadata
+Created by Arvind Gupta, last modified on Mar 19, 2021
+Go to start of metadata
+First we need to go main node of the instance like example (https://smart.highwire.org/site/bmjjournals)
+
+Click on the edit button and edit main node of the instance.
+go to the "Apache Virtual Host Settings" Tab.
+Download existing Apache Vhost Additions file example jcode-umbrella-redirects_version1.txt.
+Add new redirection according to the requirement  in this file and rename the version of file jcode-umbrella-redirects_version2.txt.
+Remove existing file on Apache Virtual Host Settings" Tab and upload new one with changes.
+Save the node.
+How to apply this changes on the dev/staging instance.
+
+Create a dev/stage instance and go to the "execute-jobs" Tab in the instance.
+Run "Apache VirtualHost Build" job.
+
+
+ How to apply this changes on the production instance.
+
+ Go to production instance and go to the "execute-jobs" Tab in the instance.
+ Run "Apache VirtualHost Build" job.
+
+
+Skip to end of metadata
+Created by Arvind Gupta, last modified on Mar 19, 2021
+Go to start of metadata
+First we need to go main node of the instance like example (https://smart.highwire.org/site/bmjjournals)
+
+Click on the edit button and edit main node of the instance.
+go to the "Apache Virtual Host Settings" Tab.
+Download existing Apache Vhost Additions file example jcode-umbrella-redirects_version1.txt.
+Add new redirection according to the requirement  in this file and rename the version of file jcode-umbrella-redirects_version2.txt.
+Remove existing file on Apache Virtual Host Settings" Tab and upload new one with changes.
+Save the node.
+How to apply this changes on the dev/staging instance.
+
+Create a dev/stage instance and go to the "execute-jobs" Tab in the instance.
+Run "Apache VirtualHost Build" job.
+
+
+ How to apply this changes on the production instance.
+
+ Go to production instance and go to the "execute-jobs" Tab in the instance.
+ Run "Apache VirtualHost Build" job.
+
+
+Backend Applications
+Skip to end of metadata
+Created by Naresh Kumar Singh, last modified by Vinoth K on May 06, 2024
+Go to start of metadata
+Please upgrade below Angular site :- 
+
+Application	Old Tech	Upgrade Tech	Start Date	End Date	Prod Date	Ticket No	Document Link
+Ecommerce 2.0	Node6	Node 18	
+
+
+
+
+Angular 13	Angular 16	15-Mar-2024	
+
+
+
+CCT2	Angular	React	15-April-2024	
+
+
+CCT2 upgrade from Angular to React 18.2.0
+Collection Maint	
+
+
+
+
+
+
+External-link Manager	
+
+
+
+
+
+
+Reports-UI	
+
+
+
+
+
+
+Data Supplement Manager	
+
+
+
+
+
+
+Direct Publishing	
+
+
+
+
+
+
+n
+
+
+
+CCT2 upgrade from Angular to React 18.2.0
+Skip to end of metadata
+Created by Vinoth K, last modified on May 06, 2024
+Go to start of metadata
+Setup: The project setup using Vite. Vite is a local development server. It has support for TypeScript and JSX. It uses Rollup and esbuild internally for bundling.
+
+Version: Vite: ^5.2.0, React: ^18.2.0, Node: v20.9.0
+
+Dependencies: React Bootstrap, Router DOM, Axios, Sass, Font and Font Awesome Icon
+
+Learning document: Cochrane Outage issue Sev1.
+Skip to end of metadata
+Created by Sarat Mohanty on Mar 08, 2021
+Go to start of metadata
+Problem Reported:
+
+The site was offline for 7 hours dated 1st March 2021. The cause was a security breach involving a malicious user changing site settings. 
+
+
+
+Troubleshooting steps:
+
+
+
+Resolution:
+
+
+Skip to end of metadata
+Created by Rahul Kumar Tiwari, last modified on Jul 03, 2023
+Go to start of metadata
+Go to production smart (https://smart.highwire.org/site/instance/mheaeworks-blue-production/) and execute the job. [Check which one is active GREEN/BLUE)
+
+Drush Common Execute the command "mhe-tefb"
+
+
+
+
+
+Note the Last count (Through Console Output) (from recent builds) eg 846
+
+
+
+
+
+Connect fa-freebird-web-prod-01.highwire.org in FTP
+
+Directory will be /drupal-prod-files/scolaris-mheaeworks_blue/content-export OR /drupal-prod-files/scolaris-mheaeworks_green/content-export based on live instance.
+
+
+
+Download the Latest file (.csv) file on your desktop in a directory.
+
+Next, go to your newly created staging instance and connect FTP and download the file for changes.
+
+/opt/sites/STAGING_INSTANCE/site-repo/current/web/modules/highwire/mhe_core/src/ContentExport.php
+
+
+
+Open the downloaded file in notepad++ and go to line 416
+
+Update the code (we are going to skip all no of the books that are exported on production)
+
+$count = $i = 0;
+After code ---------- foreach ($atomlite_payload as $apath => $atomlite_payload_item) {
+-------- add below code -------
+$i = $i+1;
+if ($i < count) {
+continue;
+}
+
+
+
+Upload on FTP (Server saved file)
+
+Go to the staging smart instance and execute mhe-tefb command in the Drush command section
+
+After complete execution You have download the file (exported file)
+
+/auto_drupal_dev/STAGING_INSTANCE/content-export
+
+
+
+Merge both excels.
+
+Post that file in Sigma_mps_insite_integration channel and tag Robin Bhandari.
+
+Video link: https://1drv.ms/v/s!ArN7knVW_f-JaleJ6iT7gy-BA_M?e=z9UXzI
+
+
+Skip to end of metadata
+Created by Rahul Kumar Tiwari, last modified on Feb 03, 2023
+Go to start of metadata
+1.	The title should be "Create Maint Site for JOURNAL_CODE"
+eg. Create Maint Site for bmjonc	
+Create Base Maint site:
+
+URL: hwmaint.journal_code.bmj.com/maint
+
+New journal setup guide: http://confluence.highwire.org/pages/viewpage.action?pageId=33333447
+
+Automation: H10 Automation Script Details
+
+Excel Must be attached to the Ticket for automation.	
+BMJONC-11 - Data cannot be retrieved due to an unexpected error.
+
+2.	
+Before the POINT 1 (above). Need 5 Sys tickets created and closed/resolved.
+1) Set up H1O Domains for JCore Launch
+
+
+
+
+Description Related to Title (Tickets)
+
+Hi Sysadmins,
+
+Can you please set up the h10 domain for jcore LAUNCH:
+
+Journal Name: BMJ Oncology
+HW Journal Code: journal_code
+H10 domain (dev): hwmaint.journal_code.bmj.com:4040
+H10 domain (prod): hwmaint.journal_code.bmj.com
+
+Thanks
+
+SYS-21200 - Data cannot be retrieved due to an unexpected error.
+
+
+2) New jnls: Create dev and Prod db: bmjonc
+
+Hi DBAs,
+
+Can you please create the dev and prod databases for the following new launch?
+
+Jcode: journal_code
+Umbrella:  bmjjournals
+
+This h10 site is needed for jcore site launch.
+
+SYS-21124 - Data cannot be retrieved due to an unexpected error.
+
+
+3) Request new Dev/Prod Content dirs and HWX intake spaces
+
+
+Hi Sysadmins,
+
+Can you please create the dev and prod content directories as well as the new HWX intake space directories (both /intake and /intake_demo/) for the following jcode.
+
+jcode: journal_code
+
+Many Thanks
+
+SYS-21123 - Data cannot be retrieved due to an unexpected error.
+
+
+4) SYS: Upload BMJONC.atom to Mark Logic and Sync to all sass stores	
+JCODE: journal_code
+
+Please upload to ML and sync to sass stores.
+
+SYS-21125 - Data cannot be retrieved due to an unexpected error.
+
+
+5) Restart indexer services to handle the newly added corpus code	
+Hello Team,
+
+Please Restart indexer services for journal_code jcode.
+
+SYS-21535 - Data cannot be retrieved due to an unexpected error.
+
+After setup H10 setup some time login with DDT not working in case you have to check 2 things
+
+pisa/servletConf.conf (on prod5 server) and check the publicAccess variable.
+Check log: Login prodtool5 via netsite
+Run command : /highwire/prodsofts/Pisa/scripts/sshsite <jcode_here>
+Logs for dev path: /logs/iossju_dev
+
+Skip to end of metadata
+Created by Aniqa Elahi , last modified on Feb 20, 2019
+Go to start of metadata
+When I Googled for the Git meaning; whaaat? Anyways, it seems like git is a derivative of the word “get’. The actual definition of Github is that GitHub not only brings together the world’s largest community of developers to discover, share, and build better software from open source projects to private teams but it also plays a great role in Version Control.
+
+Version Control
+
+
+Version Control is the process of storing multiple versions of a single project, allowing each version to be recalled at a later date. VCS (Version Control Software) are sometimes known as SCM (Source Code Management) tools or RCS (Revision Control System). One of the most popular VCS tools in use today is called Git. Git uses a database to store all the changes made to a project referenced by a label (commit) and can be used despite a stack of new commits on top of it. Let's see how to use a Git.
+
+SSH:
+
+Using the SSH protocol, you can connect and authenticate to remote servers and services. With SSH keys, you can connect to GitHub without supplying your username or password at each visit.
+
+HighWire and Github
+
+At HighWire we use GitHub for almost everything. Highwire github has three repositories ( repos ):
+
+* drupal-highwire
+* drupal-webroot
+* drupal
+
+HighWire Servers:
+
+We have a number of servers to host our client's sites, for example
+
+auto-drupal-stage-web01.highwire.org
+auto-drupal-stage-web02.highwire.org
+auto-drupal-stage-web03.highwire.org
+auto-drupal-stage-web04.highwire.org
+auto-drupal-stage-web05.highwire.org
+
+Go to designated server and type following command
+
+$ ssh aelahi@auto-drupal-stage-web02.highwire.org
+It will prompt for a password, once provided we will SSH into the server as shown in the following figure.
+
+
+
+
+
+Every server at Highwire platform has its hosted sites under /opt/sites (see the following fig). We can cd ( change directory ) to any of these hosted sites and make changes.
+
+
+
+But in order to push changes to GitHub, we need to establish a connection first. 
+
+ls -al ~/.ssh //find if you have an ssh key 
+
+
+
+
+As shown in the above figure we already have an SSH key and we don't need to create a new one. In case if we have no SSH key we can create another one using the following command.
+
+$ ssh-keygen -t rsa -b 4096 -C "your email"     //create a new key
+
+Once we find either an already existing key or create a new key, we can simply display it using the following command.
+
+cat ~/.ssh/id_rsa.pub //will display ssh keys
+
+
+
+We can now copy this key to use in the GitHub later.
+
+Adding SSH key in the Github account:
+
+In order to do this, we can go to the Github account ( one must have a github account )  and selected the SSH and GPG keys menu option ( https://github.com/settings/keys ).
+
+Next, I selected the New SSH key button which showed options to add a Title and a Key. I then gave a title to this key and pasted the key that I copied earlier from the terminal and hit the Add SSH Key button.
+
+
+Now we are connected to GitHub and can perform all the Git tasks (e.g cloning, pushing etc) from the terminal. 
+
+ Note: We need to add the key for each server separately using the above method.
+
+
+
+
+
+LikeAmeer Ibrahim likes this
+No labelsEdit Labels
+3 Comments
+User icon: mmayes
+Matt Mayes
+Here's a script I use to sync my home directory to a highwire.org server:
+
+https://gist.github.com/stoptime/6f74fae6cf9a201b9eaacd9dede80c01
+
+Copy that into your home directory on highwire server that has everything you need (like your ssh key), then run it with the target server as the param, for example if I'm on auto-drupal-stage-web01 I can run this to sync my home directory to auto-drupal-stage-web02:
+
+sh home-sync.sh auto-drupal-stage-web02
+Enter your password when prompted, and don't forget to change your username from mmayes to whatever your unix username is in the script. 
+
+
+
+ReplyLike•2 people like thisFeb 21, 2019
+User icon: gschwart
+Greg Schwartz
+Just a clarification – it seems a few places you say "HighWire" when you are really talking about just one area of highwire (drupal/jcore) – for example, HighWire has many more git repos than that, and many more servers.  Thanks for writing documentation!
+
+ReplyLike•Ameer Ibrahim likes thisFeb 28, 2019
+User icon: aelahi
+Aniqa Elahi
+Greg Schwartz, please feel free to edit any part of any documentation that I write.
+
+Skip to end of metadata
+Created by Hariom Upadhyay, last modified by Harsh Malik on Oct 19, 2022
+Go to start of metadata
+It is mainly two-issue comes from SpringerNature-MED very frequently for Editing batch and batch Reconfiguration.
+
+1.Update the BOOK associated with the batch.
+
+SF:-01183721
+
+Firstly login here ssh hwsupport@isphome01a.semantico.net (Password: ghasdeik) using cmd terminal then get to the
+the database we can then log in to the server using
+
+ssh hwsupport@cspmedsamsapi08x1.ext.dyn.semcs.net
+/opt/semantico/slot/sams_server/1/sitecode/bin/psql
+
+select * from subscription_token_batch where id = '107897';
+As this specific ticket was to update the BOOK associated with the batch
+
+For this, we first check the existing BOOK associated with the batch by running this SQL
+
+select * from product_edition where pe_name like 'Optimise A2 Teacher%';
+
+Then we search for the BOOK which we need to replace:
+select * from product_edition where pe_name = 'Optimise Updated A2 Teacher''s Book Premium Pack';
+or
+select * from product_edition where pe_name = 'Optimise Updated A2 Teacher''s Book Premium Pack';
+
+Then as we can see the BOOK has a pe_id linked to the subscription_token_batch table, so we need to update this table for un-redeemed codes:
+
+update subscription_token_batch set pe_id = '7ieotbt6v6fgqjbyvm38' where id = 107897;
+
+We also need to update the book name so we run the above UPDATE statement again, but this time we update the new book's name.
+
+For redeemed codes:
+
+update subscription set pe_id = '22yqjejsdl785t20mhn7' where subs_id in (select subscription_id from subscription_token_subscription where subscription_token_id in (select subscription_token_id from subscription_token where batch in (111740)));
+
+Rollback query: - update subscription set pe_id = 'yru6hhfly8m5i7v128dr' where subs_id in (select subscription_id from subscription_token_subscription where subscription_token_id in (select subscription_token_id from subscription_token where batch in (112226)));
+
+
+In case of any issue please use the Rollback query.
+
+Rollback query:-
+update subscription_token_batch set pe_id = '38cf2d4692114f67805812a31cf3296d' where id = 107897;
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+2.Update Batch Duration.
+
+SF:-01178641
+
+ Update batch Time:
+
+Select * from subs_duration;
+
+find the id for year from the above query like
+2 years = id 101
+6 month = id 104
+4 year = id 109
+
+Update query
+update subscription_token_batch set subs_duration_id = '101' where id =77490;
+
+Rollback query
+update subscription_token_batch set subs_duration_id = '100' where id =77490;
+
+ Now update redeemed codes, set all user subscriptions given by an activation code in batch to have a total duration of 2 years.
+First, run a select query to get a list of start dates and subs_ids to perform the update on:
+
+select start_date, end_date, subs_id from subscription where subs_id in
+(select subscription_id from subscription_token_subscription where subscription_token_id in
+(select subscription_token_id from subscription_token where batch in (77490))) ORDER BY start_date asc;
+
+Add 2 years to the start_date to get the new end_date. Example update queries:
+Each subscription may have different start dates so adjust end dates accordingly, you may need multiple different update statements.
+Or you can copy and paste all the dates into a text document and edit all lines at once to create an update statement for each id.
+I have attached the Update and Rollback script .txt file name as query(2).txt.
+
+Skip to end of metadata
+Created by Rahul Kumar Tiwari, last modified on Jan 02, 2024
+Go to start of metadata
+If you looking for a NID of Drupal backend from apath here are the step(s)
+
+Open the admin panel of Drupal and go to the development menu and click on execute PHP
+
+Execute this code with your atom path
+------------------------------------------------------------------------------------------------------------------------------
+
+
+use Drupal\Core\Database\Database;
+
+// Get the default database connection.
+$apath= '/mheasworks/article/a087650.atom';
+$connection = Database::getConnection();
+$query = $connection->query("SELECT entity_id FROM {node__apath} WHERE apath_value = :apath_value", [
+  ':apath_value' => $apath,
+]);
+$result = $query->fetchAll();
+
+if (empty($result)) {
+  $missing_static[$apath] = $apath;
+  throw new ApathNotFoundException("The nid for apath $apath could not be found in nidFromApath");
+}
+
+if (!empty($result) && count($result) >= 1) {
+  $nid = array_pop($result)->entity_id;
+  $static[$apath] = $nid;
+  dump($nid);
+}
+---------------------------------------------------------------------------------
+Change your apath in the above code and execute the code. It will show the nid
+ 
+Skip to end of metadata
+Created by Aniqa Elahi , last modified on Feb 13, 2019
+Go to start of metadata
+When there are Issues associated with images not being displayed, we can solve them in a number of ways. I will explain a few techniques to solve issues like this; for example, a customer reported that they can't see an image on their site as shown in the following image.
+
+
+
+
+
+
+
+Executing Importing Id’s Job
+
+
+
+       This should be the first step in every "content not being displayed job"  case.  Let's follow 5 simple steps after logging in as an admin in the affected site.
+
+1. Simply click on the Highwire plugin in the right corner of the menu as shown in the following figure
+
+
+
+2. A small window will pop up, copy Apath and click the Smart button, as shown in the following figure
+
+
+
+3. Once Smart is clicked it will take you to https://smart.highwire.org/site/instance/site-url, where the site-url is a unique code/identifier for each site.
+
+
+
+Note: You may need to log in to Smart if not logged in already in order to execute any job
+
+4. A list of available jobs will appear, click on Import Id's job's Run Button.
+
+
+
+5.  A new window will pop up, see the following figure.
+
+
+
+Here provide,
+
+a.  Insert Apath ( copied from the site in step 2 ).
+
+b. Check Hash Reset option.
+
+c. Check the Walk Children option.
+
+Finally, Submit these values.
+
+Note: Once a job is started, its status can be seen in Smart's Recent Builds tab. 
+
+
+
+Once a job is being executed successfully (as shown in the above fig), we can simply inspect the area with the image not showing if its fixed we are good to go otherwise let's dig into another way of fixing this issue.
+
+Inspecting Image(s) from Chrome Developer's Tool
+
+We can quickly identify a number of factors that can help us in fixing the issues related to an image using Chrome Developer Tool e.g presence of an image, attributes its URL etc. 
+
+Which, we can find by inspecting this image in the chrome developer tool available in most browsers (see the following fig). Where URL for a non-working image is http://science.sciencemag.org/content/sci/archive/363/6425/eaau1043/1/F1.medium.gif
+
+
+
+It is the best practices to compare the non-working contents (e.g image) to already working ones. In order to do so, we can find an image which is present on that page and inspect its attributes ( see the following fig)
+
+
+
+
+
+
+Above image has a URL http://science.sciencemag.org/content/sci/archive/363/6425/eaau1043/1/F3.medium.gif. As we can see both working and non-working images have the same URL format, which shows that the issue is not with the URL.
+
+Let's discuss next investigation technique!!
+
+
+
+Checking Atom Store
+
+Atom store is a platform/database where each and every content provided by a publisher is stored in the forms of an atom. This should be a place to find if the desired contents actually exist, for example, we can check if the missing image is there.
+
+In order to do so, click on the Highwire plugin as shown in step 2,  and click Saas button, atom store for that page will appear ( see the following fig)
+
+
+
+where we can simply remove the .atom path from the URL e.g http://sass.highwire.org/sci/363/6425/eaau1043.atom and reload the page.
+
+But we got nothing as shown in the following figure
+
+
+
+simply add fs in front of sass and reload the page. A number of items/atoms will appear where we can see that  F1.medium.gif is not in the atom contents.
+
+
+
+So we can conclude that issue is related to contents not being processed properly and the content management team need to reload contents to the atom store.
+
+Saasfs VS Sass
+
+     It would be fair enough to know what Saas and Sassfs ( as mentioned above ) are at this point!!
+
+      (info) Saasfs:  is a flat file system representation of the Atom store, runs on multiple disks (5-8). There is no automatic sync from atom to sassfs, something needs to actually trigger a filesync operation.
+
+      (info) Sass: is a web service, it reads from sassfs, there is no syncing, sass is not stored on any disks.
+
+      (info) Note: sass does not get filled until the article/issue is produced while sassfs is there after the article/issue is staged.
+
+ Let's discuss another investigation technique of checking if the contents are present in the Highwire Express.
+
+Highwire Express
+
+In some cases, there is a change/upgrade to a site and it might be under process and that can cause images not appearing. Simply go to https://production.highwire.org/
+
+and log in as ddt user and do a keyword search for the PEID: sci_iss_363_6425. We can get the PEID from the URL for the article and the Jcode for the site to see the current status of the issue in HWeXpress; In this case, the article is: http://science.sciencemag.org/content/archive/363/6425/eaau1043/1 and the jcode is sci. The PEID for journal issues tends to have a standard format:
+
+[jcode]_iss_[volume}_[issue]
+
+ 
+
+
+
+All green bars show that it has just finished processing and each bar corresponds to a different phase of content processing.
+
+We can see all the loaded contents by simply right-clicking the last bar, and then by clicking the Inventory Report:
+
+
+
+As it is obvious that this particular image is already there. In case if it was not there we can ask the content management team to reload the content if they have them or otherwise a request is made to the publisher to re-supply the contents. 
+
+
+
+
+
+
+Skip to end of metadata
+Created by Mohammed Ibrahim on May 04, 2022
+Go to start of metadata
+HWX – High Wire Express
+
+HWX is a content ingestion workflow system.
+Input is received from the publisher
+Data -> Content
+Available 24/7 for content processing.
+ 
+
+Publisher puts the data in the FTP space.
+
+e.g., a.xml, b.xml, go.xml, pdf, images, etc.,
+
+ 
+
+ Users:
+
+Publishers
+Content providers
+Highwire internal Team
+ 
+
+Types of Content:
+
+Issue
+PAP (Publisher Ahead of Print)
+Articles
+Data Supplement
+ 
+
+ HWX FTP processing:
+
+Publisher or provider deposits the content to HWX FTP space.
+File contains Content, Metadata and GO file directing HWX where to publish the content.
+ 
+
+We have FTP_WATCHER.pl job which run every 2 mins and checks all the FTP folder whether go.xml file is present in the directory, if the file is present then it will change the go.xml file to gone.xml.
+
+We have another job which moves the files to pre-intake space.
+
+ Technologies used are Perl, XSLT and Java.
+
+  
+
+Types of Phases:
+
+Pre-Intake
+Intake
+Processing
+Assembly
+Production
+Downstream/Dominos
+ 
+
+Pre-Intake:
+
+We have Perl modules which checks if the file is syntactically correct.
+Unzip archive files.
+Check page values.
+Copy files to internal or holding folder.
+Clear outs the FTP space.
+In this phase errors can be occurred only by the publisher.
+ 
+
+ In-Take:
+
+Copies all the files from Pre-Intake space.
+Inventory.xml -> Shows the current phase of the file.
+Dependencies.xml -> Organizes the XML, PDF and image files and also versioning of the files will take place in this phase.
+DOI -> Unique identity of the data
+Checks whether the same DOI is available in Intake space.
+ 
+
+ Processing:
+
+Intake space also called as Intact space or prod space or content space.
+Process peripheral files (covers, captions, etc.)
+Copies files to production space.
+During this process if there is any error then publisher will raise a salesforce ticket and we will get the request through Jira.
+ 
+
+ Assembly:
+
+In this process soft links of PDF will be created.
+Databases are populated, inter article relationships are created, citation links are added and TOC’s are built as appropriate.
+It creates some folders and files in the prod space.
+Intermediate files will be created.
+XSLT -> Multiple XSLT is available to validate the data.
+¨      In this process it transforms from one form to another.
+
+¨      Transforming to Transformed.
+
+Populates in highwire content stores.
+Builds article views.
+User intervention happens in this phase like Review/QA, Approvals.
+Publisher can decide whether the content should be published “without Approval” or after “Approval” or “After embargo with approval”. By default it is with out approval.
+ 
+
+Once all the processing is completed it puts the output files to atoms store / SASSFS.
+
+Content is available in the Atom store from assembly point onwards.
+
+ 
+
+Production:
+
+Once all the processing is completed then the files are placed in the production for the publisher to validate the content.
+
+High Wire team and publisher can see the article on publisher site by using the ddt credentials.
+
+Once publisher verifies the content then he/Drupal team can publish the content into internet.
+
+ 
+
+Release content
+Sync services
+Indexing for searching/discover
+ 
+
+Downstream/Dominos:
+
+We send mail to publisher that the article is published successfully.
+
+  
+
+HighWire Express (HWX) – UI:
+
+HWX UI Link
+
+HWX UI Demo Link
+
+It has its own access levels. HWX user accounts are established with one or more roles, which determines the level of functionality that will be available to that user.
+
+ 
+
+Content Processing:
+
+HWX shows a dashboard type view of all current content processing in the system.
+It shows all active content processing in the system.
+Broken down by major phases in processing.
+The current status of each content processing event is color-coded represents the status of the content at each phase.
+Colours will show success, warning, errors, user intervention, etc.
+Content types are grouped by types for better sorting, monitoring and review.
+PEID – Publication Event ID.
+ 
+
+Content Status:
+
+
+
+Skip to end of metadata
+Created by Naresh Kumar Singh, last modified on Sep 26, 2024
+Go to start of metadata
+Application	HOSTNAME	Culster	Publisher
+JCORE -FrontEnd	auto-drupal-prod-batch01.highwire.org	
+All
+JCORE -FrontEnd	auto-drupal-prod-batch02.highwire.org	
+All
+JCORE -FrontEnd	auto-drupal-prod-batch03.highwire.org	
+All
+JCORE -FrontEnd	auto-drupal-prod-content01.highwire.org	
+All
+JCORE -FrontEnd	auto-drupal-prod-content02.highwire.org	
+All
+JCORE -FrontEnd	auto-drupal-prod-varnish03.highwire.org	
+All
+JCORE -FrontEnd	auto-drupal-prod-varnish04.highwire.org	
+All
+JCORE -FrontEnd	auto-drupal-prod-web90.highwire.org	biorxiv production cluster	CSHL
+JCORE -FrontEnd	auto-drupal-prod-web91.highwire.org	biorxiv production cluster	CSHL
+JCORE -FrontEnd	auto-drupal-prod-web92.highwire.org	biorxiv production cluster	CSHL
+JCORE -FrontEnd	auto-drupal-prod-web93.highwire.org	biorxiv production cluster	CSHL
+JCORE -FrontEnd	auto-drupal-prod-web94.highwire.org	biorxiv production cluster	CSHL
+JCORE -FrontEnd	auto-drupal-prod-web95.highwire.org	biorxiv production cluster	CSHL
+JCORE -FrontEnd	auto-drupal-prod-web98.highwire.org	biorxiv production cluster	CSHL
+JCORE -FrontEnd	auto-drupal-prod-web28.highwire.org	BMJ.com Production cluster	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web29.highwire.org	BMJ.com Production cluster	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web40.highwire.org	BMJ.com Production cluster	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web41.highwire.org	BMJ.com Production cluster	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web42.highwire.org	BMJ.com Production cluster	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web97.highwire.org	BMJ.com Production cluster	BMJ
+JCORE -FrontEnd	fr-jcore-web-prod-05.highwire.org	JCore 7 Shared Production Cluster 01	UWP,ERS,CMA,ION,csirobk
+JCORE -FrontEnd	fr-jcore-web-prod-06.highwire.org	JCore 7 Shared Production Cluster 01	UWP,ERS,CMA,ION,csirobk
+JCORE -FrontEnd	fr-jcore-web-prod-07.highwire.org	JCore 7 Shared Production Cluster 01	UWP,ERS,CMA,ION,csirobk
+JCORE -FrontEnd	fr-jcore-web-prod-08.highwire.org	JCore 7 Shared Production Cluster 01	UWP,ERS,CMA,ION,csirobk
+JCORE -FrontEnd	auto-drupal-prod-web104.highwire.org	JCore 7 Shared Production Cluster 02	LSA,UWP,JRHEUM,SFN,RCGP,CCJOM,AARC,ASEV,
+JCORE -FrontEnd	auto-drupal-prod-web105.highwire.org	JCore 7 Shared Production Cluster 02	LSA,UWP,JRHEUM,SFN,RCGP,CCJOM,AARC,ASEV,
+JCORE -FrontEnd	auto-drupal-prod-web106.highwire.org	JCore 7 Shared Production Cluster 02	LSA,UWP,JRHEUM,SFN,RCGP,CCJOM,AARC,ASEV,
+JCORE -FrontEnd	auto-drupal-prod-web107.highwire.org	JCore 7 Shared Production Cluster 02	GSHP
+JCORE -FrontEnd	auto-drupal-prod-web108.highwire.org	JCore 7 Shared Production Cluster 03	GSHP,JSWC,ASPET,CFP,OCHJNL,AJNR,CGP,ISA,IIAR
+JCORE -FrontEnd	auto-drupal-prod-web109.highwire.org	JCore 7 Shared Production Cluster 03	GSHP,JSWC,ASPET,CFP,OCHJNL,AJNR,CGP,ISA,IIAR
+JCORE -FrontEnd	auto-drupal-prod-web110.highwire.org	JCore 7 Shared Production Cluster 03	GSHP,JSWC,ASPET,CFP,OCHJNL,AJNR,CGP,ISA,IIAR
+JCORE -FrontEnd	auto-drupal-prod-web111.highwire.org	JCore 7 Shared Production Cluster 03	GSHP,JSWC,ASPET,CFP,OCHJNL,AJNR,CGP,ISA,IIAR
+JCORE -FrontEnd	fr-jcore-web-prod-09.highwire.org	JCore 7 Shared Production Cluster 04	IJSS,JAAPL,UWP,WARC,ASCLS,AAFP,PDA,CBM
+JCORE -FrontEnd	fr-jcore-web-prod-10.highwire.org	JCore 7 Shared Production Cluster 04	IJSS,JAAPL,UWP,WARC,ASCLS,AAFP,PDA,CBM
+JCORE -FrontEnd	auto-drupal-prod-web117.highwire.org	JCore 7 Shared Production Cluster 04	IJSS,JAAPL,UWP,WARC,ASCLS,AAFP,PDA,CBM
+JCORE -FrontEnd	auto-drupal-prod-web118.highwire.org	JCore 7 Shared Production Cluster 04	IJSS,JAAPL,UWP,WARC,ASCLS,AAFP,PDA,CBM
+JCORE -FrontEnd	auto-drupal-prod-web01.highwire.org	Shared Production Cluster 01	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web02.highwire.org	Shared Production Cluster 01	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web03.highwire.org	Shared Production Cluster 01	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web04.highwire.org	Shared Production Cluster 01	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web05.highwire.org	Shared Production Cluster 01	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web06.highwire.org	Shared Production Cluster 01	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web16.highwire.org	Shared Production Cluster 01	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web17.highwire.org	Shared Production Cluster 01	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web18.highwire.org	Shared Production Cluster 02	BMJ,RSF
+JCORE -FrontEnd	auto-drupal-prod-web19.highwire.org	Shared Production Cluster 02	BMJ,RSF
+JCORE -FrontEnd	auto-drupal-prod-web20.highwire.org	Shared Production Cluster 02	BMJ,RSF
+JCORE -FrontEnd	auto-drupal-prod-web21.highwire.org	Shared Production Cluster 02	BMJ,RSF
+JCORE -FrontEnd	auto-drupal-prod-web22.highwire.org	Shared Production Cluster 02	BMJ,RSF
+JCORE -FrontEnd	auto-drupal-prod-web23.highwire.org	Shared Production Cluster 02	BMJ,RSF
+JCORE -FrontEnd	auto-drupal-prod-web24.highwire.org	Shared Production Cluster 02	BMJ,RSF
+JCORE -FrontEnd	auto-drupal-prod-web25.highwire.org	Shared Production Cluster 02	BMJ,RSF
+JCORE -FrontEnd	auto-drupal-prod-web32.highwire.org	Shared Production Cluster 03	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web33.highwire.org	Shared Production Cluster 03	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web34.highwire.org	Shared Production Cluster 03	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web35.highwire.org	Shared Production Cluster 03	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web36.highwire.org	Shared Production Cluster 03	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web37.highwire.org	Shared Production Cluster 03	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web38.highwire.org	Shared Production Cluster 03	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web39.highwire.org	Shared Production Cluster 03	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web44.highwire.org	Shared Production Cluster 04	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web45.highwire.org	Shared Production Cluster 04	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web46.highwire.org	Shared Production Cluster 04	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web47.highwire.org	Shared Production Cluster 04	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web48.highwire.org	Shared Production Cluster 04	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web49.highwire.org	Shared Production Cluster 04	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web50.highwire.org	Shared Production Cluster 04	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web51.highwire.org	Shared Production Cluster 04	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web52.highwire.org	Shared Production Cluster 05	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web53.highwire.org	Shared Production Cluster 05	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web54.highwire.org	Shared Production Cluster 05	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web55.highwire.org	Shared Production Cluster 05	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web56.highwire.org	Shared Production Cluster 05	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web57.highwire.org	Shared Production Cluster 05	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web58.highwire.org	Shared Production Cluster 05	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web59.highwire.org	Shared Production Cluster 05	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web12.highwire.org	Shared Production Cluster 06	BMJ, DEMO, ISHRS, RCPL,
+JCORE -FrontEnd	auto-drupal-prod-web13.highwire.org	Shared Production Cluster 06	BMJ, DEMO, ISHRS, RCPL,
+JCORE -FrontEnd	auto-drupal-prod-web14.highwire.org	Shared Production Cluster 06	BMJ, DEMO, ISHRS, RCPL,
+JCORE -FrontEnd	auto-drupal-prod-web15.highwire.org	Shared Production Cluster 06	BMJ, DEMO, ISHRS, RCPL,
+JCORE -FrontEnd	auto-drupal-prod-web60.highwire.org	Shared Production Cluster 06	BMJ, DEMO, ISHRS, RCPL,
+JCORE -FrontEnd	auto-drupal-prod-web61.highwire.org	Shared Production Cluster 06	BMJ, DEMO, ISHRS, RCPL,
+JCORE -FrontEnd	auto-drupal-prod-web62.highwire.org	Shared Production Cluster 06	BMJ, DEMO, ISHRS, RCPL,
+JCORE -FrontEnd	auto-drupal-prod-web63.highwire.org	Shared Production Cluster 06	BMJ, DEMO, ISHRS, RCPL,
+JCORE -FrontEnd	auto-drupal-prod-web43.highwire.org	Shared Production Cluster 07	BMJ, AJS
+JCORE -FrontEnd	auto-drupal-prod-web64.highwire.org	Shared Production Cluster 07	BMJ, AJS
+JCORE -FrontEnd	auto-drupal-prod-web65.highwire.org	Shared Production Cluster 07	BMJ, AJS
+JCORE -FrontEnd	auto-drupal-prod-web66.highwire.org	Shared Production Cluster 07	BMJ, AJS
+JCORE -FrontEnd	auto-drupal-prod-web67.highwire.org	Shared Production Cluster 07	BMJ, AJS
+JCORE -FrontEnd	auto-drupal-prod-web09.highwire.org	Shared Production Cluster 07	BMJ, AJS
+JCORE -FrontEnd	auto-drupal-prod-web10.highwire.org	Shared Production Cluster 07	BMJ, AJS
+JCORE -FrontEnd	auto-drupal-prod-web11.highwire.org	Shared Production Cluster 07	BMJ, AJS
+JCORE -FrontEnd	auto-drupal-prod-web68.highwire.org	Shared Production Cluster 08	BMJ, DEMO
+JCORE -FrontEnd	auto-drupal-prod-web69.highwire.org	Shared Production Cluster 08	BMJ, DEMO
+JCORE -FrontEnd	auto-drupal-prod-web70.highwire.org	Shared Production Cluster 08	BMJ, DEMO
+JCORE -FrontEnd	auto-drupal-prod-web71.highwire.org	Shared Production Cluster 08	BMJ, DEMO
+JCORE -FrontEnd	auto-drupal-prod-web72.highwire.org	Shared Production Cluster 08	BMJ, DEMO
+JCORE -FrontEnd	auto-drupal-prod-web73.highwire.org	Shared Production Cluster 08	BMJ, DEMO
+JCORE -FrontEnd	auto-drupal-prod-web74.highwire.org	Shared Production Cluster 08	BMJ, DEMO
+JCORE -FrontEnd	auto-drupal-prod-web75.highwire.org	Shared Production Cluster 08	BMJ, DEMO
+JCORE -FrontEnd	auto-drupal-prod-web76.highwire.org	Shared Production Cluster 09	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web77.highwire.org	Shared Production Cluster 09	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web78.highwire.org	Shared Production Cluster 09	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web79.highwire.org	Shared Production Cluster 09	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web80.highwire.org	Shared Production Cluster 09	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web81.highwire.org	Shared Production Cluster 09	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web82.highwire.org	Shared Production Cluster 09	BMJ
+JCORE -FrontEnd	auto-drupal-prod-web83.highwire.org	Shared Production Cluster 09	BMJ
+JCORE -FrontEnd_Infra	drupal-mobile-memcache01.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-mobile-memcache02.highwire.org	
+All
+JCORE -FrontEnd	drupal-prod-autobot01.highwire.org	
+BMJ
+JCORE -FrontEnd	drupal-prod-autobot-mysql01.highwire.org	
+BMJ
+JCORE -FrontEnd_Infra	drupal-prod-cm-1.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache01.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache02.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache03.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache12.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache14.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache15.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache16.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache17.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache18.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache19.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache20.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache21.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache22.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache23.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache24.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache25.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache26.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache28.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache29.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache30.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-jnl-memcache31.highwire.org	
+All
+JCORE -FrontEnd	drupal-prod-log1.highwire.org	
+All
+JCORE -FrontEnd	drupal-prod-mobile-batch.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-mobile-varnish01.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-mobile-varnish02.highwire.org	
+All
+JCORE -FrontEnd_Infra	drupal-prod-solr02.highwire.org	
+All
+JCORE -FrontEnd	fa-jcore-batch-prod-01.highwire.org	
+All
+JCORE -FrontEnd	fa-jcore-batch-prod-02.highwire.org	
+All
+Brill App, JCORE- FrontEnd	fa-redirect-aap.highwire.org	
+All
+JCORE-Service	fr-shibboleth-master-prod-01.highwire.org	
+All
+JCORE- Infra	thistle.highwire.org	
+All
+MYSQL server Details
+
+Application	DB server	Publisher
+Backend-Service - JCORE- MySQLDB	a4d-mysql-1.highwire.org	All
+Backend-Service - JCORE- MySQLDB	a4d-mysql-2.highwire.org	All
+Backend-Service - JCORE- MySQLDB	a4d-mysql-3.highwire.org	All
+Backend-Service - JCORE- MySQLDB	a4m-mysql-1.highwire.org	All
+Backend-Service - JCORE- MySQLDB	a4m-mysql-2.highwire.org	All
+Backend-Service - JCORE- MySQLDB	feeds-mysql-1.highwire.org	All
+Backend-Service - JCORE- MySQLDB	highwire-mysql-2.highwire.org	All
+Backend-Service - JCORE- MySQLDB	highwire-mysql-3.highwire.org	All
+Backend-Service - JCORE- MySQLDB	hw-global-user-mysql01.highwire.org	All
+Backend-Service - JCORE- MySQLDB	hw-url-map-mysql01.highwire.org	All
+Backend-Service - JCORE- MySQLDB	hw-url-map-mysql02.highwire.org	All
+Backend-Service - JCORE, Benchpress- SybaseDB	freakshow.highwire.org	All
+Backend-Service - JCORE, H10- MySQLDB	gu-ip-lookup-mysql.highwire.org	All
+Backend-Service - JCORE, H10- MySQLDB	gu-ip-lookup-mysql01.highwire.org	All
+Backend-Service - JCORE, H10- MySQLDB	gu-ip-lookup-mysql02.highwire.org	All
+Backend-Service - JCORE, H10- MySQLDB	gu-ip-lookup-mysql03.highwire.org	All
+Backend-Service - JCORE, H10- MySQLDB	gu-ip-lookup-mysql04.highwire.org	All
+Backend-Service - JCORE, Scolaris- CassandraDB	atomdb01.highwire.org	All
+Backend-Service - JCORE, Scolaris- CassandraDB	fa-atomlite-db-prod-01.highwire.org	All
+Backend-Service - JCORE, Scolaris- CassandraDB	fa-atomlite-db-prod-02.highwire.org	All
+Backend-Service - JCORE, Scolaris- CassandraDB	fa-atomlite-db-prod-03.highwire.org	All
+Backend-Service - JCORE, Scolaris- ElasticDB	fr-admin-elasticsearch-prod-01.highwire.org	All
+Backend-Service - JCORE, Scolaris- ElasticDB	fr-alerts-elasticsearch-prod-01.highwire.org	All
+Backend-Service - JCORE, Scolaris- ElasticDB	fr-embargo-elasticsearch-prod-01.highwire.org	All
+Backend-Service - JCORE, Scolaris- ElasticDB	fr-embargo-elasticsearch-prod-02.highwire.org	All
+Backend-Service - JCORE, Scolaris- MongoDB	mongo03.highwire.org	All
+Backend-Service - JCORE, Scolaris- MongoDB	mongo04.highwire.org	All
+Backend-Service - JCORE, Scolaris- MongoDB	mongo08.highwire.org	All
+Backend-Service - JCORE, Scolaris- MongoDB	mongo09.highwire.org	All
+Backend-Service - JCORE, Scolaris- MongoDB	mongo10.highwire.org	All
+Backend-Service - JCORE, Scolaris- MySQLDB	atomlite-db-prod-04.highwire.org	All
+Backend-Service - JCORE, Scolaris- MySQLDB	atomlite-db-prod-05.highwire.org	All
+Backend-Service - JCORE, Scolaris- MySQLDB	atomlite-db-prod-06.highwire.org	All
+Backend-Service - JCORE, Scolaris- MySQLDB	atomlite-db-qa-01.highwire.org	All
+Backend-Service - JCORE, Scolaris- MySQLDB	atomlite-db-qa-02.highwire.org	All
+Backend-Service - JCORE, Scolaris- MySQLDB	atomlite-db-qa-03.highwire.org	All
+Backend-Service - JCORE, Scolaris- MySQLDB	fr-alerts-mysql-prod-01.highwire.org	All
+Backend-Service - JCORE, Scolaris- MySQLDB	smart-mysql-prod01.highwire.org	All
+Backend-Service - JCORE, Scolaris- MySQLDB	smart-mysql-slave-prod01.highwire.org	All
+Backend-Service - JCORE-SybaseDB	alerts.highwire.org	All
+Content, Backend-Service - JCORE- MySQLDB	hw-reflinks-mysql01.highwire.org	All
+Content, Backend-Service - JCORE- SybaseDB ( Dev )	franconi.HighWire.ORG	All
+Content, Backend-Service - HWX JCORE- SybaseDB	montepython.highwire.org	All
+Content, Backend-Service - HWX JCORE- SybaseDB	ringmaster.highwire.org	All
+Content, Backend-Service - JCORE- SybaseDB ( Dev )	thumbelina.highwire.org	All
+Content, Backend-Service - HWX JCORE- SybaseDB	vulcanite.highwire.org	All
+Datawarehouse - JCORE, Scolaris- SybaseDB	alert-count.highwire.org	All
+JCORE- FrontEnd_MySQLDB	drupal-backup-mysql01.highwire.org	All
+JCORE- FrontEnd_MySQLDB	drupal-db-backup01.highwire.org	All
+JCORE- FrontEnd_MySQLDB	drupal-prod-jnl-mysql01.highwire.org	All
+JCORE- FrontEnd_MySQLDB	drupal-prod-jnl-mysql02.highwire.org	All
+JCORE- FrontEnd_MySQLDB	drupal-prod-jnl-mysql03.highwire.org	All
+JCORE- FrontEnd_MySQLDB	drupal-prod-jnl-mysql11.highwire.org	CSHL
+JCORE- FrontEnd_MySQLDB	drupal-prod-jnl-mysql18.highwire.org	BMJ
+JCORE- FrontEnd_MySQLDB	drupal-prod-jnl-mysql19.highwire.org	BMJ
+JCORE- FrontEnd_MySQLDB	drupal-prod-jnl-mysql-backup02.highwire.org	All
+JCORE- FrontEnd_MySQLDB	drupal-prod-jnl-mysql-backup03.highwire.org	All
+JCORE- FrontEnd_MySQLDB	drupal-prod-jnl-mysql-backup11.highwire.org	CSHL
+JCORE- FrontEnd_MySQLDB	drupal-prod-jnl-mysql-backup-18.highwire.org	BMJ
+JCORE- FrontEnd_MySQLDB	drupal-prod-jnl-mysql-backup-19.highwire.org	BMJ
+JCORE- FrontEnd_MySQLDB	drupal-prod-mobile-mysql01.highwire.org	All
+JCORE- FrontEnd_MySQLDB	fa-drupal-jnl-mysql-prod-01.highwire.org	All
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql20.highwire.org	BMJ
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql21.highwire.org	BMJ
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql22.highwire.org	BMJ
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql23.highwire.org	CMA,ION,UWP,ERS,UWP
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql24.highwire.org	SFN,JRHEUM,LSA,RCGP,AARC,ASEV,ASPET
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql25.highwire.org	CFP,GHSP,ISA,AJNR,IIAR,OCHJNL,JSWC
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql26.highwire.org	ANNALSFM,jaapl,jabfm,cbm,uwp,WARC,IJSS,PDA,ASCLS,CSHL,nathhealth,rsfjss,ccjom,JDH,psmmc,htfi,snm,snmmi
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql27.highwire.org	CSHL
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql-backup-20.highwire.org	BMJ
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql-backup-21.highwire.org	BMJ
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql-backup-22.highwire.org	BMJ
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql-backup-23.highwire.org	CMA,ION,UWP,ERS,UWP
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql-backup-24.highwire.org	SFN,JRHEUM,LSA,RCGP,AARC,ASEV,ASPET
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql-backup-25.highwire.org	CFP,GHSP,ISA,AJNR,IIAR,OCHJNL,JSWC
+JCORE- FrontEnd_MySQLDB	fa-drupal-prod-jnl-mysql-backup-26.highwire.org	ANNALSFM,jaapl,jabfm,cbm,uwp,WARC,IJSS,PDA,ASCLS,CSHL,nathhealth,rsfjss,ccjom,JDH,psmmc,htfi,snm,snmmi
+JCORE- MySQLDB	highwire-mysql-1.highwire.org	All
+
+
+API List
+
+HighWire API	api.highwire.org	http://api.highwire.org/content[/CORPUS/PATH]?parameters
+HighWire API	api.highwire.org	http://api.highwire.org/collection-member/CORPUS/PATH.atom?parameters
+HighWire API	api.highwire.org	http://api.highwire.org/opensearch/results?parameters
+HighWire API	api.highwire.org	http://api.highwire.org/authnz/CORPUS/PATH?parameters
+HighWire API	api.highwire.org	http://api.highwire.org/authnz/CORPUS/early/recent?parameters 
+HighWire API	api.highwire.org	http://api.highwire.org/content?doi=10.1136/bmj.d3949
+HighWire API	api.highwire.org	http://api.highwire.org/content?pmid=21712313&key=[provided key] 
+HighWire API	api.highwire.org	http://api.highwire.org/content/bmj/342/bmj.d3949.atom?key=[provided key] 
+HighWire API	api.highwire.org	http://api.highwire.org/content/bmjopen/1/1/e000006.abstract.html?key=[provided key] 
+HighWire API	api.highwire.org	http://api.highwire.org/content/bmjopen/1/1/e000006.full.html?key=[provided key] 
+HighWire API	api.highwire.org	http://api.highwire.org/content/bmjopen/1/1/e000006.full.pdf?key=[provided key] 
+HighWire API	api.highwire.org	http://api.highwire.org/opensearch/results?v=1&cql=bib.volume=16 and bib.issue=6&under=/injuryprev/&key=[provided key] (with URL encoding) 
+HighWire API	api.highwire.org	https://api.highwire.org/authnz/content/postgradmedj/88/1039/280.full.html?key=[supplied key]&context=postgradmedj&ip=171.66.232.30 
+HighWire API	api.highwire.org	http://api.highwire.org/key/details?key=[provided key]
+OpenSearch API	api-bmj.highwire.org	https://api-bmj.highwire.org/opensearch/results?v=1&count=50&start=1&cql=dc.collection=2676&under=jitc&key=d4c35d1c-7276-4c24-b845-78aabc14062c
+HIGHWIRE URL SASS	
+http://sass.highwire.org
+HIGHWIRE SASSFS INDEX URL	
+http://sassfs-index.highwire.org/nlm-pubid/
+HIGHWIRE MARKUP URL	
+http://markup.highwire.org/markup
+HIGHWIRE MARKUP V2 URL	
+http://new-markup-svc.highwire.org/display
+HIGHWIRE PP URL	
+http://powerpoint.highwire.org/slide
+HIGHWIRE SEARCH URL	
+http://searcher.highwire.org/search-basic
+HIGHWIRE SEARCH EXP URL	
+http://searcher.highwire.org/search-basic
+HIGHWIRE QBE SEARCH URL	
+http://searcher.highwire.org/search-similar
+HIGHWIRE PERSONALIZATION	
+http://personalization.highwire.org
+HIGHWIRE STATS URL	
+http://usage-stats.highwire.org/
+HIGHWIRE LINKS URL	
+http://links.highwire.org
+HIGHWIRE CROSSREFLINKS	
+http://links.highwire.org
+HIGHWIRE URL REF	
+http://links.highwire.org/externalref
+HIGHWIRE URL LINK RESOLVER	
+http://links.highwire.org/internal/resolve?resourceid=
+HIGHWIRE URL IJLINK	
+http://links.highwire.org/ijlinks
+HIGHWIRE CITED BY URL	
+http://cited-by.highwire.org/citing-articles
+HIGHWIRE META CONFIG	
+http://sitedata.highwire.org/lookup
+HIGHWIRE URL INSTBRANDING	
+http://instbranding.highwire.org
+HIGHWIRE URL COLLECTIONS	
+http://feeds.highwire.org/collection/
+HIGHWIRE URL IMAGE CONVERT	
+http://image.highwire.org/convert/cmaj/196/17.cover-source.tif?ext=jpg&width=360
+HIGHWIRE URL IMAGE INFO	
+http://image.highwire.org/identify
+HIGHWIRE URL LEGACYFS	
+http://legacyfs.highwire.org
+HIGHWIRE URL STATICFS	
+http://staticfs.highwire.org
+HIGHWIRE URL DOI	
+https://doi.org
+HIGHWIRE URL PDF EXTRACT	
+http://pdf.highwire.org/paged
+HIGHWIRE HOST LDAP DC1	
+hw-dc1-dc01.highwire.local
+HIGHWIRE HOST LDAP DC2	
+hw-dc1-dc02.highwire.local
+HIGHWIRE URL TFA	
+https://tfa.highwire/tfa
+HIGHWIRE ALERTS	
+http://alerts-app.highwire.org/alerts/user/nsingh@highwirepress.com
+HIGHWIRE OPEN ATHENS URL	
+https://openathens.highwire.org/initiate-login
+HIGHWIRE SHIB URL	
+http://services-ac.highwire.org:8080/cyclades/shibboleth
+HIGHWIRE ATOM COLLECTIONS URL	
+http://atom-collections.highwire.org
+HIGHWIRE RECOMMENDATIONS URL	
+http://recommendations.highwire.org
+HIGHWIRE URL SUBSCRIPTION	
+http://services-ac.highwire.org:8080/cyclades/subapi
+HIGHWIRE DOMINOS URL	
+http://dominos-event.highwire.org/event
+HIGHWIRE CONTENT SYNC SERVICE URL	
+http://content-sync.highwire.org:8080
+HIGHWIRE A4MARC	
+http://services-content.highwire.org:8080/cyclades/a4marc
+HIGHWIRE CCT JS URL	
+http://cct.highwire.org/widget/scripts/cct-widget.js
+HIGHWIRE CCT2 JS URL	
+//cct2.highwire.org/scripts/cct-widget.js
+HIGHWIRE DIRECT PUBLISHING URL	
+http://directpublishing.highwire.org
+HIGHWIRE CME URL	
+http://xsql-cme.highwire.org/
+HIGHWIRE URL LOGGING	
+http://services-api.highwire.org/log/save/book-service-log
+HIGHWIRE URL FOXY CATALOG	
+http://catalog-svc.highwire.org/catalog
+HIGHWIRE URL FOXY ECOMMERCE	
+http://ecommerce-svc.highwire.org/ecommerce
+HIGHWIRE USER PERSONIFY	
+http://services-ac.highwire.org/personify
+HIGHWIRE URL LENS	
+http://lens.highwire.org/source/
+HIGHWIRE DOMINOS EVENT PATH	
+http://dominos-event.highwire.org/event
+HIGHWIRE CCT SERVICE URL	
+http://services-content.highwire.org:8080/cyclades/ccts
+HIGHWIRE GSCHOLAR QUICK ABSTRACTS SERVICE URL	
+http://markup-svc-cache.highwire.org/data
+HIGHWIRE KPUSH URL	
+http://kpush.highwire.org
+HIGHWIRE ATOMLITE URL	
+https://atomlite-svc-pre.highwire.org
+A4D Extract Services	
+http://a4d-extract.highwire.org/policy/drupal-48/extract/<jcode>/<vol>/<issue>/<articleID>.atom
+A4D Mysql	a4d-mysql-1.highwire.org - Master	http://a4d-mysql-1.highwire.org:8080/ , http://a4d-mysql-1.highwire.org:8080/corpus/priority/ 
+A4D Mysql	a4d-mysql-2.highwire.org - Replica	 
+A4D Mysql	a4d-mysql-dev-1.highwire.org 	http://a4d-mysql-dev-1.highwire.org:8080/status
+A4F Reprocess content trough A4F	
+http://services-cms-dev-01.highwire.org/a4f?action=submit&uri=/csirobk/9781486306992.atom&republish=true
+A4F Reprocess content trough A4F	
+http://services-cms.highwire.org/a4f?action=submit&uri=/csirobk/9781486306992.atom&republish=true
+A4F properties	staticfs.highwire.org	http://staticfs.highwire.org/a4f/a4f.publishers.dev.json
+A4F properties	staticfs.highwire.org	http://staticfs.highwire.org/a4f/a4f.publishers.prod.json
+
+
+Skip to end of metadata
+Created by Naresh Kumar Singh, last modified on May 01, 2024
+Go to start of metadata
+Current MySQL Server: Centos 5 and MySQL version 5.5 
+
+drupal-prod-jnl-mysql13.highwire.org
+
+drupal-prod-jnl-mysql14.highwire.org
+
+New MySQL Server: Centos 7 and MySQL version 5.6
+
+fa-drupal-prod-jnl-mysql20.highwire.org
+
+fa-drupal-prod-jnl-mysql21.highwire.org
+
+fa-drupal-prod-jnl-mysql22.highwire.org
+
+1	BMJ.com	fa-drupal-prod-jnl-mysql18.highwire.org
+2	Biorxiv.org	fa-drupal-prod-jnl-mysql11.highwire.org
+3	BMJ Journals	
+fa-drupal-prod-jnl-mysql19.highwire.org
+
+fa-drupal-prod-jnl-mysql20.highwire.org
+
+fa-drupal-prod-jnl-mysql21.highwire.org
+
+fa-drupal-prod-jnl-mysql22.highwire.org
+
+4	Non BMJ Publishers	
+fa-drupal-prod-jnl-mysql23.highwire.org
+
+fa-drupal-prod-jnl-mysql24.highwire.org
+
+fa-drupal-prod-jnl-mysql25.highwire.org
+
+fa-drupal-prod-jnl-mysql26.highwire.org
+
+
+
+fa-drupal-prod-jnl-mysql27.highwire.org
+
+
+
+
+
+All BMJ Journals site list
+
+Primary URL	Cluster	MySQL Host
+mentalhealth.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql14.highwire.org
+journals.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql14.highwire.org
+openheart.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql14.highwire.org
+ep.bmj.com	shared_production_cluster_06	drupal-prod-jnl-mysql13.highwire.org
+drc.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql13.highwire.org
+lupus.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql14.highwire.org
+rmdopen.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql14.highwire.org
+ebn.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+fg.bmj.com	shared_production_cluster_05	drupal-prod-jnl-mysql14.highwire.org
+oem.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql13.highwire.org
+srh.bmj.com	shared_production_cluster_06	drupal-prod-jnl-mysql13.highwire.org
+bmjopenquality.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql14.highwire.org
+dtb.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+jrnms.bmj.com	shared_production_cluster_04	drupal-prod-jnl-mysql14.highwire.org
+pn.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql13.highwire.org
+spcare.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql13.highwire.org
+ebm.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql14.highwire.org
+jme.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql13.highwire.org
+militaryhealth.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+ejhp.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql13.highwire.org
+injuryprevention.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+qualitysafety.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql14.highwire.org
+gh.bmj.com	shared_production_cluster_05	drupal-prod-jnl-mysql14.highwire.org
+bmjopensem.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql13.highwire.org
+heartasia.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql13.highwire.org
+mh.bmj.com	shared_production_cluster_06	drupal-prod-jnl-mysql13.highwire.org
+innovations.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql14.highwire.org
+bmjopenrespres.bmj.com	shared_production_cluster_05	drupal-prod-jnl-mysql14.highwire.org
+svn.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql14.highwire.org
+mp.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql14.highwire.org
+tsaco.bmj.com	shared_production_cluster_05	drupal-prod-jnl-mysql14.highwire.org
+bmjleader.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql14.highwire.org
+bmjpaedsopen.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+bmjopengastro.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+considerations.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql14.highwire.org
+bmjophth.bmj.com	shared_production_cluster_02	drupal-prod-jnl-mysql14.highwire.org
+wjps.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql14.highwire.org
+nutrition.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql14.highwire.org
+gpsych.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql14.highwire.org
+fmch.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql14.highwire.org
+sit.bmj.com	shared_production_cluster_02	drupal-prod-jnl-mysql14.highwire.org
+informatics.bmj.com	shared_production_cluster_02	drupal-prod-jnl-mysql14.highwire.org
+neurologyopen.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+bmjmedicine.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql13.highwire.org
+bmjoncology.bmj.com	shared_production_cluster_05	drupal-prod-jnl-mysql14.highwire.org
+bmjpublichealth.bmj.com	shared_production_cluster_01	drupal-prod-jnl-mysql14.highwire.org
+fn.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql14.highwire.org
+jnis.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql14.highwire.org
+jech.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+jmg.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+emj.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql13.highwire.org
+pmj.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql13.highwire.org
+sti.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql13.highwire.org
+tobaccocontrol.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+ijgc.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql14.highwire.org
+rapm.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql14.highwire.org
+jitc.bmj.com	shared_production_cluster_02	drupal-prod-jnl-mysql14.highwire.org
+bjsm.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql13.highwire.org
+jcp.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+jnnp.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+thorax.bmj.com	shared_production_cluster_09	drupal-prod-jnl-mysql14.highwire.org
+heart.bmj.com	shared_production_cluster_03	drupal-prod-jnl-mysql13.highwire.org
+bjo.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql13.highwire.org
+adc.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+gut.bmj.com	shared_production_cluster_06	drupal-prod-jnl-mysql13.highwire.org
+casereports.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+bmjopen.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql14.highwire.org
+ard.bmj.com	shared_production_cluster_08	drupal-prod-jnl-mysql13.highwire.org
+Non BMJ Sites:
+
+SMART 	Domain	Publisher	DB Server
+ccjom_production	www.ccjm.org	Cleveland Clinic Journal of Medicine	drupal-prod-jnl-mysql03.highwire.org
+catalyst_production	www.asevcatalyst.org	American Society for Enology and Viticulture	drupal-prod-jnl-mysql04.highwire.org
+cmajopen_production_php7	www.cmajopen.ca	Canadian Medical Association	drupal-prod-jnl-mysql04.highwire.org
+cmajpn_production_php7	www.jpn.ca	Canadian Medical Association	drupal-prod-jnl-mysql04.highwire.org
+cjs_production_php7	www.canjsurg.ca	Canadian Medical Association	drupal-prod-jnl-mysql04.highwire.org
+htfi_production	www.ishrs-htforum.org	International Society of Hair Restoration Surgery	drupal-prod-jnl-mysql04.highwire.org
+pdajpst_production	journal.pda.org	Parenteral Drug Association	drupal-prod-jnl-mysql04.highwire.org
+jswc_php7_production	www.jswconline.org	Soil and Water Conservation Society	drupal-prod-jnl-mysql05.highwire.org
+cmaj_production_php7	www.cmaj.ca	Canadian Medical Association	drupal-prod-jnl-mysql06.highwire.org
+navi_prod_php7	navi.ion.org	Institute of Navigation	drupal-prod-jnl-mysql06.highwire.org
+ajnr_production_php7	www.ajnr.org	American Society of Neuroradiology	drupal-prod-jnl-mysql08.highwire.org
+cfp_phpproduction	www.cfp.ca	Canadian Family Physician	drupal-prod-jnl-mysql08.highwire.org
+eneuro_prod_php7	www.eneuro.org	Society for Neuroscience	drupal-prod-jnl-mysql08.highwire.org
+jaaplphp7_production	jaapl.org	American Academy of Psychiatry and The Law	drupal-prod-jnl-mysql09.highwire.org
+respcare_php7_production	rc.rcjournal.com	American Association for Respiratory Care	drupal-prod-jnl-mysql09.highwire.org
+ascls_production	clsjournal.ascls.org	American Society for Clinical Laboratory Science	drupal-prod-jnl-mysql09.highwire.org
+ersportal_prodphp7	www.ersjournals.com	European Respiratory Society	drupal-prod-jnl-mysql09.highwire.org
+breathe_prod_php7	breathe.ersjournals.com	European Respiratory Society	drupal-prod-jnl-mysql09.highwire.org
+erjor_prod_php7	openres.ersjournals.com	European Respiratory Society	drupal-prod-jnl-mysql09.highwire.org
+errev_prod_php7	err.ersjournals.com	European Respiratory Society	drupal-prod-jnl-mysql09.highwire.org
+ghsp_php7_production	www.ghspjournal.org	Johns Hopkins University Press	drupal-prod-jnl-mysql09.highwire.org
+lsa_2022_production_php7	www.life-science-alliance.org	Life Science Alliance	drupal-prod-jnl-mysql09.highwire.org
+asev_php7_production	www.ajevonline.org	American Society for Enology and Viticulture	drupal-prod-jnl-mysql10.highwire.org
+erj_prod_php7	erj.ersjournals.com	European Respiratory Society	drupal-prod-jnl-mysql10.highwire.org
+smj_production	smj.org.sa	Prince Sultan Military Medical City	drupal-prod-jnl-mysql10.highwire.org
+nsj_production	nsj.org.sa	Prince Sultan Military Medical City	drupal-prod-jnl-mysql10.highwire.org
+bjgpoa_production_php7	bjgpopen.org	Royal College of General Practitioners	drupal-prod-jnl-mysql10.highwire.org
+bjgp_production_php7	bjgp.org	Royal College of General Practitioners	drupal-prod-jnl-mysql10.highwire.org
+jrheum_2022_production_php7	www.jrheum.org	The Journal of Rheumatology Publishing Co., Ltd.	drupal-prod-jnl-mysql10.highwire.org
+jdenthyg_production	jdh.adha.org	American Dental Hygienists' Association	drupal-prod-jnl-mysql12.highwire.org
+nathealth_production	www.thenationshealth.org	American Public Health Association	drupal-prod-jnl-mysql12.highwire.org
+ijss_production	www.ijssurgery.com	International Journal of Spine Surgery	drupal-prod-jnl-mysql12.highwire.org
+invivo_production_php7	iv.iiarjournals.org	International Institute of Anticancer Research	drupal-prod-jnl-mysql15.highwire.org
+iiarjnls_production_php7	iiarjournals.org	International Institute of Anticancer Research	drupal-prod-jnl-mysql15.highwire.org
+cgp_production_php7	cgp.iiarjournals.org	International Institute of Anticancer Research	drupal-prod-jnl-mysql15.highwire.org
+anticanres_production_php7	ar.iiarjournals.org	International Institute of Anticancer Research	drupal-prod-jnl-mysql15.highwire.org
+rsfjss_production	www.rsfjournal.org	Russell Sage Foundation	drupal-prod-jnl-mysql15.highwire.org
+aspet_production_php7	aspetjournals.org	American Society for Pharmacology and Experimental Therapeutics	drupal-prod-jnl-mysql16.highwire.org
+dmd_production_php7	dmd.aspetjournals.org	American Society for Pharmacology and Experimental Therapeutics	drupal-prod-jnl-mysql16.highwire.org
+jpet_production_php7	jpet.aspetjournals.org	American Society for Pharmacology and Experimental Therapeutics	drupal-prod-jnl-mysql16.highwire.org
+molpharm_production_php7	molpharm.aspetjournals.org	American Society for Pharmacology and Experimental Therapeutics	drupal-prod-jnl-mysql16.highwire.org
+pharmrev_production_php7	pharmrev.aspetjournals.org	American Society for Pharmacology and Experimental Therapeutics	drupal-prod-jnl-mysql16.highwire.org
+jneuro_2022_production_php7	www.jneurosci.org	Society for Neuroscience	drupal-prod-jnl-mysql16.highwire.org
+annalsfm_php7_production	www.annfammed.org	American Academy of Family Physicians	drupal-prod-jnl-mysql17.highwire.org
+jabfp_php7_production	www.jabfm.org	American Board of Family Practice	drupal-prod-jnl-mysql17.highwire.org
+cbm_production_php7	www.cancerbiomed.org	China Anti-Cancer Association	drupal-prod-jnl-mysql17.highwire.org
+medrxiv_php7_production	www.medrxiv.org	Cold Spring Harbor Laboratory Press	drupal-prod-jnl-mysql17.highwire.org
+isa_production_php7	auf.isa-arbor.com	International Society of Arboriculture	drupal-prod-jnl-mysql17.highwire.org
+ochjnl_php7_production	www.ochsnerjournal.org	Ochsner Journal	drupal-prod-jnl-mysql17.highwire.org
+snmjournals_production	www.snmjournals.org	Society of Nuclear Medicine	drupal-prod-jnl-mysql17.highwire.org
+jnumed_production	jnm.snmjournals.org	Society of Nuclear Medicine	drupal-prod-jnl-mysql17.highwire.org
+jnmt_production	tech.snmjournals.org	Society of Nuclear Medicine	drupal-prod-jnl-mysql17.highwire.org
+wphopp_production_php7	hopp.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+wpgs_production_php7	gs.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+wpaeh_production_php7	aeh.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+wpjhr_production_php7	jhr.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+wpaa_production_php7	aa.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+wpnpj_production_php7	npj.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+wpm_production_php7	mon.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+wplj_production_php7	lj.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+wple_production_php7	le.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+wpcl_production_php7	cl.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+wper_production_php7	er.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+wplbr_production_php7	lbr.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+wpscs_production_php7	sca.uwpress.org	University of Wisconsin Press	drupal-prod-jnl-mysql17.highwire.org
+jadvertres_production_php7	www.journalofadvertisingresearch.com	World Advertising Research Center	drupal-prod-jnl-mysql17.highwire.org
+Upgrade Activity Steps:
+
+1- Create a new server by SYSTeam
+
+2- Stop content sync on current prod from SMART
+
+3- Take backup from current prod by DBA
+
+4- Restore backup DB with same DB name on new server by DBA 
+
+5- Update new DB server from SMART
+
+6-  Run build setting.php job from SMART
+
+7- Unit Testing
+
+8- Enable content sync
+
+9- QA do Sanity on prod and monitoring content sync process
+
+=====================================Upgraded List =============================================
+
+Epic :  QAS-1769 - Getting issue details... STATUS  
+
+
+
+BMJJ upgrade activity Tickets.
+
+1	21 March 2024	QAS-1770
+2	28 March 2024	QAS-1771
+3	04 April 2024	QAS-1783
+4	11 April 2024	QAS-1784
+5	18 April 2024	QAS-1785
+6	25 April 2024	QAS-1786
+Non BMJ sites:
+
+1	24-Apr-24	TEC-11
+2	2-May-24	TEC-12
+3	9-May-24	TEC-13
+4	16-May-24	TEC-14
+5	23-May-24	TEC-15
+6	30-May-24	TEC-16
+
+
+Skip to end of metadata
+Created by Yasas Karunatissa, last modified on Mar 09, 2021
+Go to start of metadata
+There are two ways in which XDPS events can be sent.
+
+First process
+
+If you are provided with a 'tar.gz' file then these can be sent in this order:
+
+An example of a 'tar.gz' file: clsysrev202102_semantico_20210226093237.tar.gz
+
+Firstly login to ISP home then SSH into the cochrane loader: hwsupport@cspbwgreclldr160x1
+The following is the curl you need to send with the 'tar.gz' file. Make sure to add the correct 'tar.gz' file name to the curl before sending it. (Marked in red) 
+curl -v -X POST -H "Content-type: application/json" -d '{"clientCode":"001","siteCode":"01","contentType":"CDSR","filePath":"sftp/ clsysrev202103_semantico_20210303143002.tar.gz", "frequency":"real-time"}' http://localhost:13110/import -u scolarisadmin@semantico.com:password
+Second process
+
+If you are not provided with the 'tar.gz' file and only been provided with the DOI for example: CD013309; then please follow the following steps.
+
+Firstly login to ISP home then SSH into the cochrane loader: hwsupport@cspbwgreclldr160x1
+Access the DB: sem-scolaris-loader-psql
+Enter the following SQL statement with the CD number like so (CD number marked in red)
+select bjep.job_execution_id as "ID",
+(select bjep1.date_val from batch_job_execution_params bjep1 where bjep.job_execution_id=bjep1.job_execution_id and bjep1.key_name='date') as "Date",
+(select bjep1.string_val from batch_job_execution_params bjep1 where bjep.job_execution_id=bjep1.job_execution_id and bjep1.key_name='filePrefix') as "DOI",
+(select bjep1.string_val from batch_job_execution_params bjep1 where bjep.job_execution_id=bjep1.job_execution_id and bjep1.key_name='contentPackage') as "Filename",
+(select bjep1.status from batch_job_execution bjep1 where bjep1.job_execution_id=bjep.job_execution_id) as "Status"
+from batch_job_execution_params bjep
+where bjep.string_val = 'CDSR/CD013309'
+order by "Date" desc;
+
+You will then be presented with a list of 'tar.gz' files in a table like so
+
+
+If the events are failing, on the table, under 'Status' the values will be shown as Failing. Copy the following failing 'tar.gz' files and follow the first process steps.
+
+For CCA articles
+
+If you are presented with a CCA, then please follow the steps below.
+
+Firstly login to ISP home then SSH into the cochrane loader: hwsupport@cspbwgreclldr160x1
+Get the tar.gz file for CCA and replace it with the value marked in red and substitute it.
+sem-scolaris-loader-action --action import --filepath /opt/semantico/slot/cl-loader/1/data/sftp/cca202103_semantico_20210303122035.tar.gz
+
+
+
+
+Skip to end of metadata
+Created by Suhasa H, last modified on Oct 25, 2023
+Go to start of metadata
+
+Solr Details:
+Current Solr version: 8.11
+
+Solr Install path: /solr/solr
+
+
+
+To update the Solr Config/Schema required git repo, Smat instance.
+
+Steps to update Solr config/Schema :
+
+Step 1: Update the changes in git repo.
+
+     - Solr files are kept in web/solr-conf folder (https://github.com/highwire/scolaris-site-mhe/tree/9.4.x-dev-b1/solr-conf).
+
+       This folder contains schema.xml, solrconfig.xml, solrcore.properties, solrconfig_extra.xml and many more files.
+
+       On the right branch click on the respective file and do the modification. Commit the changes on your branch.
+
+
+
+
+
+Step 2: Execute Provision Scolaris Apache Solr in Smart.
+
+    a) Once you update the git repo. Open the Smart instance and navigate to the execute job tab.
+
+https://smart.highwire.org/site/instance/mhe-d9-dev-newsite-profile/execute-jobs ( Currently working on Solr Team)
+
+
+
+
+
+ b) Find the "Provision Scolaris Apache Solr" and click on run to push the changes to the Solr server.
+
+
+
+
+
+Check the Jenkin job execution progress in the Recent Build tab. Click on Jenkin Build to view console output.
+
+
+
+
+
+ Success status indicates changes are successfully pushed to the Solr Server.
+
+
+
+Login to Solr Server:
+
+   By using SSH (putty) we can log in to the server. To do so required a VPN, and LDAP username and a password.
+
+
+
+
+
+
+
+Solr core will be created while creating the Smart instance. Solr core config path will be /opt/sites/<solrcore name>/site-repo/current/solr-conf.
+
+Ex: /opt/sites/scolaris-mhe_d9_dev_newsite_profile/site-repo/current/solr-conf
+
+
+
+Restart Solr core:
+
+    sudo service solr restart
+
+
+
+Drupal 9 Host and Instance: 
+
+
+
+Solr Host: fa-freebird-solr-dev-06.highwire.org
+Cluster: fa-freebird-web-dev-04.highwire.org
+
+
+
+Old Instance: 
+
+Smart Instance path: /opt/sites/scolaris-mhe_d9_dev_newsite_profile/site-repo/current/solr-conf (Expired)
+Smart Instance URL: https://smart.highwire.org/site/instance/mhe-d9-dev-newsite-profile
+
+Site URL (Old): http://scolaris-mhe-d9-dev-newsite-profile.fa-freebird-web-dev-04.highwire.org/ 
+
+
+
+New Instance :
+
+Smart Instance path: /opt/sites/scolaris-mhe_d9_dev_051023/site-repo/current/solr-conf
+Smart Instance URL: https://smart.highwire.org/site/instance/mhe-d9-dev-051023
+
+Site URL(New): http://scolaris-mhe-d9-dev-051023.fa-freebird-web-dev-04.highwire.org/
+
+
+
+Did you mean implementetion:
+
+Web : fa-freebird-web-dev-04.highwire.org
+Solr : fa-freebird-solr-dev-06.highwire.org
+File Path : /opt/sites/scolaris-mhe_d9_dev_25_10/site-repo/current/
+Solr Admin : http://fa-freebird-solr-dev-06.highwire.org:8983/solr/#/scolaris-mhe_d9_dev_25_10/core-overview
+Drupal Fronted : http://scolaris-mhe-d9-dev-25-10.fa-freebird-web-dev-04.highwire.org/
+Git branch : https://github.com/highwire/scolaris-site-mhe/tree/9.4.x-solr-spell-suggest
+Smart URL : https://smart.highwire.org/site/instance/mhe-d9-dev-25-10
+
+
+
+Repo :
+
+Site repo: https://github.com/highwire/scolaris-site-mhe/tree/9.4.x-solr-2023
+Freebird: https://github.com/highwire/freebird/tree/9.4.x-solr-2023
+HWPHP: https://github.com/highwire/hwphp/tree/9.4.x-release-2023
+Instance: http://scolaris-mhe-d9-dev-newsite-profile.fa-freebird-web-dev-04.highwire.org/
+
+
+
+Drupal 8 Repo : 
+
+https://github.com/highwire/scolaris-site-mhe/tree/solr-conf-compare/solr-conf  - Solr related file available in this folder.
+
+Schema: https://github.com/highwire/scolaris-site-mhe/blob/solr-conf-compare/solr-conf/schema.xml
+
+Conf: https://github.com/highwire/scolaris-site-mhe/blob/solr-conf-compare/solr-conf/solrconfig.xml 
+
+Properties: https://github.com/highwire/scolaris-site-mhe/blob/solr-conf-compare/solr-conf/solrcore.properties
+
+
+
+New dev instance (17-10-2023)
+
+
+
+
+D9 Dev Instance:
+Web : fa-freebird-web-dev-04.highwire.org
+Solr : fa-freebird-solr-dev-06.highwire.org
+File Path : /opt/sites/scolaris-mhe_d9_dev_051023/site-repo/current/
+Solr Admin : http://fa-freebird-solr-dev-06.highwire.org:8983/solr/#/scolaris-mhe_d9_dev_051023
+Drupal Fronted : http://scolaris-mhe-d9-dev-051023.fa-freebird-web-dev-04.highwire.org/
+Git branch : https://github.com/highwire/scolaris-site-mhe/tree/d9-solr-slope
+
+
+
+D8 Dev Instance:
+Web : fa-freebird-web-dev-01.highwire.org
+Solr : fr-freebird-solr-dev-01.highwire.org
+File Path : /opt/sites/scolaris-mhe_dev_solr_1310/site-repo/current/
+Solr Admin : http://fr-freebird-solr-dev-01.highwire.org:8983/solr/#/scolaris-mhe_dev_solr_1310
+Drupal Fronted : http://scolaris-mhe-dev-solr-1310.fa-freebird-web-dev-01.highwire.org/
+Git branch : https://github.com/highwire/scolaris-site-mhe/tree/solr-feature
+
+
+
+Solr Issue:
+Error / Error Message :
+
+[error]  Drupal\search_api_solr\SearchApiSolrException while indexing item entity:node/10544324:en: Solr endpoint http://fa-freebird-solr-dev-06.highwire.org:8983/ bad request (code: 400, body: Exception writing document id gp4t6m-mhe_index-entity:node/10544324:en to the index; possible analysis error: startOffset must be non-negative, and endOffset must be >= startOffset, and offsets must not go backwards startOffset=43507,endOffset=43514,lastStartOffset=43512 for field 'tm_fulltext', message: Solr HTTP error: OK (400)
+{
+  "responseHeader":{
+    "status":400,
+    "QTime":31},
+  "error":{
+    "metadata":[
+      "error-class","org.apache.solr.common.SolrException",
+      "root-error-class","java.lang.IllegalArgumentException"],
+    "msg":"Exception writing document id gp4t6m-mhe_index-entity:node/10544324:en to the index; possible analysis error: startOffset must be non-negative, and endOffset must be >= startOffset, and offsets must not go backwards startOffset=43507,endOffset=43514,lastStartOffset=43512 for field 'tm_fulltext'",
+    "code":400}}
+). in Drupal\search_api_solr\SolrConnector\SolrConnectorPluginBase->handleHttpException() (line 1048 of /opt/sites/scolaris-mhe_d9_dev_newsite_profile/site-repo/releases/20230905060041/web/modules/contrib/search_api_solr/src/SolrConnector/SolrConnectorPluginBase.php).
+
+
+
+Reference of Content atoms having this issue ?
+
+  Currently we are facing issue for 93 atom, Few are below, List will be shared over the slack.   
+
+/mheaeworks/book/9780070604605/chapter/chapter5.atom
+/mheaeworks/book/9780071603171/chapter/chapter16.atom
+/mheaeworks/book/9780071498913/chapter/chapter3.atom
+/mheaeworks/book/9780070681675/chapter/chapter3.atom
+
+When you getting this error ?
+
+  When we perform the content loading on the instance which also do the indexing with SOLR. To load the content, we use the below drush command.
+
+
+
+drush hw-la --walk-children --no-queue /mheaeworks/book/9780070604605/chapter/chapter5.atom
+drush hw-la --walk-children --no-queue /mheaeworks/book/9780071603171/chapter/chapter16.atom
+drush hw-la --walk-children --no-queue /mheaeworks/book/9780071498913/chapter/chapter3.atom
+drush hw-la --walk-children --no-queue /mheaeworks/book/9780070681675/chapter/chapter3.atom
+drush hw-la --walk-children --no-queue /mheaeworks/book/9780071384216/chapter/chapter24.atom
+
+What is the impact of this error ?
+
+   Due to this error solr will not index the content (chapter,book). This will affect the search functionolity.  
+
+Screenshot of error:
+
+
+
+
+
+Content of in the atom/Chapter:
+
+https://sassfs.highwire.org/mheaeworks/book/9780070604605/chapter/chapter5.atom
+
+https://sassfs.highwire.org/mheaeworks/book/9780071603171/chapter/chapter16.atom
+
+https://sassfs.highwire.org/mheaeworks/book/9780071384216/chapter/chapter24.atom
+
+
+
+How to setup Smart Video :
+
+video_kt_session_2: 
+
+https://adimps-my.sharepoint.com/personal/psharma_highwirepress_com/_layouts/15/stream.aspx?id=%2Fpersonal%2Fpsharma%5Fhighwirepress%5Fcom%2FDocuments%2FOnboarding%20KT%20Session%2Fvideo%5Fkt%5Fsession%5F2%2Emp4&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZyIsInJlZmVycmFsQXBwUGxhdGZvcm0iOiJXZWIiLCJyZWZlcnJhbE1vZGUiOiJ2aWV3In19&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZyIsInJlZmVycmFsQXBwUGxhdGZvcm0iOiJXZWIiLCJyZWZlcnJhbE1vZGUiOiJ2aWV3In19&ga=1
+
+video_kt_session_3:
+
+https://adimps-my.sharepoint.com/personal/psharma_highwirepress_com/_layouts/15/stream.aspx?id=%2Fpersonal%2Fpsharma%5Fhighwirepress%5Fcom%2FDocuments%2FOnboarding%20KT%20Session%2Fvideo%5Fkt%5Fsession%5F3%2Emp4&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZyIsInJlZmVycmFsQXBwUGxhdGZvcm0iOiJXZWIiLCJyZWZlcnJhbE1vZGUiOiJ2aWV3In19&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZyIsInJlZmVycmFsQXBwUGxhdGZvcm0iOiJXZWIiLCJyZWZlcnJhbE1vZGUiOiJ2aWV3In19&ga=1
+
+
+
+
+
+
+
+Viewing some content item gives blank page with error (The website encountered an unexpected error. Please try again later.)
+Skip to end of metadata
+Created by sharique husain on Jan 14, 2022
+Go to start of metadata
+Sometime for some of the content item we get blank page with error (The website encountered an unexpected error. please try again later.) as shown below. But other pages of the site is working correctly.
+
+
+
+It may be the cause of some of the settings not entered/correct in your settings.php file in Smart, like Sigma, Foxycart, Content and Client Settings. 
+
+To resolve the issue, correct the above entries in your settings.php file in Smart and execute the job (Build Site (Scolaris)).
+
+Refresh the page and the issue could be resolved.
+
+Weekly report for SAMS Journal OUP acc > 4000 subs on Every Monday-Manual Process
+Skip to end of metadata
+Created by Hariom Upadhyay, last modified by Sarat Mohanty on Jul 26, 2021
+Go to start of metadata
+Please note - HW system team has automated the mailer sending process, thus Manual processing is stopped since 19th July-2021.
+
+
+
+
+
+Reference SF ticket: 01176652
+
+
+
+To check the file on cspoupsam30x1:
+
+1. Open cmd and ssh to the isphome01a server
+ssh hwsupport@isphome01a.highwire.local
+
+2.Then need to ssh to cspoupsam30x1 server
+ssh cspoupsam30x1.ext.dyn.semcs.net
+
+3.Go to the below path
+cd /opt/semantico/data/reports/output
+
+4. ls -l OUP4000SUBS.csv and verify the latest file is generated
+
+
+
+To send OUP4000SUBS.csv every Monday follow the below steps 
+
+1. Open cmd and ssh to the isphome01a server
+ssh hwsupport@isphome01a.highwire.local
+
+2. Run scp and it will copy the file "OUP4000SUBS.csv" from cspoupsam30x1 (/opt/semantico/data/reports/output/) to isphome (/home.local/hwsupport)
+
+scp hwsupport@cspoupsam30x1.ext.dyn.semcs.net:/opt/semantico/data/reports/output/OUP4000SUBS.csv .
+
+3. Run ls -l and verify the file is the latest (today's date)
+
+4. Get the file OUP4000SUBS.csv on your local from the one recently copied to /home.local/hwsupport via WinSCP or Filezilla
+
+5. Via Salesforce send an email to "cogplatformlamp@oup.com"
+
+
+
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

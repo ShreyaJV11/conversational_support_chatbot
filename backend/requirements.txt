@@ -11,3 +11,9 @@ pgvector
 pgvector[psycopg2]
 PyJWT
 redis 
+beautifulsoup4
+langchain-core
+pytesseract
+Pillow
+pymupdf
+python-pptx

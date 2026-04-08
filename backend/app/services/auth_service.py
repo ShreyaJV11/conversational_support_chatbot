@@ -1,12 +1,17 @@
 import jwt
 import time
+import os
 from datetime import datetime, timedelta
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from app.core.redis_config import redis_client
 
-SECRET_KEY = "k3J9@xP!92kLm#Q7zA1$D5"
+# Load JWT secret from environment variable
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("JWT_SECRET_KEY must be set in .env file")
+    
 ALGORITHM = "HS256"
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")

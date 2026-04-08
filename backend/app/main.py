@@ -18,7 +18,10 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------
 # SECURITY CONFIGURATION (Load from .env in production)
 # ---------------------------------------------------------
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "k3J9@xP!92kLm#Q7zA1$D5")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("JWT_SECRET_KEY must be set in .env file")
+    
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "highwire123")
 ALGORITHM = "HS256"

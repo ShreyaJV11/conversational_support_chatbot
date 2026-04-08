@@ -14,6 +14,18 @@ interface DetailDropdownProps {
 
 const DetailDropdown: React.FC<DetailDropdownProps> = ({ content }) => {
   const [open, setOpen] = useState(false);
+  
+  // Extract images from content
+  const imageRegex = /\[IMAGE_REF:(https?:\/\/[^\]]+)\]/g;
+  const images: string[] = [];
+  let match;
+  while ((match = imageRegex.exec(content)) !== null) {
+    images.push(match[1]);
+  }
+  
+  // Remove image markers from text content
+  const textContent = content.replace(imageRegex, '').trim();
+  
   return (
     <div className="mt-2">
       <button
@@ -25,8 +37,23 @@ const DetailDropdown: React.FC<DetailDropdownProps> = ({ content }) => {
       {open && (
         <div className="mt-1 text-sm prose prose-slate max-w-none border-l-2 border-gray-200 pl-2">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {content}
+            {textContent}
           </ReactMarkdown>
+          {images.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {images.map((url, idx) => (
+                <img
+                  key={idx}
+                  src={url}
+                  alt={`Reference ${idx + 1}`}
+                  className="max-w-full rounded border border-gray-200 shadow-sm"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -51,15 +78,27 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   // Split short and detailed answers
   let shortAnswer = message.content;
   let detailedAnswer = '';
+  const shortImages: string[] = [];
+  
   if (isBot && message.content.includes('DETAILED_ANSWER:')) {
     const parts = message.content.split('DETAILED_ANSWER:');
     shortAnswer = parts[0].replace('SHORT_ANSWER:', '').trim();
     detailedAnswer = parts[1].trim();
   }
+  
+  // Extract images from short answer
+  const imageRegex = /\[IMAGE_REF:(https?:\/\/[^\]]+)\]/g;
+  let match;
+  while ((match = imageRegex.exec(shortAnswer)) !== null) {
+    shortImages.push(match[1]);
+  }
+  
+  // Remove image markers from short answer text
+  shortAnswer = shortAnswer.replace(imageRegex, '').trim();
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 animate-fade-in`}>
-      <div className={`flex max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start gap-2`}>
+      <div className={`flex ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start gap-2`}>
 
         {/* Avatar */}
         <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${
@@ -70,14 +109,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
         {/* Message Container */}
         <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
-          <div className={`px-4 py-2 rounded-2xl shadow-sm ${
+          <div className={`px-4 py-2 rounded-2xl shadow-sm break-words ${
             isUser
               ? 'bg-emerald-600 text-white rounded-tr-none'
               : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'
           }`}>
 
             {/* SHORT_ANSWER */}
-            <div className="text-sm leading-relaxed prose prose-slate max-w-none">
+            <div className="text-sm leading-relaxed prose prose-slate max-w-none overflow-wrap-anywhere">
               {isBot ? (
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
@@ -86,15 +125,33 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                     ol: ({node, ...props}) => <ol className="list-decimal ml-4 my-2" {...props} />,
                     li: ({node, ...props}) => <li className="mb-1" {...props} />,
                     strong: ({node, ...props}) => <span className="font-bold text-indigo-900" {...props} />,
-                    a: ({node, ...props}) => <a className="text-blue-600 underline" target="_blank" rel="noreferrer" {...props} />
+                    a: ({node, ...props}) => <a className="text-blue-600 underline break-all" target="_blank" rel="noreferrer" {...props} />
                   }}
                 >
                   {shortAnswer}
                 </ReactMarkdown>
               ) : (
-                <p className="whitespace-pre-wrap">{shortAnswer}</p>
+                <p className="whitespace-pre-wrap break-words">{shortAnswer}</p>
               )}
             </div>
+
+            {/* Images in SHORT_ANSWER */}
+            {isBot && shortImages.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {shortImages.map((url, idx) => (
+                  <img
+                    key={idx}
+                    src={url}
+                    alt={`Reference ${idx + 1}`}
+                    className="max-w-full rounded border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => window.open(url, '_blank')}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* DETAILED_ANSWER Dropdown */}
             {isBot && detailedAnswer && <DetailDropdown content={detailedAnswer} />}

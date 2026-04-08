@@ -1,19 +1,75 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query
-from app.services.ingestion_service import ingest_file
-from app.services.bot_service import get_bot_config
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query, Body
 import shutil
 import os
+import re
+import requests
+import uuid
 from datetime import datetime
-from typing import Optional
+from pydantic import BaseModel
+from bs4 import BeautifulSoup
 
-# Router prefix set once for admin tasks
+from app.services.ingestion_service import ingest_file
+from app.services.bot_service import get_bot_config
+
+# Router prefix only once
 router = APIRouter(prefix="/admin")
 
 BASE_UPLOAD_DIR = "uploads"
 os.makedirs(BASE_UPLOAD_DIR, exist_ok=True)
 
-# 🚀 UPGRADE: Support for codebase and documentation file types
-ALLOWED_EXTENSIONS = {".txt", ".py", ".js", ".ts", ".java", ".cpp", ".md"}
+# 🔥 Define allowed extensions matching your ingest_file configuration
+ALLOWED_EXTENSIONS = {
+    # Text formats
+    ".txt", ".md", ".json", ".yaml", ".yml",
+    # Document formats
+    ".pdf", ".docx", ".pptx",
+    # Spreadsheet formats
+    ".xlsx", ".xls", ".csv",
+    # Web formats
+    ".html", ".htm",
+    # Image formats (with OCR)
+    ".png", ".jpg", ".jpeg"
+}
+
+
+# ==========================================================
+# PYDANTIC MODELS
+# ==========================================================
+
+class FetchUrlRequest(BaseModel):
+    url: str
+    bot_id: int
+
+
+# ==========================================================
+# HELPER FUNCTIONS
+# ==========================================================
+
+def sanitize_filename(filename: str) -> str:
+    """
+    Sanitize filename to prevent path traversal attacks.
+    Removes directory separators and keeps only safe characters.
+    """
+    # Get just the basename (removes any path components)
+    filename = os.path.basename(filename)
+    
+    # Remove any remaining path separators
+    filename = filename.replace('/', '').replace('\\', '')
+    
+    # Keep only alphanumeric, dots, hyphens, and underscores
+    filename = re.sub(r'[^\w\.\-]', '_', filename)
+    
+    # Prevent hidden files
+    if filename.startswith('.'):
+        filename = '_' + filename
+    
+    # Limit length
+    if len(filename) > 255:
+        name, ext = os.path.splitext(filename)
+        filename = name[:250] + ext
+    
+    return filename
+
 
 # ==========================================================
 # LIST KB FILES (Bot Scoped)
@@ -26,85 +82,190 @@ def list_kb_files(bot_id: int):
 
     files_data = []
 
-    if os.path.exists(bot_upload_dir):
-        for filename in os.listdir(bot_upload_dir):
-            file_path = os.path.join(bot_upload_dir, filename)
+    for filename in os.listdir(bot_upload_dir):
+        file_path = os.path.join(bot_upload_dir, filename)
 
-            if os.path.isfile(file_path):
-                files_data.append({
-                    "name": filename,
-                    "uploaded": datetime.fromtimestamp(
-                        os.path.getctime(file_path)
-                    ).isoformat(),
-                    "status": "Processed"
-                })
+        if os.path.isfile(file_path):
+            files_data.append({
+                "name": filename,
+                "uploaded": datetime.fromtimestamp(
+                    os.path.getctime(file_path)
+                ).isoformat(),
+                "status": "Processed"
+            })
 
     return files_data
 
 
 # ==========================================================
-# UPLOAD KNOWLEDGE BASE FILE (Enterprise Upgraded)
+# UPLOAD KNOWLEDGE BASE FILE (WITH SECURITY IMPROVEMENTS)
 # ==========================================================
 
 @router.post("/upload-kb")
 async def upload_kb(
     bot_id: int = Query(...),
-    file: UploadFile = File(...),
-    # 🚀 UPGRADE: Parameters to support Source Attribution and Routing
-    source_system: str = Query("manual_upload", description="e.g., github, confluence, jira"),
-    source_url: str = Query("", description="The direct link for citations"),
-    is_verified: bool = Query(True, description="Mark as official company documentation")
+    file: UploadFile = File(...)
 ):
-
     bot_config = get_bot_config(str(bot_id))
 
     if not bot_config:
         raise HTTPException(status_code=404, detail="Invalid bot_id")
 
-    # 🚀 UPGRADE: Validate against the expanded allowed list
-    file_ext = os.path.splitext(file.filename)[1].lower()
-    if file_ext not in ALLOWED_EXTENSIONS:
+    # 1️⃣ SANITIZE FILENAME (prevent path traversal)
+    safe_filename = sanitize_filename(file.filename)
+    
+    if not safe_filename or safe_filename == '_':
         raise HTTPException(
             status_code=400,
-            detail=f"File type {file_ext} not supported. Allowed: {list(ALLOWED_EXTENSIONS)}"
+            detail="Invalid filename"
         )
 
-    contents = await file.read()
+    # 2️⃣ Check File Extension securely
+    _, ext = os.path.splitext(safe_filename.lower())
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type {ext}. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
 
-    # Max 5MB check
+    # 3️⃣ Check File Size (Max 5MB)
+    contents = await file.read()
     if len(contents) > 5 * 1024 * 1024:
         raise HTTPException(
             status_code=400,
             detail="File too large (max 5MB)"
         )
+    await file.seek(0)  # Reset pointer after reading for size check
 
-    await file.seek(0)
-
-    # Scoped upload directory per bot
+    # 4️⃣ Save File Locally with sanitized name
     bot_upload_dir = os.path.join(BASE_UPLOAD_DIR, str(bot_id))
     os.makedirs(bot_upload_dir, exist_ok=True)
+    
+    # Use sanitized filename
+    file_path = os.path.join(bot_upload_dir, safe_filename)
+    
+    # Verify the path is still within the upload directory (extra safety)
+    real_upload_dir = os.path.realpath(bot_upload_dir)
+    real_file_path = os.path.realpath(file_path)
+    
+    if not real_file_path.startswith(real_upload_dir):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file path detected"
+        )
 
-    file_path = os.path.join(bot_upload_dir, file.filename)
-
-    # Save file locally
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # 🚀 UPGRADE: Passing metadata into the ingestion service
-    # This ensures the DB stores the correct 'category' and 'source_url'
-    result = ingest_file(
-        file_path=file_path,
-        bot_id=bot_id,
-        source_system=source_system,
-        source_url=source_url,
-        is_verified=is_verified,
-        ingest_config=bot_config.get("ingest_config", {})
-    )
+    # 5️⃣ Trigger Multi-Format Ingestion
+    try:
+        result = ingest_file(
+            file_path=file_path,
+            bot_id=bot_id, 
+            ingest_config=bot_config.get("ingest_config", {})
+        )
+    except Exception as e:
+        # Catch ingestion errors (e.g. corrupt PDF) and return to frontend
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
 
     return {
-        "message": "File processed and indexed",
+        "message": "File successfully processed and embedded.",
         "file_name": result.get("file_name"),
-        "category": result.get("category"),  # Will show 'codebase' or 'support'
+        "category": result.get("category", "general"),
         "chunks_inserted": result.get("chunks_inserted", 0),
         "chunks_skipped": result.get("chunks_skipped", 0)
     }
+
+
+
+# ==========================================================
+# FETCH CONTENT FROM URL
+# ==========================================================
+
+@router.post("/fetch-url")
+async def fetch_url(request: FetchUrlRequest):
+    """
+    Fetch content from a URL and add it to the knowledge base.
+    Supports HTML pages, documentation sites, articles, etc.
+    """
+    bot_config = get_bot_config(str(request.bot_id))
+
+    if not bot_config:
+        raise HTTPException(status_code=404, detail="Invalid bot_id")
+
+    # Validate URL
+    if not request.url.startswith(('http://', 'https://')):
+        raise HTTPException(
+            status_code=400,
+            detail="URL must start with http:// or https://"
+        )
+
+    try:
+        # Fetch content from URL
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        response = requests.get(request.url, headers=headers, timeout=30)
+        response.raise_for_status()
+
+        # Check content type
+        content_type = response.headers.get('content-type', '').lower()
+        
+        if 'text/html' not in content_type and 'text/plain' not in content_type:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported content type: {content_type}. Only HTML and text pages are supported."
+            )
+
+        # Generate unique filename
+        url_hash = str(uuid.uuid4().hex[:8])
+        safe_filename = f"url_{url_hash}.html"
+
+        # Save content to file
+        bot_upload_dir = os.path.join(BASE_UPLOAD_DIR, str(request.bot_id))
+        os.makedirs(bot_upload_dir, exist_ok=True)
+        file_path = os.path.join(bot_upload_dir, safe_filename)
+
+        # Save HTML content
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(response.text)
+
+        # Ingest the file
+        result = ingest_file(
+            file_path=file_path,
+            bot_id=request.bot_id,
+            ingest_config=bot_config.get("ingest_config", {})
+        )
+
+        return {
+            "message": "URL content successfully fetched and indexed.",
+            "url": request.url,
+            "file_name": safe_filename,
+            "category": result.get("category", "general"),
+            "chunks_inserted": result.get("chunks_inserted", 0),
+            "chunks_skipped": result.get("chunks_skipped", 0)
+        }
+
+    except requests.exceptions.Timeout:
+        raise HTTPException(
+            status_code=408,
+            detail="Request timeout. The URL took too long to respond."
+        )
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(
+            status_code=503,
+            detail="Connection error. Could not reach the URL."
+        )
+    except requests.exceptions.HTTPError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"HTTP error: {e.response.status_code} - {e.response.reason}"
+        )
+    except Exception as e:
+        # Clean up file on error
+        if 'file_path' in locals() and os.path.exists(file_path):
+            os.remove(file_path)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch URL: {str(e)}"
+        )

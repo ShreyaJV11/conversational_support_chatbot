@@ -157,8 +157,8 @@ def process_emails() -> dict:
             # --- LLM Answer ---
             answer_parts = []
             try:
-                for chunk in get_answers([], context, user_query):
-                    answer_parts.append(chunk)
+                for token in get_answers([], context, user_query):
+                    answer_parts.append(token)
             except Exception as e:
                 logger.error(f"LLM error: {e}")
 

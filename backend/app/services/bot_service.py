@@ -9,8 +9,8 @@ def get_bot_config(bot_id: int):
         "memory_limit": 6,
         "retriever_config": {},
         "llm_config": {
-            "repo_id": "HuggingFaceH4/zephyr-7b-beta",
+            "repo_id": "llama-3.1-8b-instant",  # Fixed: GROQ model name
             "temperature": 0.0,
-            "max_new_tokens": 200
+            "max_new_tokens": 2048  # Increased for better responses
         }
     }

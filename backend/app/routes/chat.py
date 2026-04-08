@@ -9,14 +9,7 @@ import json
 from app.services.auth_service import verify_jwt_token, check_rate_limit, create_jwt_token
 from app.services.salesforce_service import create_salesforce_case
 from app.services.retrieval_service import retrieve_chunks
-# 🚀 UPGRADE: Imported semantic_query_router
-from app.services.llm_service import (
-    get_answers, 
-    detect_ticket_intent, 
-    rewrite_query, 
-    detect_category,
-    semantic_query_router
-)
+from app.services.llm_service import get_answers, detect_ticket_intent, rewrite_query, detect_category
 from app.services.suggestion_service import get_suggestions
 from app.services.memory_service import (
     get_or_create_user,
@@ -425,14 +418,9 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
         # Rewrite query to resolve pronouns ("it", "they", etc.) before retrieval
         standalone_query = rewrite_query(request.user_question, history_dicts)
 
-        # 🚀 UPGRADE 1: Classify Query (Support vs Codebase)
-        target_category = semantic_query_router(standalone_query)
-
-        # 🚀 UPGRADE 2: Pass Target Category to Retriever
         chunks, is_domain = retrieve_chunks(
             user_query=standalone_query,
             bot_id=request.bot_id,
-            target_category=target_category,
             chat_history=history_rows,
             bot_config=bot_config.get("retriever_config", {})
         )
@@ -460,49 +448,39 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
                 headers={"X-Suggestions": suggestions_json}
             )
 
+        context_text = "\n".join(chunks)
+
         # ── LLM RESPONSE ──────────────────────────────────────────────────────
 
-        # Run LLM before opening the stream so suggestions can be computed from
-        # the actual answer and placed in the header — never embedded in the body.
-        tokens = await asyncio.to_thread(
-            lambda: list(
-                get_answers(
-                    history_dicts,
-                    chunks, # 🚀 UPGRADE 3: Pass raw List of Dicts, NOT joined text
-                    standalone_query,
-                    bot_config.get("llm_config", {})
-                )
-            )
-        )
-        full_answer = "".join(tokens)
-
-        short_answer, detailed_answer = split_short_detailed(full_answer)
-        final_answer = (
-            f"{short_answer}\n\n{detailed_answer}"
-            if detailed_answer
-            else short_answer
-        )
-
-        # Suggestions are query-aware and go ONLY in the X-Suggestions header
-        query_suggestions = _get_query_based_suggestions(
-            request.bot_id,
-            standalone_query,
-            full_answer
-        )
-
-        save_message(conversation_id, "assistant", full_answer, category)
-
-        async def stream_wrapper():
-            for char in final_answer:
-                yield char
-                await asyncio.sleep(0.003)
+        # Stream tokens directly from LLM with proper async handling
+        def stream_llm_response():
+            full_answer = ""
+            
+            # Stream each token as it's generated
+            for token in get_answers(
+                history_dicts,
+                context_text,
+                standalone_query,
+                bot_config.get("llm_config", {})
+            ):
+                full_answer += token
+                yield token.encode('utf-8')
+            
+            # Save the complete answer after streaming
+            save_message(conversation_id, "assistant", full_answer, category)
 
         return StreamingResponse(
-            stream_wrapper(),
+            stream_llm_response(),
             media_type="text/plain",
             headers={
                 "X-Accel-Buffering": "no",
-                "X-Suggestions": json.dumps(query_suggestions),
+                "X-Suggestions": json.dumps(
+                    _get_query_based_suggestions(
+                        request.bot_id,
+                        standalone_query,
+                        ""  # Empty for now, suggestions will be generic
+                    )
+                ),
             }
         )
 

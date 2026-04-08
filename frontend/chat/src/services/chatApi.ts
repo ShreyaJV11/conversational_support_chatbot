@@ -11,7 +11,6 @@ class ChatApiService {
   private sessionId: string;
   private userInfo?: { name: string; email: string };
   private authToken?: string;
-
   private botId?: number;
   private organizationId?: string;
 
@@ -25,7 +24,6 @@ class ChatApiService {
     this.baseUrl = baseUrl.replace(/\/$/, "");
     this.botId = botId;
     this.organizationId = organizationId;
-
     this.sessionId = sessionId || this.generateSessionId();
     this.authToken = localStorage.getItem("chat_token") || undefined;
   }
@@ -42,7 +40,8 @@ class ChatApiService {
 
   async sendMessage(
     request: ChatRequest | string,
-    onChunk: (text: string, suggestions?: string[]) => void
+    // ✅ ADDED third param: images[] from backend get_answers()["images"]
+    onChunk: (text: string, suggestions?: string[], images?: string[]) => void
   ): Promise<void> {
     try {
       let chatRequest: ChatRequest;
@@ -118,13 +117,15 @@ class ChatApiService {
           suggestions = JSON.parse(suggestionsHeader);
         } catch (e) {
           console.error("Failed to parse suggestions header:", e);
-          suggestions = suggestionsHeader.includes("|") ? suggestionsHeader.split("|") : [];
+          suggestions = suggestionsHeader.includes("|")
+            ? suggestionsHeader.split("|")
+            : [];
         }
       }
 
       const contentType = response.headers.get("content-type");
 
-      // JSON response
+      // ── JSON response
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
 
@@ -135,14 +136,21 @@ class ChatApiService {
 
         const finalSuggestions = data.suggestions || suggestions;
 
+        // ✅ NEW: backend returns {text, images} from get_answers()
+        if (data.text !== undefined) {
+          onChunk(data.text, finalSuggestions, data.images || []);
+          return;
+        }
+
+        // Legacy: plain {message} response (welcome message etc.)
         if (data.message) {
-          onChunk(data.message, finalSuggestions);
+          onChunk(data.message, finalSuggestions, []);
         }
 
         return;
       }
 
-      // Streaming response
+      // ── Streaming response
       if (!response.body) {
         throw new Error("Streaming not supported by backend");
       }
@@ -153,21 +161,20 @@ class ChatApiService {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
+        
         const chunk = decoder.decode(value, { stream: true });
-        onChunk(chunk, []);
+        
+        // Stream each chunk immediately to the UI
+        if (chunk) {
+          onChunk(chunk, suggestions, []);
+        }
       }
 
-      // emit header suggestions
-      if (suggestions.length > 0) {
-        onChunk("", suggestions);
-      }
-
-      
+      return;
 
     } catch (error) {
       console.error("Chat API streaming error:", error);
-      onChunk("\n⚠ Backend connection issue. Please check server.");
+      onChunk("\n⚠ Backend connection issue. Please check server.", [], []);
     }
   }
 
@@ -195,7 +202,6 @@ class ChatApiService {
     }
   }
 
-  // 🔴 FIXED (same logic, just added userQuery support)
   async getSuggestions(userQuery: string): Promise<string[]> {
     try {
       const finalUrl = `${this.baseUrl}/bot/${this.botId}/suggestions?user_query=${encodeURIComponent(userQuery)}`;

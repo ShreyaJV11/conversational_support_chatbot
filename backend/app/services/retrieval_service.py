@@ -30,7 +30,6 @@ DEFAULT_RETRIEVER_CONFIG = {
 # ==========================================================
 
 def create_embeddings(model_name: str):
-    """Initializes the embedding model for vector similarity search."""
     return HuggingFaceEmbeddings(model_name=model_name)
 
 
@@ -39,7 +38,6 @@ def create_embeddings(model_name: str):
 # ==========================================================
 
 def is_followup_query(user_query: str) -> bool:
-    """Checks if the query is a follow-up that requires context (pronouns/vague starts)."""
     text = user_query.lower().strip()
 
     pronouns = ["it", "they", "them", "this", "that"]
@@ -53,7 +51,7 @@ def is_followup_query(user_query: str) -> bool:
 
 
 # ==========================================================
-# FOLLOW-UP REWRITE (Contextual Awareness)
+# FOLLOW-UP REWRITE (Configurable)
 # ==========================================================
 
 def rewrite_question(
@@ -61,7 +59,6 @@ def rewrite_question(
     user_query: str,
     bot_config: Dict[str, Any]
 ) -> str:
-    """Rephrases follow-up questions into standalone queries using chat history."""
 
     if not chat_history:
         return user_query
@@ -71,7 +68,6 @@ def rewrite_question(
     last_user = None
     last_assistant = None
 
-    # Get the last interaction from history
     for msg in reversed(chat_history):
         role = msg[0] if isinstance(msg, tuple) else msg.get("role")
         content = msg[1] if isinstance(msg, tuple) else msg.get("content")
@@ -124,20 +120,15 @@ Do not explain anything.
 
 
 # ==========================================================
-# MAIN RETRIEVER (🚀 ENTERPRISE UPGRADED)
+# MAIN RETRIEVER (Fully Configurable)
 # ==========================================================
 
 def retrieve_chunks(
     user_query: str,
     bot_id: int,
-    target_category: str,  # 🚀 From semantic_query_router
     chat_history: Optional[List] = None,
     bot_config: Optional[Dict[str, Any]] = None
-) -> Tuple[List[Dict[str, Any]], bool]:
-    """
-    Performs a vector search filtered by bot_id AND router category.
-    Returns metadata-rich chunks for LLM source attribution.
-    """
+) -> Tuple[List[str], bool]:
 
     config = {**DEFAULT_RETRIEVER_CONFIG, **(bot_config or {})}
     chat_history = chat_history or []
@@ -146,37 +137,47 @@ def retrieve_chunks(
     cur = None
 
     try:
-        # 1️⃣ Query Rewriting for follow-ups
+        # ----------------------------------
+        # 1️⃣ Rewrite if enabled
+        # ----------------------------------
+
         if config["enable_rewrite"] and chat_history and is_followup_query(user_query):
             user_query = rewrite_question(chat_history, user_query, config)
 
-        # 2️⃣ Vector Generation
+        # ----------------------------------
+        # 2️⃣ Create Embeddings Dynamically
+        # ----------------------------------
+
         embeddings = create_embeddings(config["embedding_model"])
         query_vector = embeddings.embed_query(user_query)
 
         if not query_vector:
             return [], False
 
-        # 3️⃣ Database Connection with pgvector
+        # ----------------------------------
+        # 3️⃣ DB Connection
+        # ----------------------------------
+
         conn = get_connection()
         register_vector(conn)
         cur = conn.cursor()
 
-        # 4️⃣ Vector Search: Filtered by Bot & Router Category
+        # ----------------------------------
+        # 4️⃣ Vector Search (Bot Scoped)
+        # ----------------------------------
+
         kb_table = config["kb_table"]
         top_k = config["top_k"]
 
-        # 🔥 We fetch source_system and source_url for the citation engine
         cur.execute(
             f"""
-            SELECT chunk_text, source_system, source_url, embedding <=> %s::vector AS distance
+            SELECT chunk_text, embedding <=> %s::vector AS distance
             FROM {kb_table}
             WHERE bot_id = %s
-            AND category = %s  -- 🛡️ SECURITY & CONTEXT GATING
             ORDER BY distance ASC
             LIMIT %s;
             """,
-            (query_vector, bot_id, target_category, top_k)
+            (query_vector, bot_id, top_k)
         )
 
         results = cur.fetchall()
@@ -184,39 +185,36 @@ def retrieve_chunks(
         if not results:
             return [], False
 
-        # distance is the 4th column (index 3)
-        best_distance = results[0][3]
+        best_distance = results[0][1]
 
-        # 5️⃣ Domain Guard (Threshold filtering)
+        # ----------------------------------
+        # 5️⃣ Domain Guard
+        # ----------------------------------
+
         domain_threshold = config["domain_threshold"]
         distance_margin = config["distance_margin"]
 
         if best_distance > domain_threshold:
             return [], False
 
-        # 6️⃣ Packaging for LLM (Dict format for Source Attribution)
-        filtered_chunks = []
-        for row in results:
-            distance = row[3]
-            if distance <= best_distance + distance_margin:
-                filtered_chunks.append({
-                    "text": row[0],
-                    "source_system": row[1] if row[1] else "Internal KB",
-                    "source_url": row[2] if row[2] else "No URL provided"
-                })
+        # ----------------------------------
+        # 6️⃣ Smart Filtering
+        # ----------------------------------
 
-        # Fallback to top result if margin filtering is too aggressive
+        filtered_chunks = [
+            row[0]
+            for row in results
+            if row[1] <= best_distance + distance_margin
+        ]
+
         if not filtered_chunks:
-            filtered_chunks = [{
-                "text": results[0][0],
-                "source_system": results[0][1] if results[0][1] else "Internal KB",
-                "source_url": results[0][2] if results[0][2] else "No URL provided"
-            }]
+            filtered_chunks = [results[0][0]]
 
-        return filtered_chunks[:config["max_chunks"]], True
+        max_chunks = config["max_chunks"]
 
-    except Exception as e:
-        print(f"CRITICAL RETRIEVER ERROR: {e}")
+        return filtered_chunks[:max_chunks], True
+
+    except Exception:
         return [], False
 
     finally:

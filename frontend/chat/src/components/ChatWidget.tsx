@@ -293,11 +293,11 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   useEffect(() => {
     const handleResizeMove = (e: PointerEvent) => {
       setSize(prev => {
-        // e.movementX se left drag negative hoga, minus karke width badhegi
-        const newWidth = Math.min(Math.max(320, prev.width - e.movementX), 800);
-        const newHeight = Math.min(Math.max(350, prev.height - e.movementY), 800);
+        // Completely limitless - only minimum constraints
+        const newWidth = Math.max(320, prev.width - e.movementX);
+        const newHeight = Math.max(350, prev.height - e.movementY);
 
-        // 🔥 Iframe ko bol rahe hain "Main bada ho gaya, tu bhi apna size badha le!"
+        // Tell iframe to resize
         if (window.parent) {
           window.parent.postMessage({ 
             type: "RESIZE_WIDGET", 
@@ -344,23 +344,28 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
           className="relative mb-4 bg-white rounded-lg shadow-chat border border-gray-200 transition-all duration-300 animate-slide-up flex flex-col"
           style={{
            width: state.isMinimized ? 320 : size.width,
-            height: state.isMinimized ? 56 : size.height,
-            maxWidth: '100%', 
-            maxHeight: '85vh'
+            height: state.isMinimized ? 56 : size.height
           }}
         >
           
           {!state.isMinimized && (
             <div
               onPointerDown={handleResizeStart}
-              className="absolute top-0 left-0 w-6 h-6 cursor-nwse-resize z-50"
+              className="absolute top-0 left-0 w-8 h-8 cursor-nwse-resize z-50 hover:bg-gray-200 transition-colors"
               title="Drag to resize"
               style={{
                 borderTopLeftRadius: '0.5rem',
-                // A subtle gradient to show the user it's draggable
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)'
+                background: 'linear-gradient(135deg, rgba(100,100,100,0.3) 0%, transparent 50%)'
               }}
-            />
+            >
+              <svg 
+                className="w-4 h-4 text-gray-400 ml-0.5 mt-0.5" 
+                fill="currentColor" 
+                viewBox="0 0 20 20"
+              >
+                <path d="M0 0h4v4H0V0zm6 6h4v4H6V6zm6 6h4v4h-4v-4z"/>
+              </svg>
+            </div>
           )}
 {/* Header */}
           <div className="flex-shrink-0 flex items-center justify-between p-4 bg-primary-600 text-white rounded-t-lg">

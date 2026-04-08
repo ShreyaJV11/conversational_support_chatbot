@@ -1,12 +1,11 @@
 import os
 import re
-import json
 import logging
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from functools import lru_cache
-from typing import Optional, List, Dict, Union
+from typing import Optional
 
 load_dotenv()
 
@@ -21,9 +20,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 DEFAULT_REPO_ID      = "llama-3.1-8b-instant"
-CODE_REPO_ID         = "llama-3.3-70b-versatile" # 🚀 UPGRADE: Heavy model for code
 DEFAULT_TEMPERATURE  = 0.0
-DEFAULT_MAX_TOKENS   = 2048
+DEFAULT_MAX_TOKENS   = 4096  # Increased for more detailed responses
 EMAIL_MAX_TOKENS     = 300
 EMAIL_TEMPERATURE    = 0.2
 HISTORY_WINDOW       = 3
@@ -32,6 +30,7 @@ MAX_PHRASE_REPEATS   = 2
 
 FALLBACK_RESPONSE    = "I do not have enough internal information to answer that."
 
+# ✅ IMAGE_REF lines must NEVER be stripped from context
 CONTEXT_BANNED_PATTERNS = [
     "hide details",
     "note:",
@@ -137,15 +136,14 @@ def create_chat_model(llm_config: Optional[dict] = None) -> ChatGroq:
     repo_id     = cfg.get("repo_id", DEFAULT_REPO_ID)
     temperature = float(cfg.get("temperature", DEFAULT_TEMPERATURE))
     max_tokens  = int(cfg.get("max_new_tokens", DEFAULT_MAX_TOKENS))
-    
+
     GROQ_SUPPORTED = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "mixtral-8x7b-32768"]
     if repo_id not in GROQ_SUPPORTED:
-        logger.warning(f"create_chat_model: unsupported model '{repo_id}', overriding to {DEFAULT_REPO_ID}")
+        logger.warning(f"Unsupported model '{repo_id}', overriding to {DEFAULT_REPO_ID}")
         repo_id = DEFAULT_REPO_ID
 
-
     if max_tokens < 500:
-        logger.warning(f"create_chat_model: max_tokens={max_tokens} too low, overriding to {DEFAULT_MAX_TOKENS}")
+        logger.warning(f"max_tokens={max_tokens} too low, overriding to {DEFAULT_MAX_TOKENS}")
         max_tokens = DEFAULT_MAX_TOKENS
 
     return _create_chat_model_cached(
@@ -156,54 +154,8 @@ def create_chat_model(llm_config: Optional[dict] = None) -> ChatGroq:
 
 
 # ---------------------------------------------------------------------------
-# 🚀 UPGRADE 1: SEMANTIC QUERY ROUTER
-# ---------------------------------------------------------------------------
-
-def semantic_query_router(user_query: str) -> str:
-    """
-    Uses a fast Groq model to classify if the query is for CODE or SUPPORT.
-    """
-    router_model = create_chat_model({"repo_id": "llama-3.1-8b-instant", "temperature": 0.0})
-    
-    prompt = """Analyze the user query. Is it asking about codebase/programming logic, or operational support/troubleshooting?
-    Respond ONLY with a valid JSON object: {"category": "codebase"} OR {"category": "support"}
-    """
-    try:
-        response = router_model.invoke([
-            SystemMessage(content=prompt),
-            HumanMessage(content=user_query)
-        ])
-        
-        # Clean up in case the LLM adds markdown backticks
-        clean_json = response.content.replace("```json", "").replace("```", "").strip()
-        decision = json.loads(clean_json)
-        return decision.get("category", "support")
-    except Exception as e:
-        logger.error(f"Router failed, defaulting to support: {e}")
-        return "support"
-
-
-# ---------------------------------------------------------------------------
-# 🚀 UPGRADE 2: SOURCE FORMATTER
-# ---------------------------------------------------------------------------
-
-def format_attributed_context(retrieved_chunks: Union[List[Dict], str]) -> str:
-    """Transforms DB dictionaries into LLM-friendly text with URLs."""
-    if isinstance(retrieved_chunks, str):
-        return retrieved_chunks # Fallback if passed a plain string
-
-    formatted = ""
-    for i, chunk in enumerate(retrieved_chunks, 1):
-        formatted += (
-            f"[SOURCE {i} | {chunk.get('source_system', 'internal')}]\n"
-            f"{chunk.get('text', '')}\n"
-            f"[URL: {chunk.get('source_url', 'No URL')}]\n\n"
-        )
-    return formatted
-
-
-# ---------------------------------------------------------------------------
 # CONTEXT CLEANING
+# ✅ KEY FIX: [IMAGE_REF:url] lines are ALWAYS preserved
 # ---------------------------------------------------------------------------
 
 def clean_context(context: str) -> str:
@@ -216,18 +168,43 @@ def clean_context(context: str) -> str:
 
     for line in context.split("\n"):
         line = line.strip()
+
+        # ✅ Always keep image reference lines — never filter them
+        if line.startswith("[IMAGE_REF:") and line.endswith("]"):
+            if line not in seen:
+                cleaned_lines.append(line)
+                seen.add(line)
+            continue
+
         if not line or len(line) < 3:
             continue
         if any(p in line.lower() for p in CONTEXT_BANNED_PATTERNS):
             continue
         if line in seen:
             continue
+
         seen.add(line)
         cleaned_lines.append(line)
 
     cleaned = "\n".join(cleaned_lines)
     logger.debug(f"clean_context: {len(context)} → {len(cleaned)} chars after cleaning.")
     return cleaned
+
+
+# ---------------------------------------------------------------------------
+# EXTRACT IMAGE REFS FROM CONTEXT
+# ---------------------------------------------------------------------------
+
+def extract_image_refs(context: str) -> list:
+    """Extract all [IMAGE_REF:url] markers from context."""
+    if not context:
+        return []
+    
+    pattern = r'\[IMAGE_REF:(https?://[^\]]+)\]'
+    matches = re.findall(pattern, context)
+    
+    logger.info(f"extract_image_refs: found {len(matches)} image(s) in context")
+    return matches
 
 
 # ---------------------------------------------------------------------------
@@ -264,7 +241,10 @@ def enforce_format(output: str) -> str:
             short_part = parts[0].replace("SHORT_ANSWER:", "").strip()
             if short_part:
                 logger.warning("enforce_format: DETAILED_ANSWER missing; returning short only.")
-                return f"SHORT_ANSWER:\n{short_part}\n\nDETAILED_ANSWER:\n{FALLBACK_RESPONSE}"
+                return (
+                    f"SHORT_ANSWER:\n{short_part}\n\n"
+                    f"DETAILED_ANSWER:\n{FALLBACK_RESPONSE}"
+                )
             return FALLBACK_RESPONSE
 
         short_raw, detailed_raw = parts
@@ -274,14 +254,15 @@ def enforce_format(output: str) -> str:
         if not has_short and not has_detailed:
             logger.warning("Format missing → using raw output")
             return (
-                 "SHORT_ANSWER:\n"
-                   + output[:200]  # first part as short
-                   + "\n\nDETAILED_ANSWER:\n"
-                   + output
-                     )
+                "SHORT_ANSWER:\n"
+                + output[:200]
+                + "\n\nDETAILED_ANSWER:\n"
+                + output
+            ).strip()
 
         seen: set[str] = set()
         cleaned_lines = []
+
         for line in detailed_part.split("\n"):
             line = line.strip()
             if line and line not in seen:
@@ -306,6 +287,7 @@ def enforce_format(output: str) -> str:
 
 def _build_history_messages(history: Optional[list], window: int = HISTORY_WINDOW) -> list:
     messages = []
+
     if not history or not isinstance(history, list):
         return messages
 
@@ -344,15 +326,19 @@ def _inject_topic_from_history(user_query: str, history: Optional[list]) -> str:
         return user_query
 
     last_topic = None
+
     for msg in reversed(history):
         if msg.get("role") == "assistant":
             content = msg.get("content", "")
+
             SKIP_WORDS = {
                 "the", "this", "that", "there", "their", "these", "those",
                 "with", "from", "into", "also", "both", "each", "more",
                 "short_answer", "detailed_answer",
             }
+
             words = content.split()
+
             for word in words:
                 cleaned = word.strip(".,;:()")
                 if (
@@ -362,12 +348,14 @@ def _inject_topic_from_history(user_query: str, history: Optional[list]) -> str:
                 ):
                     last_topic = cleaned
                     break
+
             if not last_topic:
                 for word in words:
                     cleaned = word.strip(".,;:()")
                     if len(cleaned) > 3 and cleaned.lower() not in SKIP_WORDS:
                         last_topic = cleaned
                         break
+
             if last_topic:
                 logger.info(f"_inject_topic_from_history: picked topic='{last_topic}'")
                 break
@@ -384,6 +372,7 @@ def _inject_topic_from_history(user_query: str, history: Optional[list]) -> str:
         " this": f" {last_topic}",
         " that": f" {last_topic}",
     }
+
     result = f" {user_query.lower()}"
     for pronoun, replacement in PRONOUN_REPLACEMENTS.items():
         result = result.replace(pronoun, replacement)
@@ -406,9 +395,14 @@ def rewrite_query(
         logger.warning("rewrite_query: received empty query.")
         return ""
 
-    PRONOUN_TRIGGERS = {"it", "its", "they", "them", "their", "this", "that", "he", "she", "those", "these"}
+    PRONOUN_TRIGGERS = {
+        "it", "its", "they", "them", "their", "this", "that",
+        "he", "she", "those", "these"
+    }
+
     clean_query = re.sub(r'[^\w\s]', '', user_query.lower())
     query_words = set(clean_query.split())
+
     if not query_words & PRONOUN_TRIGGERS:
         logger.info(f"rewrite_query: no pronouns detected, skipping rewrite for '{user_query}'")
         return user_query
@@ -441,102 +435,111 @@ def rewrite_query(
             return _inject_topic_from_history(user_query, history)
 
         logger.info(f"rewrite_query: '{user_query}' → '{rewritten}'")
+
         return rewritten or user_query
+
     except Exception as e:
         logger.error(f"rewrite_query error: {e}")
         return _inject_topic_from_history(user_query, history)
 
 
 # ---------------------------------------------------------------------------
-# 🚀 UPGRADE 3: STRICT SYSTEM PROMPTS
+# SYSTEM PROMPT
 # ---------------------------------------------------------------------------
 
-SUPPORT_SYSTEM_PROMPT = """You are the MPS Support Assistant.
+SYSTEM_PROMPT = """You are the MPS Support Assistant.
 
 STRICT RULES:
 - Answer ONLY using the provided DOCUMENTATION.
 - Do NOT use prior knowledge or training data.
-- If the DOCUMENTATION does not contain the answer, respond ONLY with the fallback.
-- CITATION RULE: Every technical step must cite its source exactly like this: [Source: <URL>]
+- If the DOCUMENTATION does not contain the answer, respond ONLY with:
+  "I do not have enough internal information to answer that."
 
-FALLBACK:
-I do not have enough internal information to answer that.
+🖼️ IMAGE HANDLING (CRITICAL):
+- The DOCUMENTATION may contain lines like: [IMAGE_REF:https://example.com/image.png]
+- These are image references that MUST be included in your response
+- Copy EVERY [IMAGE_REF:...] line EXACTLY as it appears
+- Place them at the END of your DETAILED_ANSWER section
+- Do NOT modify, skip, or paraphrase these lines
+- Include ALL image references, even if there are many
 
-FORMAT:
+- Provide comprehensive, detailed explanations with step-by-step instructions when available.
+- Include all relevant information from the documentation.
+
+FORMAT (MANDATORY):
 SHORT_ANSWER:
-<one or two sentences>
+<2-3 sentences summarizing the key points>
 
 DETAILED_ANSWER:
-1. <step one> [Source: https://...]
-2. <step two> [Source: https://...]
-"""
-
-CODE_SYSTEM_PROMPT = """You are a Senior Principal Software Engineer at MPS.
-
-STRICT RULES:
-- Answer the coding question using ONLY the provided CODEBASE DOCUMENTATION.
-- Do not invent functions or classes that don't exist in the context.
-- CITATION RULE: Whenever explaining logic or fixing bugs, cite the file URL: [Source: <URL>]
-"""
+<Provide comprehensive explanation with:>
+- Step-by-step instructions (numbered)
+- Important details and context
+- Any warnings or notes
+<Then copy ALL [IMAGE_REF:...] lines from documentation here>"""
 
 
 # ---------------------------------------------------------------------------
-# ANSWER GENERATION (WITH DYNAMIC ROUTING & STREAMING)
+# ANSWER GENERATION (STREAMING)
 # ---------------------------------------------------------------------------
 
 def get_answers(
     history: Optional[list],
-    context: Union[List[Dict], str], # 🚀 Updated to expect List of Dicts
+    context: str,
     user_query: str,
     llm_config: Optional[dict] = None,
 ):
+    """
+    Streams text tokens from the LLM.
+    Yields plain text strings token by token.
+    """
     if not user_query or not user_query.strip():
         yield FALLBACK_RESPONSE
         return
 
-    if not context:
+    if not context or not context.strip():
         logger.warning("get_answers: empty context received.")
         yield FALLBACK_RESPONSE
         return
 
-    # 🚦 1. Semantic Routing & Model Selection
-    route_decision = semantic_query_router(user_query)
-    
-    if route_decision == "codebase":
-        active_prompt = CODE_SYSTEM_PROMPT
-        model_id = CODE_REPO_ID # Uses 70b model for code
-        logger.info("🚦 ROUTER: Routing to CODEBASE expert (Llama 3.3 70B)")
-    else:
-        active_prompt = SUPPORT_SYSTEM_PROMPT
-        model_id = DEFAULT_REPO_ID # Uses 8b model for support
-        logger.info("🚦 ROUTER: Routing to SUPPORT expert (Llama 3.1 8B)")
-
     config = {
         "max_new_tokens": DEFAULT_MAX_TOKENS,
         "temperature": DEFAULT_TEMPERATURE,
-        "repo_id": model_id, # Inject the dynamically chosen model
         **(llm_config or {}),
     }
 
     chat_model = create_chat_model(config)
-    
-    # 🔗 2. Format Context with Attribution
-    formatted_context = format_attributed_context(context)
-    clean_ctx = clean_context(formatted_context)
+    context    = clean_context(context)
 
-    messages = [SystemMessage(content=active_prompt)]
+    # Extract image URLs from context
+    image_urls = extract_image_refs(context)
+
+    messages = [SystemMessage(content=SYSTEM_PROMPT)]
     messages.extend(_build_history_messages(history, window=HISTORY_WINDOW))
 
     FORMAT_REMINDER = (
-        "\n\nCRITICAL RULES:"
-        "\n1. Answer ONLY from documentation."
-        "\n2. Cite your sources inline using [Source: <URL>]."
+        "\n\n🚨 CRITICAL RULES — follow exactly:\n"
+        "1. Use ONLY information from the DOCUMENTATION above.\n"
+        "2. Do NOT invent or assume any names, people, or organisations.\n"
+        "3. If the answer is not explicitly in the DOCUMENTATION, write ONLY:\n"
+        "   I do not have enough internal information to answer that.\n"
+        "\n"
+        "4. 🖼️ IMAGE RULE (MANDATORY):\n"
+        "   - If you see ANY lines starting with [IMAGE_REF: in the DOCUMENTATION\n"
+        "   - You MUST copy them EXACTLY into your DETAILED_ANSWER section\n"
+        "   - Copy the COMPLETE line including the brackets and URL\n"
+        "   - Example: [IMAGE_REF:https://example.com/image.png]\n"
+        "   - Place all image references at the END of your DETAILED_ANSWER\n"
+        "\n"
+        "Your response MUST use this exact format:\n"
+        "SHORT_ANSWER:\n<2-3 sentences summarizing the key points>\n\n"
+        "DETAILED_ANSWER:\n<comprehensive explanation>\n"
+        "<all [IMAGE_REF:...] lines from documentation>"
     )
-    
+
     messages.append(
         HumanMessage(
             content=(
-                f"DOCUMENTATION:\n{clean_ctx}"
+                f"DOCUMENTATION:\n{context}"
                 f"\n\nQUERY:\n{user_query}"
                 f"{FORMAT_REMINDER}"
             )
@@ -545,6 +548,7 @@ def get_answers(
 
     try:
         logger.info(f"get_answers: streaming for query='{user_query[:60]}...'")
+        logger.info(f"get_answers: context contains {len(image_urls)} image(s)")
         full_response = ""
 
         for chunk in chat_model.stream(messages):
@@ -553,10 +557,11 @@ def get_answers(
                 continue
 
             if any(phrase in token for phrase in BANNED_PHRASES):
-                logger.warning(f"get_answers: banned phrase hit, stopping stream.")
+                logger.warning("get_answers: banned phrase hit, stopping stream.")
                 break
 
             full_response += token
+            yield token  # Yield each token from LLM
 
             if any(
                 full_response.count(phrase) > MAX_PHRASE_REPEATS
@@ -564,10 +569,15 @@ def get_answers(
             ):
                 logger.warning("get_answers: repetition guard triggered, stopping stream.")
                 break
-            
-            yield token
 
-        logger.info("get_answers: streaming complete.")
+        logger.info("get_answers: streaming complete, applying format enforcement.")
+        logger.info(f"get_answers: LLM response contains {full_response.count('[IMAGE_REF:')} image reference(s)")
+        
+        # 🔥 FALLBACK: If LLM didn't include images but context has them, append them
+        if image_urls and '[IMAGE_REF:' not in full_response:
+            logger.warning(f"get_answers: LLM didn't include images, appending {len(image_urls)} image(s) automatically")
+            image_block = "\n\n" + "\n".join([f"[IMAGE_REF:{url}]" for url in image_urls[:5]])  # Limit to 5 images
+            yield image_block
 
     except Exception as e:
         logger.error(f"get_answers error: {e}")
@@ -584,11 +594,8 @@ def detect_ticket_intent(
 ) -> bool:
     if not user_message or not user_message.strip():
         return False
-
     msg_lower = user_message.lower().strip()
-    intent = any(kw in msg_lower for kw in TICKET_INTENT_KEYWORDS)
-    logger.info(f"detect_ticket_intent (keyword): '{user_message[:40]}' → {intent}")
-    return intent
+    return any(kw in msg_lower for kw in TICKET_INTENT_KEYWORDS)
 
 
 # ---------------------------------------------------------------------------
@@ -612,13 +619,12 @@ STRICT RULES:
 - Each step on a new line
 - Do NOT repeat information
 - Do NOT include sections like "Resolution" or "Next Steps"
-- Do NOT explain everything — be concise
 - Sound like a human engineer, not documentation
 
 End with:
 Regards,
-MPS Support Team
-"""
+MPS Support Team"""
+
 
 def generate_email_reply(
     email_subject: str,
@@ -629,7 +635,11 @@ def generate_email_reply(
         logger.warning("generate_email_reply: missing subject or body.")
         return "Error: email subject and body are required."
 
-    config     = {"max_new_tokens": EMAIL_MAX_TOKENS, "temperature": EMAIL_TEMPERATURE, **(llm_config or {})}
+    config     = {
+        "max_new_tokens": EMAIL_MAX_TOKENS,
+        "temperature": EMAIL_TEMPERATURE,
+        **(llm_config or {}),
+    }
     chat_model = create_chat_model(config)
     prompt     = f"Customer Email:\nSubject: {email_subject}\nMessage: {email_body}"
 

@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: chatbot_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-chatbot_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chatbot_network
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: chatbot_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chatbot_network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chatbot_backend
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-chatbot_db}
+      
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      
+      # App settings
+      SECRET_KEY: ${SECRET_KEY:-k3J9@xP!92kLm#Q7zA1$D5}
+      ALGORITHM: HS256
+      
+      # Tesseract (auto-detected in container)
+      TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata
+      
+      # Email settings (if using)
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD:-}
+      
+      # CORS
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:5174}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/.env:/app/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - chatbot_network
+    restart: unless-stopped
+
+  # Admin Frontend
+  admin:
+    build:
+      context: ./frontend/admin
+      dockerfile: Dockerfile
+    container_name: chatbot_admin
+    environment:
+      VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8000/api}
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - chatbot_network
+    restart: unless-stopped
+
+  # Chat Widget Frontend
+  chat:
+    build:
+      context: ./frontend/chat
+      dockerfile: Dockerfile
+    container_name: chatbot_chat
+    environment:
+      VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8000/api}
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    networks:
+      - chatbot_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  chatbot_network:
+    driver: bridge

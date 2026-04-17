@@ -17,3 +17,6 @@ pytesseract
 Pillow
 pymupdf
 python-pptx
+langchain-groq
+requests
+python-multipart

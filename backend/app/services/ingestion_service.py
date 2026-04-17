@@ -20,7 +20,13 @@ try:
     import pytesseract
     from PIL import Image
     import io
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Users\Venkata.Jakkinapalli\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
+    # Auto-detect tesseract in Docker, fallback to Windows path for local dev
+    import shutil
+    tesseract_path = shutil.which('tesseract')
+    if tesseract_path:
+        pytesseract.pytesseract.tesseract_cmd = tesseract_path
+    elif os.path.exists(r'C:\Users\Venkata.Jakkinapalli\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'):
+        pytesseract.pytesseract.tesseract_cmd = r'C:\Users\Venkata.Jakkinapalli\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
     OCR_AVAILABLE = True
 except ImportError:
     OCR_AVAILABLE = False

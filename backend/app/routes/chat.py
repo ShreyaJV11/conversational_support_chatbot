@@ -432,13 +432,19 @@ Category : {ticket_category}
 
         # ---------------- RAG RETRIEVAL ----------------
 
-        chunks, is_domain = retrieve_chunks(
+        result = retrieve_chunks(
             user_query=request.user_question,
             bot_id=request.bot_id,
             chat_history=history_rows,
             bot_config=bot_config.get("retriever_config", {})
         )
-
+        if isinstance(result, tuple):
+            chunks, is_domain = result
+            images = []
+        else:
+            chunks = result.get("chunks", [])
+            is_domain = result.get("is_domain", True)
+            images = result.get("images", [])
         if not is_domain:
             return StreamingResponse(
                 stream_text(bot_config["domain_message"]),
@@ -507,7 +513,8 @@ Category : {ticket_category}
                 "X-Suggestions": get_query_suggestions(
                     request.bot_id,
                     request.user_question
-                )
+                ),
+                "X-Images": json.dumps(images)  # 🔥 NEW
             }
         )
 

@@ -45,7 +45,7 @@ class ChatApiService {
 
   async sendMessage(
     request: ChatRequest | string,
-    onChunk: (text: string, suggestions?: string[]) => void
+    onChunk: (text: string, suggestions?: string[], images?: string[]) => void
   ): Promise<void> {
     try {
       let chatRequest: ChatRequest;
@@ -109,16 +109,11 @@ class ChatApiService {
         },
         body: JSON.stringify(chatRequest)
       });
-
-      let suggestions: string[] | undefined;
       const suggestionsHeader = response.headers.get("X-Suggestions");
-      if (suggestionsHeader) {
-        try {
-          suggestions = JSON.parse(suggestionsHeader);
-        } catch (e) {
-          console.error("Failed to parse suggestions header", e);
-        }
-      }
+      const suggestions = suggestionsHeader ? JSON.parse(suggestionsHeader) : [];
+
+      const imagesHeader = response.headers.get("X-Images");
+      const images = imagesHeader ? JSON.parse(imagesHeader) : [];
       if (!response.ok) {
         throw new Error("Backend connection failed");
       }
@@ -137,7 +132,7 @@ class ChatApiService {
         }
 
         if (data.message) {
-          onChunk(data.message, suggestions);
+          onChunk(data.message, suggestions,images);
         }
 
         return;
@@ -158,7 +153,7 @@ class ChatApiService {
 
         const chunk = decoder.decode(value, { stream: true });
 
-        onChunk(chunk, suggestions);
+        onChunk(chunk, suggestions,images);
       }
 
     } catch (error) {

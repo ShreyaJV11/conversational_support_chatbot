@@ -228,7 +228,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
 
       await chatApi.sendMessage(
         request,
-        (chunk: string, incomingSuggestions?: string[]) => {
+        (chunk: string, incomingSuggestions?: string[], incomingImages?: string[]) => {
         setState(prev => ({
           ...prev,
           messages: prev.messages.map(msg =>
@@ -239,6 +239,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
         }));
         if (incomingSuggestions && incomingSuggestions.length > 0) {
           setSuggestions(incomingSuggestions);
+        }
+        if (incomingImages && incomingImages.length > 0) {
+          console.log("IMAGES RECEIVED:", incomingImages);
         }
       });
 

@@ -142,9 +142,11 @@ class ChatApiService {
           return;
         }
 
-        // Legacy: plain {message} response (welcome message etc.)
+        // Registration response: plain {message} response (welcome message etc.)
         if (data.message) {
+          // Send the complete message at once, not character by character
           onChunk(data.message, finalSuggestions, []);
+          return;
         }
 
         return;

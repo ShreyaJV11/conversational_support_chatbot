@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# Test files
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+test/
+tests/
+__tests__/
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads (will be mounted as volume)
+uploads/
+
+# Test files (backend)
+test*.py
+backend/test*.py
+backend/scripts/test_*.py
+
+# Junk files
+backend/26.0.1
+backend/cd
+backend/python
+
+# Documentation files
+backend/questions_answer.txt
+backend/*.txt

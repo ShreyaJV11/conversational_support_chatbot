@@ -5,9 +5,12 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.messages import SystemMessage, HumanMessage
 from pgvector.psycopg2 import register_vector
 
-from app.db.database import get_connection
+from app.db.database import get_connection, return_connection
 from app.services.llm_service import create_chat_model
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 # ==========================================================
 # DEFAULT CONFIG
@@ -15,10 +18,10 @@ from app.services.llm_service import create_chat_model
 
 DEFAULT_RETRIEVER_CONFIG = {
     "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-    "top_k": 15,
-    "domain_threshold": 0.65,
-    "distance_margin": 0.1,
-    "max_chunks": 8,
+    "top_k": 30,
+    "domain_threshold": 0.75,  # Increased from 0.60 to be more lenient (higher = more lenient)
+    "distance_margin": 0.20,
+    "max_chunks": 15,
     "enable_rewrite": True,
     "rewrite_max_words": 20,
     "kb_table": "kb_chunks"
@@ -26,11 +29,20 @@ DEFAULT_RETRIEVER_CONFIG = {
 
 
 # ==========================================================
-# EMBEDDING FACTORY
+# EMBEDDING FACTORY WITH CACHING
 # ==========================================================
 
+_embedding_cache = {}
+
 def create_embeddings(model_name: str):
-    return HuggingFaceEmbeddings(model_name=model_name)
+    """Create embeddings with caching to avoid cold start issues."""
+    if model_name not in _embedding_cache:
+        logger.info(f"Loading embedding model: {model_name}")
+        _embedding_cache[model_name] = HuggingFaceEmbeddings(model_name=model_name)
+        # Warmup: create a dummy embedding to load the model
+        _embedding_cache[model_name].embed_query("warmup query")
+        logger.info(f"Embedding model loaded and warmed up: {model_name}")
+    return _embedding_cache[model_name]
 
 
 # ==========================================================
@@ -138,11 +150,21 @@ def retrieve_chunks(
 
     try:
         # ----------------------------------
+        # 0️⃣ Handle empty queries
+        # ----------------------------------
+        
+        if not user_query or not user_query.strip():
+            logger.warning("Empty query received, returning no chunks")
+            return [], False
+        
+        # ----------------------------------
         # 1️⃣ Rewrite if enabled
         # ----------------------------------
 
+        original_query = user_query
         if config["enable_rewrite"] and chat_history and is_followup_query(user_query):
             user_query = rewrite_question(chat_history, user_query, config)
+            logger.info(f"Query rewritten: '{original_query}' -> '{user_query}'")
 
         # ----------------------------------
         # 2️⃣ Create Embeddings Dynamically
@@ -152,7 +174,10 @@ def retrieve_chunks(
         query_vector = embeddings.embed_query(user_query)
 
         if not query_vector:
+            logger.error("Failed to create query embedding")
             return [], False
+
+        logger.info(f"Query: '{user_query}' | Vector length: {len(query_vector)}")
 
         # ----------------------------------
         # 3️⃣ DB Connection
@@ -181,11 +206,15 @@ def retrieve_chunks(
         )
 
         results = cur.fetchall()
+        
+        logger.info(f"Retrieved {len(results)} chunks for bot_id={bot_id}")
 
         if not results:
+            logger.warning(f"No chunks found for query: '{user_query}'")
             return [], False
 
         best_distance = results[0][1]
+        logger.info(f"Best distance: {best_distance:.4f}")
 
         # ----------------------------------
         # 5️⃣ Domain Guard
@@ -195,6 +224,7 @@ def retrieve_chunks(
         distance_margin = config["distance_margin"]
 
         if best_distance > domain_threshold:
+            logger.warning(f"Best distance {best_distance:.4f} > threshold {domain_threshold}")
             return [], False
 
         # ----------------------------------
@@ -211,14 +241,18 @@ def retrieve_chunks(
             filtered_chunks = [results[0][0]]
 
         max_chunks = config["max_chunks"]
+        
+        final_chunks = filtered_chunks[:max_chunks]
+        logger.info(f"Returning {len(final_chunks)} chunks (filtered from {len(filtered_chunks)})")
 
-        return filtered_chunks[:max_chunks], True
+        return final_chunks, True
 
-    except Exception:
+    except Exception as e:
+        logger.error(f"Retrieval error: {e}")
         return [], False
 
     finally:
         if cur:
             cur.close()
         if conn:
-            conn.close()
+            return_connection(conn)

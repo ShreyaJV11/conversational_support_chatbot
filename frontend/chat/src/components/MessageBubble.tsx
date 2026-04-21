@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { User, Bot, CheckCircle, AlertTriangle, ExternalLink } from 'lucide-react';
+import { User, Bot, CheckCircle, AlertTriangle } from 'lucide-react';
 import { ChatMessage } from '../types';
 
 interface MessageBubbleProps {

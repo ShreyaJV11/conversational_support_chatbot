@@ -14,6 +14,7 @@ graph = GraphService()
 
 @router.get("/process-emails")
 async def run_email_bot():
+    """Process unread emails."""
     try:
         logger.info("Starting email processing...")
         result = await asyncio.to_thread(process_emails)
@@ -31,6 +32,7 @@ async def run_email_bot():
 
 @router.get("/drafts")
 async def fetch_drafts():
+    """Fetch draft emails."""
     try:
         url = f"https://graph.microsoft.com/v1.0/users/{graph.user_id}/mailFolders/drafts/messages"
         response = requests.get(url, headers=graph._headers(), timeout=15)

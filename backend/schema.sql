@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     bot_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
+    organization VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(bot_id, email)
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX idx_users_bot_email ON users(bot_id, email);
 CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_organization ON users(organization);
 
 -- ============================================================
 -- SESSIONS TABLE
@@ -128,17 +130,8 @@ CREATE INDEX idx_rate_limits_window ON rate_limits(window_start);
 CREATE TABLE IF NOT EXISTS bot_configs (
     id SERIAL PRIMARY KEY,
     bot_id INTEGER UNIQUE NOT NULL,
-    bot_name VARCHAR(255) NOT NULL,
-    require_registration BOOLEAN DEFAULT TRUE,
-    initial_message TEXT,
-    domain_message TEXT,
-    escalation_message TEXT,
-    memory_limit INTEGER DEFAULT 6,
-    llm_config JSONB,
-    retriever_config JSONB,
     ingest_config JSONB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_bot_configs_bot_id ON bot_configs(bot_id);
@@ -183,26 +176,33 @@ CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
 CREATE TRIGGER update_conversations_updated_at BEFORE UPDATE ON conversations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Trigger for bot_configs table
-CREATE TRIGGER update_bot_configs_updated_at BEFORE UPDATE ON bot_configs
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 -- ============================================================
 -- INITIAL DATA
 -- ============================================================
 
 -- Insert default bot configuration
-INSERT INTO bot_configs (bot_id, bot_name, initial_message, domain_message, escalation_message)
+INSERT INTO bot_configs (bot_id, ingest_config)
 VALUES (
     1,
-    'MPS Support Bot',
-    'Please provide your name and email.',
-    'I can only answer domain-related questions.',
-    'No relevant information found.',
-    6,
-    '{"repo_id": "llama-3.1-8b-instant", "temperature": 0.0, "max_new_tokens": 2048}'::jsonb,
-    '{"top_k": 15, "domain_threshold": 0.65}'::jsonb,
-    '{"chunk_size": 500, "chunk_overlap": 50}'::jsonb
+    '{
+        "bot_name": "MPS Support Bot",
+        "require_registration": true,
+        "initial_message": "Please provide your name and email.",
+        "domain_message": "I can only answer domain-related questions.",
+        "escalation_message": "No relevant information found.",
+        "memory_limit": 6,
+        "llm_config": {
+            "repo_id": "llama-3.1-8b-instant",
+            "temperature": 0.0,
+            "max_new_tokens": 2048
+        },
+        "retriever_config": {
+            "top_k": 15,
+            "domain_threshold": 0.65
+        },
+        "chunk_size": 500,
+        "chunk_overlap": 50
+    }'::jsonb
 )
 ON CONFLICT (bot_id) DO NOTHING;
 

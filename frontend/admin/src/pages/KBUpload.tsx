@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
 
-// 🔥 Match this list with your backend allowed extensions
+// Match this list with your backend allowed extensions
 const ALLOWED_EXTENSIONS = [
   // Text formats
   ".txt", ".md", ".json", ".yaml", ".yml",

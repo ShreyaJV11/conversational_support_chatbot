@@ -660,15 +660,40 @@ def generate_email_reply(
 # ---------------------------------------------------------------------------
 
 def detect_category(user_query: str, llm_config: Optional[dict] = None) -> str:
+    """
+    Use LLM to intelligently detect the category/topic of the user's question.
+    This scales automatically as you add more content to your knowledge base.
+    """
     if not user_query:
         return "general"
 
-    q = user_query.lower()
+    try:
+        chat_model = create_chat_model(llm_config)
+        
+        prompt = f"""Analyze this support question and identify its main topic/category in 1-3 words.
 
-    for category, keywords in CATEGORY_KEYWORDS.items():
-        if any(kw in q for kw in keywords):
-            logger.info(f"detect_category (keyword): '{user_query[:40]}' → {category}")
-            return category
+Question: {user_query}
 
-    logger.info(f"detect_category (keyword): '{user_query[:40]}' → general (no match)")
-    return "general"
+Return ONLY the category name (e.g., "chrome extension", "platform setup", "billing", "technical issue", "account management", etc.)
+Do not explain. Just the category name."""
+
+        response = chat_model.invoke([
+            SystemMessage(content="You are a support ticket categorization system."),
+            HumanMessage(content=prompt)
+        ])
+        
+        category = response.content.strip().lower()
+        logger.info(f"detect_category (LLM): '{user_query[:40]}' → {category}")
+        return category
+        
+    except Exception as e:
+        logger.error(f"Category detection failed: {e}")
+        # Fallback to keyword-based detection
+        q = user_query.lower()
+        
+        for category, keywords in CATEGORY_KEYWORDS.items():
+            if any(kw in q for kw in keywords):
+                logger.info(f"detect_category (fallback): '{user_query[:40]}' → {category}")
+                return category
+        
+        return "general"

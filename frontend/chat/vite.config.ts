@@ -17,18 +17,10 @@ export default defineConfig({
     }
   },
   build: {
-    lib: {
-      entry: 'src/main.tsx',
-      name: 'ChatbotWidget',
-      fileName: (format) => `chatbot-widget.${format}.js`,
-      formats: ['umd', 'es']
-    },
-    rollupOptions: {
-      external: [],
-      output: {
-        globals: {}
-      }
-    }
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    minify: 'esbuild'
   },
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')

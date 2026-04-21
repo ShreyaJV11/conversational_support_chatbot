@@ -13,11 +13,10 @@ interface ChatWidgetProps {
 }
 
 const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
-  const [sessionId] = useState(() => {
-    const existing = localStorage.getItem("mps_chat_session");
-    if (existing) return existing;
-
-    const newId = "session_" + Date.now();
+  // Generate a NEW session ID every time the widget loads (no persistence)
+  const [sessionId, setSessionId] = useState(() => {
+    // Always create a fresh session - don't reuse old ones
+    const newId = "session_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9);
     localStorage.setItem("mps_chat_session", newId);
     return newId;
   });
@@ -26,10 +25,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
     apiBaseUrl = 'http://localhost:8000',
     botId,
     organizationId,
-    theme = {},
-    position = { bottom: '20px', right: '20px' },
     initialMessage = true,
-    userName,
     maxMessages = 50,
     typingDelay = 1000
   } = config;
@@ -58,13 +54,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   const [isResizing, setIsResizing] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   
+  // Recreate chatApi when sessionId changes
   const chatApi = React.useMemo(() => {
     return new ChatApiService({
       baseUrl: apiBaseUrl,
       botId,
       organizationId
-    });
-  }, [apiBaseUrl, botId, organizationId]);
+    }, sessionId);
+  }, [apiBaseUrl, botId, organizationId, sessionId]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -118,12 +115,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   // --- RESET HANDLER ---
   const handleResetChat = () => {
     if (window.confirm("Are you sure you want to clear this conversation?")) {
-      // 1. Clear Local Storage
+      // 1. Clear Local Storage (session AND token)
       localStorage.removeItem("mps_chat_session");
+      localStorage.removeItem("chat_token");
       
-      // 2. Generate new session
-      const newId = "session_" + Date.now();
+      // 2. Generate completely new session with random component
+      const newId = "session_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9);
       localStorage.setItem("mps_chat_session", newId);
+      setSessionId(newId);  // This will trigger chatApi recreation
       
       // 3. Reset State
       setState(prev => ({
@@ -143,14 +142,35 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   const handleToggleChat = () => {
   const nextOpenState = !state.isOpen;
   
-  setState(prev => ({
-    ...prev,
-    isOpen: nextOpenState,
-    isMinimized: false,
-    unreadCount: nextOpenState ? 0 : prev.unreadCount
-  }));
+  // If opening the chat, generate a new session to force re-registration
+  if (nextOpenState) {
+    const newId = "session_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9);
+    localStorage.setItem("mps_chat_session", newId);
+    setSessionId(newId);
+    
+    // Clear messages and user info to force fresh start
+    setState(prev => ({
+      ...prev,
+      messages: [],
+      userInfo: {},
+      isOpen: true,
+      isMinimized: false,
+      unreadCount: 0
+    }));
+    setSuggestions([]);
+    
+    // Load initial message
+    setTimeout(() => loadInitialMessage(), 100);
+  } else {
+    setState(prev => ({
+      ...prev,
+      isOpen: false,
+      isMinimized: false,
+      unreadCount: 0
+    }));
+  }
 
-  // 🔥 THIS IS THE KEY: Tell widget.js to resize the iframe
+  // Tell widget.js to resize the iframe
   if (window.parent) {
     window.parent.postMessage({ 
       type: nextOpenState ? "CHAT_OPENED" : "CHAT_CLOSED" 
@@ -223,34 +243,54 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
     try {
       await new Promise(resolve => setTimeout(resolve, typingDelay));
 
-      const request: any = {
-        user_question: message,
-        
-        
-      };
+      // For registration (name,email format), pass the raw string to chatApi
+      // so it can detect and handle it properly
+      if (message.includes(',') && message.split(',').length === 2) {
+        await chatApi.sendMessage(
+          message,  // Pass raw string for registration detection
+          (chunk: string, incomingSuggestions?: string[], images?: string[]) => {
+            setState(prev => ({
+              ...prev,
+              messages: prev.messages.map(msg =>
+                msg.id === botMessageId
+                  ? { ...msg, content: msg.content + chunk }
+                  : msg
+              )
+            }));
 
-      if (Object.keys(state.userInfo).length > 0) {
-        request.user_info = state.userInfo;
+            if (incomingSuggestions && incomingSuggestions.length > 0) {
+              setSuggestions(incomingSuggestions);
+            }
+          }
+        );
+      } else {
+        // For normal messages, build the request object
+        const request: any = {
+          user_question: message,
+        };
+
+        if (Object.keys(state.userInfo).length > 0) {
+          request.user_info = state.userInfo;
+        }
+
+        await chatApi.sendMessage(
+          request,
+          (chunk: string, incomingSuggestions?: string[], images?: string[]) => {
+            setState(prev => ({
+              ...prev,
+              messages: prev.messages.map(msg =>
+                msg.id === botMessageId
+                  ? { ...msg, content: msg.content + chunk }
+                  : msg
+              )
+            }));
+
+            if (incomingSuggestions && incomingSuggestions.length > 0) {
+              setSuggestions(incomingSuggestions);
+            }
+          }
+        );
       }
-
-      await chatApi.sendMessage(
-  request,
-  (chunk: string, incomingSuggestions?: string[]) => {
-    setState(prev => ({
-      ...prev,
-      messages: prev.messages.map(msg =>
-        msg.id === botMessageId
-          ? { ...msg, content: msg.content + chunk }
-          : msg
-      )
-    }));
-
-    // ✅ HANDLE SUGGESTIONS HERE
-    if (incomingSuggestions && incomingSuggestions.length > 0) {
-      setSuggestions(incomingSuggestions);
-    }
-  }
-);
 
       setState(prev => ({
         ...prev,
@@ -371,7 +411,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
           <div className="flex-shrink-0 flex items-center justify-between p-4 bg-primary-600 text-white rounded-t-lg">
             <div className="flex items-center space-x-2">
               <MessageCircle size={20} />
-              <span className="font-medium">MPS Support Assistant</span>
+              <span className="font-medium">HighWirePress Support Assistant</span>
               {state.hasError && (
                 <AlertCircle size={16} className="text-yellow-300" />
               )}

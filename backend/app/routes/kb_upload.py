@@ -1,4 +1,5 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query, Body
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query, Body, Request
+from fastapi.responses import JSONResponse
 import shutil
 import os
 import re
@@ -17,6 +18,15 @@ router = APIRouter(prefix="/admin")
 BASE_UPLOAD_DIR = "uploads"
 os.makedirs(BASE_UPLOAD_DIR, exist_ok=True)
 
+# ---------------------------------------------------------
+# SECURITY CONFIGURATION
+# ---------------------------------------------------------
+# Maximum file size: 50MB
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB in bytes
+
+# Maximum URL fetch size: 10MB
+MAX_URL_CONTENT_SIZE = 10 * 1024 * 1024  # 10MB in bytes
+
 # 🔥 Define allowed extensions matching your ingest_file configuration
 ALLOWED_EXTENSIONS = {
     # Text formats
@@ -29,6 +39,19 @@ ALLOWED_EXTENSIONS = {
     ".html", ".htm",
     # Image formats (with OCR)
     ".png", ".jpg", ".jpeg"
+}
+
+# Allowed MIME types for additional validation
+ALLOWED_MIME_TYPES = {
+    "text/plain", "text/markdown", "application/json",
+    "text/yaml", "application/x-yaml",
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel", "text/csv",
+    "text/html",
+    "image/png", "image/jpeg", "image/jpg"
 }
 
 
@@ -75,8 +98,16 @@ def sanitize_filename(filename: str) -> str:
 # LIST KB FILES (Bot Scoped)
 # ==========================================================
 
+@router.options("/kb-files/{bot_id}")
+def list_kb_files_options(bot_id: int):
+    """Handle OPTIONS preflight request for kb-files endpoint."""
+    return JSONResponse(content={"message": "OK"}, status_code=200)
+
+
 @router.get("/kb-files/{bot_id}")
 def list_kb_files(bot_id: int):
+    """List all knowledge base files for a bot."""
+    
     bot_upload_dir = os.path.join(BASE_UPLOAD_DIR, str(bot_id))
     os.makedirs(bot_upload_dir, exist_ok=True)
 
@@ -101,11 +132,19 @@ def list_kb_files(bot_id: int):
 # UPLOAD KNOWLEDGE BASE FILE (WITH SECURITY IMPROVEMENTS)
 # ==========================================================
 
+@router.options("/upload-kb")
+async def upload_kb_options():
+    """Handle OPTIONS preflight request for upload-kb endpoint."""
+    return JSONResponse(content={"message": "OK"}, status_code=200)
+
+
 @router.post("/upload-kb")
 async def upload_kb(
     bot_id: int = Query(...),
     file: UploadFile = File(...)
 ):
+    """Upload a knowledge base file."""
+    
     bot_config = get_bot_config(str(bot_id))
 
     if not bot_config:
@@ -120,7 +159,26 @@ async def upload_kb(
             detail="Invalid filename"
         )
 
-    # 2️⃣ Check File Extension securely
+    # 2️⃣ VALIDATE FILE SIZE
+    file_content = await file.read()
+    file_size = len(file_content)
+    
+    if file_size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {MAX_FILE_SIZE / (1024*1024):.0f}MB"
+        )
+    
+    if file_size == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="File is empty"
+        )
+    
+    # Reset file pointer for later use
+    await file.seek(0)
+
+    # 3️⃣ Check File Extension securely
     _, ext = os.path.splitext(safe_filename.lower())
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -182,12 +240,19 @@ async def upload_kb(
 # FETCH CONTENT FROM URL
 # ==========================================================
 
+@router.options("/fetch-url")
+async def fetch_url_options():
+    """Handle OPTIONS preflight request for fetch-url endpoint."""
+    return JSONResponse(content={"message": "OK"}, status_code=200)
+
+
 @router.post("/fetch-url")
 async def fetch_url(request: FetchUrlRequest):
     """
     Fetch content from a URL and add it to the knowledge base.
     Supports HTML pages, documentation sites, articles, etc.
     """
+    
     bot_config = get_bot_config(str(request.bot_id))
 
     if not bot_config:

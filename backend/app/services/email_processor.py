@@ -165,20 +165,20 @@ def process_emails() -> dict:
             raw_answer = clean_llm_answer("".join(answer_parts).strip())
             logger.info(f"Answer: {raw_answer[:100]}...")
 
-            # --- Email Reply ---
+           
             if not raw_answer:
-                # Clean fallback — testers won't lose confidence
+                
                 ai_reply = (
                     "We have reviewed your query and our team is looking into it. "
                     "We will get back to you within 1 business day.\n\n"
                     "If this is urgent, please reply with 'URGENT' in the subject line."
                 )
             else:
-                # Pass clean answer to email generator — let IT do the formatting
+                
                 prompt_body = f"Customer query:\n{user_query}\n\nAnswer:\n{raw_answer}"
                 ai_reply = generate_email_reply(subject, prompt_body)
 
-            # --- Build and Create Draft ---
+           
             draft_html = build_draft_html(subject, user_query, ai_reply)
             draft_id = graph.create_draft_reply(message_id, draft_html)
 

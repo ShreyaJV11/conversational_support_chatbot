@@ -1,4 +1,59 @@
-from app.db.database import get_connection
+from app.db.database import get_connection, return_connection
+
+
+# ==========================================================
+# HELPER FUNCTIONS
+# ==========================================================
+
+def get_or_create_organization(email: str) -> int:
+    """
+    Extract domain from email and get or create organization.
+    Returns organization_id.
+    """
+    try:
+        domain = email.split('@')[1].lower()
+        # Extract organization name from domain (e.g., highwirepress.com -> HighWirePress)
+        org_name = domain.split('.')[0].capitalize()
+    except (IndexError, AttributeError):
+        domain = "unknown.com"
+        org_name = "Unknown"
+    
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        
+        # Try to get existing organization
+        cur.execute(
+            """
+            SELECT id FROM organizations 
+            WHERE domain = %s
+            """,
+            (domain,)
+        )
+        
+        result = cur.fetchone()
+        if result:
+            return result[0]
+        
+        # Create new organization
+        cur.execute(
+            """
+            INSERT INTO organizations (domain, organization_name)
+            VALUES (%s, %s)
+            RETURNING id
+            """,
+            (domain, org_name)
+        )
+        
+        org_id = cur.fetchone()[0]
+        conn.commit()
+        return org_id
+        
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            return_connection(conn)  # Return to pool instead of closing
 
 
 # ==========================================================
@@ -9,16 +64,19 @@ def get_or_create_user(bot_id: int, name: str, email: str) -> int:
     conn = get_connection()
     try:
         cur = conn.cursor()
+        
+        # Get or create organization
+        organization_id = get_or_create_organization(email)
 
         cur.execute(
             """
-            INSERT INTO users (bot_id, name, email)
-            VALUES (%s, %s, %s)
+            INSERT INTO users (bot_id, name, email, organization_id)
+            VALUES (%s, %s, %s, %s)
             ON CONFLICT (bot_id, email)
-            DO UPDATE SET name = EXCLUDED.name
+            DO UPDATE SET name = EXCLUDED.name, organization_id = EXCLUDED.organization_id
             RETURNING id
             """,
-            (bot_id, name, email)
+            (bot_id, name, email, organization_id)
         )
 
         user_id = cur.fetchone()[0]
@@ -26,8 +84,10 @@ def get_or_create_user(bot_id: int, name: str, email: str) -> int:
         return user_id
 
     finally:
-        cur.close()
-        conn.close()
+        if cur:
+            cur.close()
+        if conn:
+            return_connection(conn)
 
 
 def link_session_to_user(bot_id: int, user_id: int, session_id: str):
@@ -48,8 +108,10 @@ def link_session_to_user(bot_id: int, user_id: int, session_id: str):
         conn.commit()
 
     finally:
-        cur.close()
-        conn.close()
+        if cur:
+            cur.close()
+        if conn:
+            return_connection(conn)
 
 
 def get_user_by_session(bot_id: int, session_id: str):
@@ -59,9 +121,10 @@ def get_user_by_session(bot_id: int, session_id: str):
 
         cur.execute(
             """
-            SELECT u.id, u.name, u.email
+            SELECT u.id, u.name, u.email, o.organization_name, o.domain
             FROM users u
             JOIN sessions s ON u.id = s.user_id
+            LEFT JOIN organizations o ON u.organization_id = o.id
             WHERE s.session_id = %s
             AND s.bot_id = %s
             """,
@@ -74,14 +137,18 @@ def get_user_by_session(bot_id: int, session_id: str):
             return {
                 "id": row[0],
                 "name": row[1],
-                "email": row[2]
+                "email": row[2],
+                "organization": row[3],
+                "domain": row[4]
             }
 
         return None
 
     finally:
-        cur.close()
-        conn.close()
+        if cur:
+            cur.close()
+        if conn:
+            return_connection(conn)
 
 
 # ==========================================================
@@ -134,8 +201,10 @@ def get_or_create_conversation(user_id: int, bot_id: int, force_new: bool = Fals
         return convo_id
 
     finally:
-        cur.close()
-        conn.close()
+        if cur:
+            cur.close()
+        if conn:
+            return_connection(conn)
 
 
 def save_message(conversation_id: int, role: str, content: str, category: str = None):
@@ -163,8 +232,10 @@ def save_message(conversation_id: int, role: str, content: str, category: str = 
         conn.commit()
 
     finally:
-        cur.close()
-        conn.close()
+        if cur:
+            cur.close()
+        if conn:
+            return_connection(conn)
 
 
 def get_recent_messages(conversation_id: int, limit: int = 6):
@@ -187,5 +258,7 @@ def get_recent_messages(conversation_id: int, limit: int = 6):
         return rows[::-1]  # chronological order
 
     finally:
-        cur.close()
-        conn.close()
+        if cur:
+            cur.close()
+        if conn:
+            return_connection(conn)

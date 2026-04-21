@@ -2,19 +2,19 @@ import json
 import logging
 import re
 import time
-from app.db.database import get_connection
+from app.db.database import get_connection, return_connection
 from app.services.llm_service import create_chat_model
 from langchain_core.messages import SystemMessage, HumanMessage
 from app.services.retrieval_service import retrieve_chunks
 
 logger = logging.getLogger(__name__)
 
-# Fallback suggestions (never return empty)
+
 FALLBACK_SUGGESTIONS = {
     "issue":    ["Login issue", "Site down", "Payment error"],
     "site":     ["Production", "Staging", "Mobile App"],
     "duration": ["Just started", "Since 1 hour", "Since today"],
-    "default":  ["Can you explain more?","What are the features?","How does it work?"],
+    "default":  ["What is JCore?", "How to setup Sigma Solr?", "How to restart Fragr?"],
 }
 
 
@@ -30,7 +30,7 @@ def extract_suggestions(text: str) -> list:
     try:
         data = json.loads(text)
     except Exception:
-        # FIX: was bare `except:` — now catches Exception specifically
+        
         match = re.search(r'\[.*\]', text, re.DOTALL)
         if not match:
             return []
@@ -41,11 +41,11 @@ def extract_suggestions(text: str) -> list:
 
     suggestions = []
 
-    # Case 1: ["A", "B", "C"] — ideal output
+  
     if isinstance(data, list) and all(isinstance(i, str) for i in data):
         return data[:3]
 
-    # Case 2 + 3: [{"0": "..."}, ...] or [{"question": "..."}]
+
     if isinstance(data, list):
         for item in data:
             if not isinstance(item, dict):
@@ -74,7 +74,10 @@ def get_suggestions(bot_id: int, user_query: str, step: str = None) -> list:
         conn = get_connection()
         cur  = conn.cursor()
 
-        # 1. Fetch KB context chunks
+        # 1. Fetch KB context chunks (skip if empty query)
+        if not user_query or not user_query.strip():
+            return FALLBACK_SUGGESTIONS.get(step, FALLBACK_SUGGESTIONS["default"])
+        
         chunks, is_valid = retrieve_chunks(user_query, bot_id)
         if not is_valid or not chunks:
             return FALLBACK_SUGGESTIONS.get(step, FALLBACK_SUGGESTIONS["default"])
@@ -177,10 +180,7 @@ def get_suggestions(bot_id: int, user_query: str, step: str = None) -> list:
         return FALLBACK_SUGGESTIONS.get(step, FALLBACK_SUGGESTIONS["default"])
 
     finally:
-        # FIX: was `get_connection()` assigned inside try without None init,
-        #      so finally block could crash on NameError if connection failed.
-        #      Now conn and cur are initialised to None before try block.
         if cur:
             cur.close()
         if conn:
-            conn.close()
+            return_connection(conn)

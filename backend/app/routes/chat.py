@@ -5,6 +5,9 @@ from typing import Optional, Dict
 import re
 import asyncio
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from app.services.auth_service import verify_jwt_token, check_rate_limit, create_jwt_token
 from app.services.salesforce_service import create_salesforce_case
@@ -390,9 +393,32 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
                 elif "site name or system affected" in msg_lower: current_step = "site"
                 elif "describe your issue"          in msg_lower: current_step = "issue"
 
+        # Check if user explicitly wants to create a ticket
         is_ticket_intent = detect_ticket_intent(request.user_question)
         ticket_step = get_ticket_step(history_rows)
-        if is_ticket_intent or ticket_step:
+        
+        # Check if last assistant message asked about creating a ticket
+        user_confirming_ticket = False
+        if history_rows and len(history_rows) > 0:
+            last_role, last_msg = history_rows[-1]
+            if last_role == "assistant" and "would you like me to create a support ticket?" in last_msg.lower():
+                # User is responding to ticket creation offer
+                user_response = request.user_question.lower().strip()
+                if user_response in ["yes", "y", "sure", "ok", "okay", "please", "yeah"]:
+                    user_confirming_ticket = True
+                elif user_response in ["no", "n", "nope", "not now", "later"]:
+                    # User declined ticket creation, continue with normal flow
+                    pass
+                else:
+                    # User asked a different question instead of answering yes/no
+                    # Treat it as a new question, not ticket flow
+                    pass
+        
+        # Only enter ticket flow if:
+        # 1. User explicitly said they want a ticket, OR
+        # 2. User confirmed ticket creation, OR  
+        # 3. Already in ticket flow (ticket_step exists)
+        if is_ticket_intent or user_confirming_ticket or ticket_step:
             return handle_ticket_flow(
                  request,
                  conversation_id,
@@ -402,21 +428,49 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
                  category
     )
 
-        # ── TICKET INTENT GUARD ───────────────────────────────────────────────
-
-        
-
-        # ── TICKET CREATION ───────────────────────────────────────────────────
-
-        
-        # ── SAVE USER MESSAGE ─────────────────────────────────────────────────
         
         save_message(conversation_id, "user", request.user_question,category)
+
+        # ── HANDLE GREETINGS & PLEASANTRIES ───────────────────────────────────
+        
+        query_lower = request.user_question.lower().strip()
+        
+        # Only match standalone greetings (not questions starting with "how")
+        standalone_greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "hi there", "hello there"]
+        thanks_phrases = ["thank you", "thanks", "thank", "appreciate it", "thx", "ty"]
+        
+        # Check if it's ONLY a greeting (not a question)
+        is_greeting = any(query_lower == greeting or query_lower.startswith(greeting + " ") for greeting in standalone_greetings)
+        is_thanks = any(thank in query_lower for thank in thanks_phrases) and len(query_lower.split()) <= 5
+        
+        if is_greeting:
+            response = "Hello! How can I help you today?"
+            save_message(conversation_id, "assistant", response, category)
+            suggestions_json = json.dumps(get_suggestions(request.bot_id, user_query="", step=None))
+            return StreamingResponse(
+                stream_text(response),
+                media_type="text/plain",
+                headers={"X-Suggestions": suggestions_json}
+            )
+        
+        if is_thanks and not any(q in query_lower for q in ["how", "what", "why", "when", "where", "?"]):
+            response = "You're welcome! Is there anything else I can help you with?"
+            save_message(conversation_id, "assistant", response, category)
+            suggestions_json = json.dumps(get_suggestions(request.bot_id, user_query="", step=None))
+            return StreamingResponse(
+                stream_text(response),
+                media_type="text/plain",
+                headers={"X-Suggestions": suggestions_json}
+            )
 
         # ── RAG RETRIEVAL ─────────────────────────────────────────────────────
 
         # Rewrite query to resolve pronouns ("it", "they", etc.) before retrieval
         standalone_query = rewrite_query(request.user_question, history_dicts)
+        
+        # Debug logging
+        logger.info(f"Original query: '{request.user_question}'")
+        logger.info(f"Rewritten query: '{standalone_query}'")
 
         chunks, is_domain = retrieve_chunks(
             user_query=standalone_query,
@@ -424,6 +478,8 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
             chat_history=history_rows,
             bot_config=bot_config.get("retriever_config", {})
         )
+        
+        logger.info(f"Retrieved {len(chunks) if chunks else 0} chunks for query: '{standalone_query}'")
 
         if not is_domain:
             # Off-topic query — generic suggestions
@@ -440,8 +496,8 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
                 + "\n\nWould you like me to create a support ticket?"
             )
             save_message(conversation_id, "assistant", escalation_text,category)
-            # Ticket flow starting — show issue-type chips
-            suggestions_json = json.dumps(get_suggestions(request.bot_id,request.user_question, step="issue"))
+            # Show Yes/No suggestions for ticket creation confirmation
+            suggestions_json = json.dumps(["Yes, create a ticket", "No, try another question"])
             return StreamingResponse(
                 stream_text(escalation_text),
                 media_type="text/plain",

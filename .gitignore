@@ -1,20 +1,30 @@
 # Environment variables
 .env
+backend/.env
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.pytest_cache/
 
 # Virtual environment
 venv/
 .venv/
+backend/venv/
+frontend/venv/
 
 # Node
 node_modules/
 dist/
 build/
+frontend/admin/node_modules/
+frontend/chat/node_modules/
+
+# Uploads (confidential documentation)
+backend/uploads/
+*.txt
 
 # VS Code
 .vscode/
@@ -22,3 +32,13 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Test files
+test*.py
+backend/test*.py
+backend/scripts/test_*.py
+
+# Junk files
+backend/26.0.1
+backend/cd
+backend/python

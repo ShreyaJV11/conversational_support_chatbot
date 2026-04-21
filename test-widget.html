@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MPS Chat Widget - Test Page</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>Hello World</h1>
+        <p>This is a simple HTML document with the MPS chat widget embedded.</p>
+        <p>Look for the chat button in the bottom-right corner of the page!</p>
+    </div>
+
+    <!-- Load the chat widget -->
+    <div id="root"></div>
+    <script src="http://localhost:5173/chatbot-widget.umd.js"></script>
+    <script>
+        // Initialize the widget
+        if (window.ChatbotWidget && window.ChatbotWidget.init) {
+            window.ChatbotWidget.init({
+                apiBaseUrl: 'http://localhost:8000',
+                botId: 1,
+                organizationId: 1
+            });
+        }
+    </script>
+</body>
+</html>

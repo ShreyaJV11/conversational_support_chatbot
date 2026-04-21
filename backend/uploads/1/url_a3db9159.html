@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html class="no-js" dir="ltr" lang="en-GB"
+	prefix="og: https://ogp.me/ns#" >
+<head>
+	<meta charset="UTF-8"><script type="text/javascript">(window.NREUM||(NREUM={})).init={ajax:{deny_list:["bam.nr-data.net"]},feature_flags:["soft_nav"]};(window.NREUM||(NREUM={})).loader_config={licenseKey:"NRJS-333ee02360711bae4cc",applicationID:"1146108104",browserID:"1146114824"};;/*! For license information please see nr-loader-rum-1.312.1.min.js.LICENSE.txt */
+(()=>{var e,t,r={163:(e,t,r)=>{"use strict";r.d(t,{j:()=>T});var n=r(384),i=r(1741);var s=r(2555);r(860).K7.genericEvents;const o="experimental.resources",a="register",c=e=>{if(!e||"string"!=typeof e)return!1;try{document.createDocumentFragment().querySelector(e)}catch{return!1}return!0};var u=r(2614),d=r(944),l=r(8122);const f="[data-nr-mask]",g=e=>(0,l.a)(e,(()=>{const e={feature_flags:[],experimental:{allow_registered_children:!1,resources:!1},mask_selector:"*",block_selector:"[data-nr-block]",mask_input_options:{color:!1,date:!1,"datetime-local":!1,email:!1,month:!1,number:!1,range:!1,search:!1,tel:!1,text:!1,time:!1,url:!1,week:!1,textarea:!1,select:!1,password:!0}};return{ajax:{deny_list:void 0,block_internal:!0,enabled:!0,autoStart:!0},api:{get allow_registered_children(){return e.feature_flags.includes(a)||e.experimental.allow_registered_children},set allow_registered_children(t){e.experimental.allow_registered_children=t},duplicate_registered_data:!1},browser_consent_mode:{enabled:!1},distributed_tracing:{enabled:void 0,exclude_newrelic_header:void 0,cors_use_newrelic_header:void 0,cors_use_tracecontext_headers:void 0,allowed_origins:void 0},get feature_flags(){return e.feature_flags},set feature_flags(t){e.feature_flags=t},generic_events:{enabled:!0,autoStart:!0},harvest:{interval:30},jserrors:{enabled:!0,autoStart:!0},logging:{enabled:!0,autoStart:!0},metrics:{enabled:!0,autoStart:!0},obfuscate:void 0,page_action:{enabled:!0},page_view_event:{enabled:!0,autoStart:!0},page_view_timing:{enabled:!0,autoStart:!0},performance:{capture_marks:!1,capture_measures:!1,capture_detail:!0,resources:{get enabled(){return e.feature_flags.includes(o)||e.experimental.resources},set enabled(t){e.experimental.resources=t},asset_types:[],first_party_domains:[],ignore_newrelic:!0}},privacy:{cookies_enabled:!0},proxy:{assets:void 0,beacon:void 0},session:{expiresMs:u.wk,inactiveMs:u.BB},session_replay:{autoStart:!0,enabled:!1,preload:!1,sampling_rate:10,error_sampling_rate:100,collect_fonts:!1,inline_images:!1,fix_stylesheets:!0,mask_all_inputs:!0,get mask_text_selector(){return e.mask_selector},set mask_text_selector(t){c(t)?e.mask_selector="".concat(t,",").concat(f):""===t||null===t?e.mask_selector=f:(0,d.R)(5,t)},get block_class(){return"nr-block"},get ignore_class(){return"nr-ignore"},get mask_text_class(){return"nr-mask"},get block_selector(){return e.block_selector},set block_selector(t){c(t)?e.block_selector+=",".concat(t):""!==t&&(0,d.R)(6,t)},get mask_input_options(){return e.mask_input_options},set mask_input_options(t){t&&"object"==typeof t?e.mask_input_options={...t,password:!0}:(0,d.R)(7,t)}},session_trace:{enabled:!0,autoStart:!0},soft_navigations:{enabled:!0,autoStart:!0},ssl:void 0,user_actions:{enabled:!0,elementAttributes:["id","className","tagName","type"]}}})());var p=r(6154),m=r(9324);let h=0;const v={buildEnv:m.F3,distMethod:m.Xs,version:m.xv,originTime:p.WN},b={consented:!1},y={activatedFeatures:void 0,appMetadata:{},configured:!1,get consented(){return this.session?.state?.consent||b.consented},set consented(e){b.consented=e},customTransaction:void 0,denyList:[],disabled:!1,drainRegistry:new Map,harvester:void 0,isolatedBacklog:!1,isRecording:!1,loaderType:void 0,maxBytes:3e4,obfuscator:void 0,onerror:void 0,ptid:void 0,releaseIds:{},session:void 0,timeKeeper:void 0,registeredEntities:[],jsAttributesMetadata:{bytes:0},get harvestCount(){return++h}},_=e=>{const t=(0,l.a)(e,y),r=Object.keys(v).reduce((e,t)=>(e[t]={value:v[t],writable:!1,configurable:!0,enumerable:!0},e),{});return Object.defineProperties(t,r)},w=e=>{const t=e.startsWith("http");e+="/",r.p=t?e:"https://"+e};var x=r(7836),R=r(3241);const k={accountID:void 0,trustKey:void 0,agentID:void 0,licenseKey:void 0,applicationID:void 0,xpid:void 0},A=e=>(0,l.a)(e,k);function T(e,t={},r,o){let{init:a,info:c,loader_config:u,runtime:d={},exposed:l=!0}=t;if(!c){const e=(0,n.pV)();a=e.init,c=e.info,u=e.loader_config}e.init=g(a||{}),e.loader_config=A(u||{}),c.jsAttributes??={},p.bv&&(c.jsAttributes.isWorker=!0),e.info=(0,s.D)(c);const f=e.init;e.runtime??=_(d),f.proxy.assets&&w(f.proxy.assets),e.runtime.configured||(Object.defineProperty(e,"beacons",{get:()=>[e.info.beacon,e.info.errorBeacon,e.init.proxy.assets,e.init.proxy.beacon].filter(Boolean)}),Object.defineProperty(e.runtime,"denyList",{get:()=>[...e.init.ajax.deny_list||[],...e.init.ajax.block_internal?e.beacons:[]]}),e.runtime.ptid=e.agentIdentifier,function(e){const t=(0,n.pV)();Object.getOwnPropertyNames(i.W.prototype).forEach(r=>{const n=i.W.prototype[r];if("function"!=typeof n||"constructor"===n)return;let s=t[r];e[r]&&!1!==e.exposed&&"micro-agent"!==e.runtime?.loaderType&&(t[r]=(...t)=>{const n=e[r](...t);return s?s(...t):n})})}(e),e.runtime.loaderType=r,e.ee=x.ee.get(e.agentIdentifier),e.exposed=l,(0,R.W)({drained:!!e.runtime.activatedFeatures,type:"lifecycle",name:"initialize",feature:void 0,data:e.config}),e.runtime.configured=!0)}},384:(e,t,r)=>{"use strict";r.d(t,{NT:()=>a,Zm:()=>c,bQ:()=>d,dV:()=>u,pV:()=>l});var n=r(6154),i=r(1863),s=r(944),o=r(1910);const a={beacon:"bam.nr-data.net",errorBeacon:"bam.nr-data.net"};function c(){return n.gm.NREUM||(n.gm.NREUM={}),void 0===n.gm.newrelic&&(n.gm.newrelic=n.gm.NREUM),n.gm.NREUM}function u(){let e=c();return e.o||(e.o={ST:n.gm.setTimeout,SI:n.gm.setImmediate||n.gm.setInterval,CT:n.gm.clearTimeout,XHR:n.gm.XMLHttpRequest,REQ:n.gm.Request,EV:n.gm.Event,PR:n.gm.Promise,MO:n.gm.MutationObserver,FETCH:n.gm.fetch,WS:n.gm.WebSocket},(0,o.i)(...Object.values(e.o))),e}function d(e,t){let r=c();r.initializedAgents??={},t.initializedAt={ms:(0,i.t)(),date:new Date},r.initializedAgents[e]=t,2===Object.keys(r.initializedAgents).length&&(0,s.R)(69)}function l(){return function(){let e=c();const t=e.info||{};e.info={beacon:a.beacon,errorBeacon:a.errorBeacon,...t}}(),function(){let e=c();const t=e.init||{};e.init={...t}}(),u(),function(){let e=c();const t=e.loader_config||{};e.loader_config={...t}}(),c()}},782:(e,t,r)=>{"use strict";r.d(t,{T:()=>n});const n=r(860).K7.pageViewTiming},860:(e,t,r)=>{"use strict";r.d(t,{$J:()=>d,K7:()=>c,P3:()=>u,XX:()=>i,Yy:()=>a,df:()=>s,qY:()=>n,v4:()=>o});const n="events",i="jserrors",s="browser/blobs",o="rum",a="browser/logs",c={ajax:"ajax",genericEvents:"generic_events",jserrors:i,logging:"logging",metrics:"metrics",pageAction:"page_action",pageViewEvent:"page_view_event",pageViewTiming:"page_view_timing",sessionReplay:"session_replay",sessionTrace:"session_trace",softNav:"soft_navigations"},u={[c.pageViewEvent]:1,[c.pageViewTiming]:2,[c.metrics]:3,[c.jserrors]:4,[c.softNav]:5,[c.ajax]:6,[c.sessionTrace]:7,[c.sessionReplay]:8,[c.logging]:9,[c.genericEvents]:10},d={[c.pageViewEvent]:o,[c.pageViewTiming]:n,[c.ajax]:n,[c.softNav]:n,[c.metrics]:i,[c.jserrors]:i,[c.sessionTrace]:s,[c.sessionReplay]:s,[c.logging]:a,[c.genericEvents]:"ins"}},944:(e,t,r)=>{"use strict";r.d(t,{R:()=>i});var n=r(3241);function i(e,t){"function"==typeof console.debug&&(console.debug("New Relic Warning: https://github.com/newrelic/newrelic-browser-agent/blob/main/docs/warning-codes.md#".concat(e),t),(0,n.W)({drained:null,type:"data",name:"warn",feature:"warn",data:{code:e,secondary:t}}))}},1687:(e,t,r)=>{"use strict";r.d(t,{Ak:()=>a,Ze:()=>u,x3:()=>c});var n=r(3241),i=r(3606),s=r(860),o=r(2646);function a(e,t){if(!e)return;const r={staged:!1,priority:s.P3[t]||0};e.runtime.drainRegistry.get(t)||e.runtime.drainRegistry.set(t,r)}function c(e,t){if(!e)return;const r=e.runtime.drainRegistry;r&&(r.get(t)&&r.delete(t),l(e,t,!1),r.size&&d(e))}function u(e,t="feature",r=!1){if(e){if(!e.runtime.drainRegistry.get(t)||r)return l(e,t);e.runtime.drainRegistry.get(t).staged=!0,d(e)}}function d(e){if(!e)return;const t=Array.from(e.runtime.drainRegistry);t.every(([e,t])=>t.staged)&&(t.sort((e,t)=>e[1].priority-t[1].priority),t.forEach(([t])=>{e.runtime.drainRegistry.delete(t),l(e,t)}))}function l(e,t,r=!0){if(!e)return;const s=e.ee,a=i.i.handlers;if(s&&!s.aborted&&s.backlog&&a){if((0,n.W)({type:"lifecycle",name:"drain",feature:t}),r){const e=s.backlog[t],r=a[t];if(r){for(let t=0;e&&t<e.length;++t)f(e[t],r);Object.entries(r).forEach(([e,t])=>{Object.values(t||{}).forEach(t=>{t[0]?.on&&t[0].context()instanceof o.y&&!t[0].listeners(e).includes(t[1])&&t[0].on(e,t[1])})})}}s.isolatedBacklog||delete a[t],s.backlog[t]=null,s.emit("drain-"+t,[])}}function f(e,t){var r=e[1];Object.values(t[r]||{}).forEach(t=>{var r=e[0];if(t[0]===r){var n=t[1],i=e[3],s=e[2];n.apply(i,s)}})}},1738:(e,t,r)=>{"use strict";r.d(t,{U:()=>f,Y:()=>l});var n=r(3241),i=r(9908),s=r(1863),o=r(944),a=r(3969),c=r(8362),u=r(860),d=r(4261);function l(e,t,r,s){const l=s||r;!l||l[e]&&l[e]!==c.d.prototype[e]||(l[e]=function(){(0,i.p)(a.xV,["API/"+e+"/called"],void 0,u.K7.metrics,r.ee),(0,n.W)({drained:!!r.runtime?.activatedFeatures,type:"data",name:"api",feature:d.Pl+e,data:{}});try{return t.apply(this,arguments)}catch(e){(0,o.R)(23,e)}})}function f(e,t,r,n,o){const a=e.info;null===r?delete a.jsAttributes[t]:a.jsAttributes[t]=r,(o||null===r)&&(0,i.p)(d.Pl+n,[(0,s.t)(),t,r],void 0,"session",e.ee)}},1741:(e,t,r)=>{"use strict";r.d(t,{W:()=>s});var n=r(944),i=r(4261);class s{#e(e,...t){if(this[e]!==s.prototype[e])return this[e](...t);(0,n.R)(35,e)}addPageAction(e,t){return this.#e(i.hG,e,t)}register(e){return this.#e(i.eY,e)}recordCustomEvent(e,t){return this.#e(i.fF,e,t)}setPageViewName(e,t){return this.#e(i.Fw,e,t)}setCustomAttribute(e,t,r){return this.#e(i.cD,e,t,r)}noticeError(e,t){return this.#e(i.o5,e,t)}setUserId(e,t=!1){return this.#e(i.Dl,e,t)}setApplicationVersion(e){return this.#e(i.nb,e)}setErrorHandler(e){return this.#e(i.bt,e)}addRelease(e,t){return this.#e(i.k6,e,t)}log(e,t){return this.#e(i.$9,e,t)}start(){return this.#e(i.d3)}finished(e){return this.#e(i.BL,e)}recordReplay(){return this.#e(i.CH)}pauseReplay(){return this.#e(i.Tb)}addToTrace(e){return this.#e(i.U2,e)}setCurrentRouteName(e){return this.#e(i.PA,e)}interaction(e){return this.#e(i.dT,e)}wrapLogger(e,t,r){return this.#e(i.Wb,e,t,r)}measure(e,t){return this.#e(i.V1,e,t)}consent(e){return this.#e(i.Pv,e)}}},1863:(e,t,r)=>{"use strict";function n(){return Math.floor(performance.now())}r.d(t,{t:()=>n})},1910:(e,t,r)=>{"use strict";r.d(t,{i:()=>s});var n=r(944);const i=new Map;function s(...e){return e.every(e=>{if(i.has(e))return i.get(e);const t="function"==typeof e?e.toString():"",r=t.includes("[native code]"),s=t.includes("nrWrapper");return r||s||(0,n.R)(64,e?.name||t),i.set(e,r),r})}},2555:(e,t,r)=>{"use strict";r.d(t,{D:()=>a,f:()=>o});var n=r(384),i=r(8122);const s={beacon:n.NT.beacon,errorBeacon:n.NT.errorBeacon,licenseKey:void 0,applicationID:void 0,sa:void 0,queueTime:void 0,applicationTime:void 0,ttGuid:void 0,user:void 0,account:void 0,product:void 0,extra:void 0,jsAttributes:{},userAttributes:void 0,atts:void 0,transactionName:void 0,tNamePlain:void 0};function o(e){try{return!!e.licenseKey&&!!e.errorBeacon&&!!e.applicationID}catch(e){return!1}}const a=e=>(0,i.a)(e,s)},2614:(e,t,r)=>{"use strict";r.d(t,{BB:()=>o,H3:()=>n,g:()=>u,iL:()=>c,tS:()=>a,uh:()=>i,wk:()=>s});const n="NRBA",i="SESSION",s=144e5,o=18e5,a={STARTED:"session-started",PAUSE:"session-pause",RESET:"session-reset",RESUME:"session-resume",UPDATE:"session-update"},c={SAME_TAB:"same-tab",CROSS_TAB:"cross-tab"},u={OFF:0,FULL:1,ERROR:2}},2646:(e,t,r)=>{"use strict";r.d(t,{y:()=>n});class n{constructor(e){this.contextId=e}}},2843:(e,t,r)=>{"use strict";r.d(t,{G:()=>s,u:()=>i});var n=r(3878);function i(e,t=!1,r,i){(0,n.DD)("visibilitychange",function(){if(t)return void("hidden"===document.visibilityState&&e());e(document.visibilityState)},r,i)}function s(e,t,r){(0,n.sp)("pagehide",e,t,r)}},3241:(e,t,r)=>{"use strict";r.d(t,{W:()=>s});var n=r(6154);const i="newrelic";function s(e={}){try{n.gm.dispatchEvent(new CustomEvent(i,{detail:e}))}catch(e){}}},3606:(e,t,r)=>{"use strict";r.d(t,{i:()=>s});var n=r(9908);s.on=o;var i=s.handlers={};function s(e,t,r,s){o(s||n.d,i,e,t,r)}function o(e,t,r,i,s){s||(s="feature"),e||(e=n.d);var o=t[s]=t[s]||{};(o[r]=o[r]||[]).push([e,i])}},3878:(e,t,r)=>{"use strict";function n(e,t){return{capture:e,passive:!1,signal:t}}function i(e,t,r=!1,i){window.addEventListener(e,t,n(r,i))}function s(e,t,r=!1,i){document.addEventListener(e,t,n(r,i))}r.d(t,{DD:()=>s,jT:()=>n,sp:()=>i})},3969:(e,t,r)=>{"use strict";r.d(t,{TZ:()=>n,XG:()=>a,rs:()=>i,xV:()=>o,z_:()=>s});const n=r(860).K7.metrics,i="sm",s="cm",o="storeSupportabilityMetrics",a="storeEventMetrics"},4234:(e,t,r)=>{"use strict";r.d(t,{W:()=>i});var n=r(1687);class i{constructor(e,t){this.agentRef=e,this.ee=e?.ee,this.featureName=t,this.blocked=!1}deregisterDrain(){(0,n.x3)(this.agentRef,this.featureName)}}},4261:(e,t,r)=>{"use strict";r.d(t,{$9:()=>u,BL:()=>a,CH:()=>g,Dl:()=>_,Fw:()=>y,PA:()=>h,Pl:()=>n,Pv:()=>k,Tb:()=>l,U2:()=>s,V1:()=>R,Wb:()=>x,bt:()=>b,cD:()=>v,d3:()=>w,dT:()=>c,eY:()=>p,fF:()=>f,hG:()=>i,k6:()=>o,nb:()=>m,o5:()=>d});const n="api-",i="addPageAction",s="addToTrace",o="addRelease",a="finished",c="interaction",u="log",d="noticeError",l="pauseReplay",f="recordCustomEvent",g="recordReplay",p="register",m="setApplicationVersion",h="setCurrentRouteName",v="setCustomAttribute",b="setErrorHandler",y="setPageViewName",_="setUserId",w="start",x="wrapLogger",R="measure",k="consent"},5289:(e,t,r)=>{"use strict";r.d(t,{GG:()=>o,Qr:()=>c,sB:()=>a});var n=r(3878),i=r(6389);function s(){return"undefined"==typeof document||"complete"===document.readyState}function o(e,t){if(s())return e();const r=(0,i.J)(e),o=setInterval(()=>{s()&&(clearInterval(o),r())},500);(0,n.sp)("load",r,t)}function a(e){if(s())return e();(0,n.DD)("DOMContentLoaded",e)}function c(e){if(s())return e();(0,n.sp)("popstate",e)}},5607:(e,t,r)=>{"use strict";r.d(t,{W:()=>n});const n=(0,r(9566).bz)()},6154:(e,t,r)=>{"use strict";r.d(t,{OF:()=>u,RI:()=>i,WN:()=>l,bv:()=>s,gm:()=>o,m:()=>c,mw:()=>a,sb:()=>d,zk:()=>f});var n=r(1863);const i="undefined"!=typeof window&&!!window.document,s="undefined"!=typeof WorkerGlobalScope&&("undefined"!=typeof self&&self instanceof WorkerGlobalScope&&self.navigator instanceof WorkerNavigator||"undefined"!=typeof globalThis&&globalThis instanceof WorkerGlobalScope&&globalThis.navigator instanceof WorkerNavigator),o=i?window:"undefined"!=typeof WorkerGlobalScope&&("undefined"!=typeof self&&self instanceof WorkerGlobalScope&&self||"undefined"!=typeof globalThis&&globalThis instanceof WorkerGlobalScope&&globalThis),a=Boolean("hidden"===o?.document?.visibilityState),c=""+o?.location,u=/iPad|iPhone|iPod/.test(o.navigator?.userAgent),d=u&&"undefined"==typeof SharedWorker,l=((()=>{const e=o.navigator?.userAgent?.match(/Firefox[/\s](\d+\.\d+)/);Array.isArray(e)&&e.length>=2&&e[1]})(),Date.now()-(0,n.t)()),f=()=>{const e=o?.performance?.getEntriesByType?.("navigation")?.[0];if(e&&e.responseStart>0&&e.responseStart<o.performance.now())return e}},6389:(e,t,r)=>{"use strict";function n(e,t=500,r={}){const n=r?.leading||!1;let i;return(...r)=>{n&&void 0===i&&(e.apply(this,r),i=setTimeout(()=>{i=clearTimeout(i)},t)),n||(clearTimeout(i),i=setTimeout(()=>{e.apply(this,r)},t))}}function i(e){let t=!1;return(...r)=>{t||(t=!0,e.apply(this,r))}}r.d(t,{J:()=>i,s:()=>n})},6630:(e,t,r)=>{"use strict";r.d(t,{T:()=>n});const n=r(860).K7.pageViewEvent},7699:(e,t,r)=>{"use strict";r.d(t,{It:()=>s,KC:()=>a,No:()=>i,qh:()=>o});var n=r(860);const i=16e3,s=1e6,o="SESSION_ERROR",a={[n.K7.logging]:!0,[n.K7.genericEvents]:!0,[n.K7.jserrors]:!0,[n.K7.ajax]:!0}},7836:(e,t,r)=>{"use strict";r.d(t,{P:()=>a,ee:()=>c});var n=r(384),i=r(8990),s=r(2646),o=r(5607);const a="nr@context:".concat(o.W),c=function e(t,r){var n={},o={},d={},l=!1;try{l=16===r.length&&u.initializedAgents?.[r]?.runtime.isolatedBacklog}catch(e){}var f={on:p,addEventListener:p,removeEventListener:function(e,t){var r=n[e];if(!r)return;for(var i=0;i<r.length;i++)r[i]===t&&r.splice(i,1)},emit:function(e,r,n,i,s){!1!==s&&(s=!0);if(c.aborted&&!i)return;t&&s&&t.emit(e,r,n);var a=g(n);m(e).forEach(e=>{e.apply(a,r)});var u=v()[o[e]];u&&u.push([f,e,r,a]);return a},get:h,listeners:m,context:g,buffer:function(e,t){const r=v();if(t=t||"feature",f.aborted)return;Object.entries(e||{}).forEach(([e,n])=>{o[n]=t,t in r||(r[t]=[])})},abort:function(){f._aborted=!0,Object.keys(f.backlog).forEach(e=>{delete f.backlog[e]})},isBuffering:function(e){return!!v()[o[e]]},debugId:r,backlog:l?{}:t&&"object"==typeof t.backlog?t.backlog:{},isolatedBacklog:l};return Object.defineProperty(f,"aborted",{get:()=>{let e=f._aborted||!1;return e||(t&&(e=t.aborted),e)}}),f;function g(e){return e&&e instanceof s.y?e:e?(0,i.I)(e,a,()=>new s.y(a)):new s.y(a)}function p(e,t){n[e]=m(e).concat(t)}function m(e){return n[e]||[]}function h(t){return d[t]=d[t]||e(f,t)}function v(){return f.backlog}}(void 0,"globalEE"),u=(0,n.Zm)();u.ee||(u.ee=c)},8122:(e,t,r)=>{"use strict";r.d(t,{a:()=>i});var n=r(944);function i(e,t){try{if(!e||"object"!=typeof e)return(0,n.R)(3);if(!t||"object"!=typeof t)return(0,n.R)(4);const r=Object.create(Object.getPrototypeOf(t),Object.getOwnPropertyDescriptors(t)),s=0===Object.keys(r).length?e:r;for(let o in s)if(void 0!==e[o])try{if(null===e[o]){r[o]=null;continue}Array.isArray(e[o])&&Array.isArray(t[o])?r[o]=Array.from(new Set([...e[o],...t[o]])):e[o]instanceof Map||e[o]instanceof Set||e[o]instanceof Date||e[o]instanceof RegExp?r[o]=e[o]:"object"==typeof e[o]&&"object"==typeof t[o]?r[o]=i(e[o],t[o]):r[o]=e[o]}catch(e){r[o]||(0,n.R)(1,e)}return r}catch(e){(0,n.R)(2,e)}}},8362:(e,t,r)=>{"use strict";r.d(t,{d:()=>s});var n=r(9566),i=r(1741);class s extends i.W{agentIdentifier=(0,n.LA)(16)}},8374:(e,t,r)=>{r.nc=(()=>{try{return document?.currentScript?.nonce}catch(e){}return""})()},8990:(e,t,r)=>{"use strict";r.d(t,{I:()=>i});var n=Object.prototype.hasOwnProperty;function i(e,t,r){if(n.call(e,t))return e[t];var i=r();if(Object.defineProperty&&Object.keys)try{return Object.defineProperty(e,t,{value:i,writable:!0,enumerable:!1}),i}catch(e){}return e[t]=i,i}},9324:(e,t,r)=>{"use strict";r.d(t,{F3:()=>i,Xs:()=>s,xv:()=>n});const n="1.312.1",i="PROD",s="CDN"},9566:(e,t,r)=>{"use strict";r.d(t,{LA:()=>a,bz:()=>o});var n=r(6154);const i="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";function s(e,t){return e?15&e[t]:16*Math.random()|0}function o(){const e=n.gm?.crypto||n.gm?.msCrypto;let t,r=0;return e&&e.getRandomValues&&(t=e.getRandomValues(new Uint8Array(30))),i.split("").map(e=>"x"===e?s(t,r++).toString(16):"y"===e?(3&s()|8).toString(16):e).join("")}function a(e){const t=n.gm?.crypto||n.gm?.msCrypto;let r,i=0;t&&t.getRandomValues&&(r=t.getRandomValues(new Uint8Array(e)));const o=[];for(var a=0;a<e;a++)o.push(s(r,i++).toString(16));return o.join("")}},9908:(e,t,r)=>{"use strict";r.d(t,{d:()=>n,p:()=>i});var n=r(7836).ee.get("handle");function i(e,t,r,i,s){s?(s.buffer([e],i),s.emit(e,t,r)):(n.buffer([e],i),n.emit(e,t,r))}}},n={};function i(e){var t=n[e];if(void 0!==t)return t.exports;var s=n[e]={exports:{}};return r[e](s,s.exports,i),s.exports}i.m=r,i.d=(e,t)=>{for(var r in t)i.o(t,r)&&!i.o(e,r)&&Object.defineProperty(e,r,{enumerable:!0,get:t[r]})},i.f={},i.e=e=>Promise.all(Object.keys(i.f).reduce((t,r)=>(i.f[r](e,t),t),[])),i.u=e=>"nr-rum-1.312.1.min.js",i.o=(e,t)=>Object.prototype.hasOwnProperty.call(e,t),e={},t="NRBA-1.312.1.PROD:",i.l=(r,n,s,o)=>{if(e[r])e[r].push(n);else{var a,c;if(void 0!==s)for(var u=document.getElementsByTagName("script"),d=0;d<u.length;d++){var l=u[d];if(l.getAttribute("src")==r||l.getAttribute("data-webpack")==t+s){a=l;break}}if(!a){c=!0;var f={296:"sha512-EBevTx+IXLhfp3rcdB/+2IBkydvAvYO85Bg7o/JAfe5/1BHeAY6HkMhclfLvNo4yjovWHNXDKPvq85KQM98H1Q=="};(a=document.createElement("script")).charset="utf-8",i.nc&&a.setAttribute("nonce",i.nc),a.setAttribute("data-webpack",t+s),a.src=r,0!==a.src.indexOf(window.location.origin+"/")&&(a.crossOrigin="anonymous"),f[o]&&(a.integrity=f[o])}e[r]=[n];var g=(t,n)=>{a.onerror=a.onload=null,clearTimeout(p);var i=e[r];if(delete e[r],a.parentNode&&a.parentNode.removeChild(a),i&&i.forEach(e=>e(n)),t)return t(n)},p=setTimeout(g.bind(null,void 0,{type:"timeout",target:a}),12e4);a.onerror=g.bind(null,a.onerror),a.onload=g.bind(null,a.onload),c&&document.head.appendChild(a)}},i.r=e=>{"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},i.p="https://js-agent.newrelic.com/",(()=>{var e={374:0,840:0};i.f.j=(t,r)=>{var n=i.o(e,t)?e[t]:void 0;if(0!==n)if(n)r.push(n[2]);else{var s=new Promise((r,i)=>n=e[t]=[r,i]);r.push(n[2]=s);var o=i.p+i.u(t),a=new Error;i.l(o,r=>{if(i.o(e,t)&&(0!==(n=e[t])&&(e[t]=void 0),n)){var s=r&&("load"===r.type?"missing":r.type),o=r&&r.target&&r.target.src;a.message="Loading chunk "+t+" failed: ("+s+": "+o+")",a.name="ChunkLoadError",a.type=s,a.request=o,n[1](a)}},"chunk-"+t,t)}};var t=(t,r)=>{var n,s,[o,a,c]=r,u=0;if(o.some(t=>0!==e[t])){for(n in a)i.o(a,n)&&(i.m[n]=a[n]);if(c)c(i)}for(t&&t(r);u<o.length;u++)s=o[u],i.o(e,s)&&e[s]&&e[s][0](),e[s]=0},r=self["webpackChunk:NRBA-1.312.1.PROD"]=self["webpackChunk:NRBA-1.312.1.PROD"]||[];r.forEach(t.bind(null,0)),r.push=t.bind(null,r.push.bind(r))})(),(()=>{"use strict";i(8374);var e=i(8362),t=i(860);const r=Object.values(t.K7);var n=i(163);var s=i(9908),o=i(1863),a=i(4261),c=i(1738);var u=i(1687),d=i(4234),l=i(5289),f=i(6154),g=i(944),p=i(384);const m=e=>f.RI&&!0===e?.privacy.cookies_enabled;function h(e){return!!(0,p.dV)().o.MO&&m(e)&&!0===e?.session_trace.enabled}var v=i(6389),b=i(7699);class y extends d.W{constructor(e,t){super(e,t),this.abortHandler=void 0,this.featAggregate=void 0,this.loadedSuccessfully=void 0,this.onAggregateImported=new Promise(e=>{this.loadedSuccessfully=e}),this.deferred=Promise.resolve(),!1===e.init[this.featureName].autoStart?this.deferred=new Promise((t,r)=>{this.ee.on("manual-start-all",(0,v.J)(()=>{(0,u.Ak)(e,this.featureName),t()}))}):(0,u.Ak)(e,t)}importAggregator(e,t,r={}){if(this.featAggregate)return;const n=async()=>{let n;await this.deferred;try{if(m(e.init)){const{setupAgentSession:t}=await i.e(296).then(i.bind(i,3521));n=t(e)}}catch(e){(0,g.R)(20,e),this.ee.emit("internal-error",[e]),(0,s.p)(b.qh,[e],void 0,this.featureName,this.ee)}try{if(!this.#t(this.featureName,n,e.init))return(0,u.Ze)(this.agentRef,this.featureName),void this.loadedSuccessfully(!1);const{Aggregate:i}=await t();this.featAggregate=new i(e,r),e.runtime.harvester.initializedAggregates.push(this.featAggregate),this.loadedSuccessfully(!0)}catch(e){(0,g.R)(34,e),this.abortHandler?.(),(0,u.Ze)(this.agentRef,this.featureName,!0),this.loadedSuccessfully(!1),this.ee&&this.ee.abort()}};f.RI?(0,l.GG)(()=>n(),!0):n()}#t(e,r,n){if(this.blocked)return!1;switch(e){case t.K7.sessionReplay:return h(n)&&!!r;case t.K7.sessionTrace:return!!r;default:return!0}}}var _=i(6630),w=i(2614),x=i(3241);class R extends y{static featureName=_.T;constructor(e){var t;super(e,_.T),this.setupInspectionEvents(),t=e,(0,c.Y)(a.Fw,function(e,r){"string"==typeof e&&("/"!==e.charAt(0)&&(e="/"+e),t.runtime.customTransaction=(r||"http://custom.transaction")+e,(0,s.p)(a.Pl+a.Fw,[(0,o.t)()],void 0,void 0,t.ee))},t),this.importAggregator(e,()=>i.e(296).then(i.bind(i,146)))}setupInspectionEvents(){const e=(e,t)=>{e&&(0,x.W)({timeStamp:e.timeStamp,loaded:"complete"===e.target.readyState,type:"window",name:t,data:e.target.location+""})};(0,l.sB)(t=>{e(t,"DOMContentLoaded")}),(0,l.GG)(t=>{e(t,"load")}),(0,l.Qr)(t=>{e(t,"navigate")}),this.ee.on(w.tS.UPDATE,(e,t)=>{(0,x.W)({type:"lifecycle",name:"session",data:t})})}}class k extends e.d{constructor(e){var t;(super(),f.gm)?(this.features={},(0,p.bQ)(this.agentIdentifier,this),this.desiredFeatures=new Set(e.features||[]),this.desiredFeatures.add(R),(0,n.j)(this,e,e.loaderType||"agent"),t=this,(0,c.Y)(a.cD,function(e,r,n=!1){if("string"==typeof e){if(["string","number","boolean"].includes(typeof r)||null===r)return(0,c.U)(t,e,r,a.cD,n);(0,g.R)(40,typeof r)}else(0,g.R)(39,typeof e)},t),function(e){(0,c.Y)(a.Dl,function(t,r=!1){if("string"!=typeof t&&null!==t)return void(0,g.R)(41,typeof t);const n=e.info.jsAttributes["enduser.id"];r&&null!=n&&n!==t?(0,s.p)(a.Pl+"setUserIdAndResetSession",[t],void 0,"session",e.ee):(0,c.U)(e,"enduser.id",t,a.Dl,!0)},e)}(this),function(e){(0,c.Y)(a.nb,function(t){if("string"==typeof t||null===t)return(0,c.U)(e,"application.version",t,a.nb,!1);(0,g.R)(42,typeof t)},e)}(this),function(e){(0,c.Y)(a.d3,function(){e.ee.emit("manual-start-all")},e)}(this),function(e){(0,c.Y)(a.Pv,function(t=!0){if("boolean"==typeof t){if((0,s.p)(a.Pl+a.Pv,[t],void 0,"session",e.ee),e.runtime.consented=t,t){const t=e.features.page_view_event;t.onAggregateImported.then(e=>{const r=t.featAggregate;e&&!r.sentRum&&r.sendRum()})}}else(0,g.R)(65,typeof t)},e)}(this),this.run()):(0,g.R)(21)}get config(){return{info:this.info,init:this.init,loader_config:this.loader_config,runtime:this.runtime}}get api(){return this}run(){try{const e=function(e){const t={};return r.forEach(r=>{t[r]=!!e[r]?.enabled}),t}(this.init),n=[...this.desiredFeatures];n.sort((e,r)=>t.P3[e.featureName]-t.P3[r.featureName]),n.forEach(r=>{if(!e[r.featureName]&&r.featureName!==t.K7.pageViewEvent)return;const n=function(e){switch(e){case t.K7.ajax:return[t.K7.jserrors];case t.K7.sessionTrace:return[t.K7.ajax,t.K7.pageViewEvent];case t.K7.sessionReplay:return[t.K7.sessionTrace];case t.K7.pageViewTiming:return[t.K7.pageViewEvent];default:return[]}}(r.featureName).filter(e=>!(e in this.features));n.length>0&&(0,g.R)(36,{targetFeature:r.featureName,missingDependencies:n}),this.features[r.featureName]=new r(this)})}catch(e){(0,g.R)(22,e);for(const e in this.features)this.features[e].abortHandler?.();const t=(0,p.Zm)();delete t.initializedAgents[this.agentIdentifier]?.features,delete this.sharedAggregator;return t.ee.get(this.agentIdentifier).abort(),!1}}}var A=i(2843),T=i(782);class E extends y{static featureName=T.T;constructor(e){super(e,T.T),f.RI&&((0,A.u)(()=>(0,s.p)("docHidden",[(0,o.t)()],void 0,T.T,this.ee),!0),(0,A.G)(()=>(0,s.p)("winPagehide",[(0,o.t)()],void 0,T.T,this.ee)),this.importAggregator(e,()=>i.e(296).then(i.bind(i,2117))))}}var S=i(3969);class j extends y{static featureName=S.TZ;constructor(e){super(e,S.TZ),f.RI&&document.addEventListener("securitypolicyviolation",e=>{(0,s.p)(S.xV,["Generic/CSPViolation/Detected"],void 0,this.featureName,this.ee)}),this.importAggregator(e,()=>i.e(296).then(i.bind(i,9623)))}}new k({features:[R,E,j],loaderType:"lite"})})()})();</script>
+	<base href="https://www.highwirepress.com/">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="shortcut icon" href="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/favicon/favicon.ico">
+
+<link href="http://fonts.cdnfonts.com/css/sofia-pro?styles=17636,17630,17640,17631,17632,17634,17638,17628,17626" rel="stylesheet">
+                
+                
+	<link rel="stylesheet" href="https://use.typekit.net/ljr6hfd.css">
+	<link rel="stylesheet" href="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/dist/css/main.css?v=td4ruy">
+
+	<script>
+		document.getElementsByTagName('html')[0].className = 'js';
+	</script>
+
+	
+		<!-- All in One SEO 4.3.9 - aioseo.com -->
+		<title>Academic publishing solutions | Scholarly publishing Platform Services | HighWire Press</title>
+		<meta name="description" content="We offer Academic Publishing Solutions with an advanced Scholarly Publishing Platform and expert services to streamline the publishing process and enhance journal impact." />
+		<meta name="robots" content="max-image-preview:large" />
+		<meta name="keywords" content="scholarly publishing" />
+		<link rel="canonical" href="https://www.highwirepress.com/" />
+		<meta name="generator" content="All in One SEO (AIOSEO) 4.3.9" />
+		<meta property="og:locale" content="en_GB" />
+		<meta property="og:site_name" content="Highwire Press -" />
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Academic publishing solutions | Scholarly publishing Platform Services | HighWire Press" />
+		<meta property="og:description" content="We offer Academic Publishing Solutions with an advanced Scholarly Publishing Platform and expert services to streamline the publishing process and enhance journal impact." />
+		<meta property="og:url" content="https://www.highwirepress.com/" />
+		<meta property="og:image" content="https://www.highwirepress.com/wp-content/uploads/2023/06/highwirepress-logo.svg" />
+		<meta property="og:image:secure_url" content="https://www.highwirepress.com/wp-content/uploads/2023/06/highwirepress-logo.svg" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@highwirepress" />
+		<meta name="twitter:title" content="Academic publishing solutions | Scholarly publishing Platform Services | HighWire Press" />
+		<meta name="twitter:description" content="We offer Academic Publishing Solutions with an advanced Scholarly Publishing Platform and expert services to streamline the publishing process and enhance journal impact." />
+		<meta name="twitter:creator" content="@highwirepress" />
+		<meta name="twitter:image" content="https://www.highwirepress.com/wp-content/uploads/2023/06/highwirepress-logo.svg" />
+		<script type="application/ld+json" class="aioseo-schema">
+			{"@context":"https:\/\/schema.org","@graph":[{"@type":"BreadcrumbList","@id":"https:\/\/www.highwirepress.com\/#breadcrumblist","itemListElement":[{"@type":"ListItem","@id":"https:\/\/www.highwirepress.com\/#listItem","position":1,"item":{"@type":"WebPage","@id":"https:\/\/www.highwirepress.com\/","name":"Home","description":"We offer Academic Publishing Solutions with an advanced Scholarly Publishing Platform and expert services to streamline the publishing process and enhance journal impact.","url":"https:\/\/www.highwirepress.com\/"}}]},{"@type":"Organization","@id":"https:\/\/www.highwirepress.com\/#organization","name":"Highwire Press","url":"https:\/\/www.highwirepress.com\/","logo":{"@type":"ImageObject","url":"https:\/\/www.highwirepress.com\/wp-content\/uploads\/2023\/06\/highwirepress-logo.svg","@id":"https:\/\/www.highwirepress.com\/#organizationLogo","caption":"Highwirepress logo"},"image":{"@id":"https:\/\/www.highwirepress.com\/#organizationLogo"},"sameAs":["https:\/\/twitter.com\/highwirepress","https:\/\/www.linkedin.com\/company\/highwire-press\/"]},{"@type":"WebPage","@id":"https:\/\/www.highwirepress.com\/#webpage","url":"https:\/\/www.highwirepress.com\/","name":"Academic publishing solutions | Scholarly publishing Platform Services | HighWire Press","description":"We offer Academic Publishing Solutions with an advanced Scholarly Publishing Platform and expert services to streamline the publishing process and enhance journal impact.","inLanguage":"en-GB","isPartOf":{"@id":"https:\/\/www.highwirepress.com\/#website"},"breadcrumb":{"@id":"https:\/\/www.highwirepress.com\/#breadcrumblist"},"datePublished":"2019-01-31T18:34:13+00:00","dateModified":"2025-07-01T05:51:10+00:00"},{"@type":"WebSite","@id":"https:\/\/www.highwirepress.com\/#website","url":"https:\/\/www.highwirepress.com\/","name":"Highwire Press","inLanguage":"en-GB","publisher":{"@id":"https:\/\/www.highwirepress.com\/#organization"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https:\/\/www.highwirepress.com\/?s={search_term_string}"},"query-input":"required name=search_term_string"}}]}
+		</script>
+		<!-- All in One SEO -->
+
+<link rel='dns-prefetch' href='//www.highwirepress.com' />
+<link rel='dns-prefetch' href='//s.w.org' />
+<link rel='stylesheet' id='apply-online-BS-css'  href='https://www.highwirepress.com/wp-content/plugins/apply-online/public/css/bootstrap.min.css?ver=2.4.3' media='all' />
+<link rel='stylesheet' id='aol-jquery-ui-css-css'  href='https://www.highwirepress.com/wp-content/plugins/apply-online/public/css/jquery-ui.min.css?ver=6.0.1' media='all' />
+<link rel='stylesheet' id='apply-online-css'  href='https://www.highwirepress.com/wp-content/plugins/apply-online/public/css/applyonline-public.css?ver=2.4.3' media='all' />
+<style id='global-styles-inline-css' type='text/css'>
+body{--wp--preset--color--black: #000000;--wp--preset--color--cyan-bluish-gray: #abb8c3;--wp--preset--color--white: #ffffff;--wp--preset--color--pale-pink: #f78da7;--wp--preset--color--vivid-red: #cf2e2e;--wp--preset--color--luminous-vivid-orange: #ff6900;--wp--preset--color--luminous-vivid-amber: #fcb900;--wp--preset--color--light-green-cyan: #7bdcb5;--wp--preset--color--vivid-green-cyan: #00d084;--wp--preset--color--pale-cyan-blue: #8ed1fc;--wp--preset--color--vivid-cyan-blue: #0693e3;--wp--preset--color--vivid-purple: #9b51e0;--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple: linear-gradient(135deg,rgba(6,147,227,1) 0%,rgb(155,81,224) 100%);--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan: linear-gradient(135deg,rgb(122,220,180) 0%,rgb(0,208,130) 100%);--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange: linear-gradient(135deg,rgba(252,185,0,1) 0%,rgba(255,105,0,1) 100%);--wp--preset--gradient--luminous-vivid-orange-to-vivid-red: linear-gradient(135deg,rgba(255,105,0,1) 0%,rgb(207,46,46) 100%);--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray: linear-gradient(135deg,rgb(238,238,238) 0%,rgb(169,184,195) 100%);--wp--preset--gradient--cool-to-warm-spectrum: linear-gradient(135deg,rgb(74,234,220) 0%,rgb(151,120,209) 20%,rgb(207,42,186) 40%,rgb(238,44,130) 60%,rgb(251,105,98) 80%,rgb(254,248,76) 100%);--wp--preset--gradient--blush-light-purple: linear-gradient(135deg,rgb(255,206,236) 0%,rgb(152,150,240) 100%);--wp--preset--gradient--blush-bordeaux: linear-gradient(135deg,rgb(254,205,165) 0%,rgb(254,45,45) 50%,rgb(107,0,62) 100%);--wp--preset--gradient--luminous-dusk: linear-gradient(135deg,rgb(255,203,112) 0%,rgb(199,81,192) 50%,rgb(65,88,208) 100%);--wp--preset--gradient--pale-ocean: linear-gradient(135deg,rgb(255,245,203) 0%,rgb(182,227,212) 50%,rgb(51,167,181) 100%);--wp--preset--gradient--electric-grass: linear-gradient(135deg,rgb(202,248,128) 0%,rgb(113,206,126) 100%);--wp--preset--gradient--midnight: linear-gradient(135deg,rgb(2,3,129) 0%,rgb(40,116,252) 100%);--wp--preset--duotone--dark-grayscale: url('#wp-duotone-dark-grayscale');--wp--preset--duotone--grayscale: url('#wp-duotone-grayscale');--wp--preset--duotone--purple-yellow: url('#wp-duotone-purple-yellow');--wp--preset--duotone--blue-red: url('#wp-duotone-blue-red');--wp--preset--duotone--midnight: url('#wp-duotone-midnight');--wp--preset--duotone--magenta-yellow: url('#wp-duotone-magenta-yellow');--wp--preset--duotone--purple-green: url('#wp-duotone-purple-green');--wp--preset--duotone--blue-orange: url('#wp-duotone-blue-orange');--wp--preset--font-size--small: 13px;--wp--preset--font-size--medium: 20px;--wp--preset--font-size--large: 36px;--wp--preset--font-size--x-large: 42px;}.has-black-color{color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-color{color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-color{color: var(--wp--preset--color--white) !important;}.has-pale-pink-color{color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-color{color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-color{color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-color{color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-color{color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-color{color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-color{color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-color{color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-color{color: var(--wp--preset--color--vivid-purple) !important;}.has-black-background-color{background-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-background-color{background-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-background-color{background-color: var(--wp--preset--color--white) !important;}.has-pale-pink-background-color{background-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-background-color{background-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-background-color{background-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-background-color{background-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-background-color{background-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-background-color{background-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-background-color{background-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-background-color{background-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-background-color{background-color: var(--wp--preset--color--vivid-purple) !important;}.has-black-border-color{border-color: var(--wp--preset--color--black) !important;}.has-cyan-bluish-gray-border-color{border-color: var(--wp--preset--color--cyan-bluish-gray) !important;}.has-white-border-color{border-color: var(--wp--preset--color--white) !important;}.has-pale-pink-border-color{border-color: var(--wp--preset--color--pale-pink) !important;}.has-vivid-red-border-color{border-color: var(--wp--preset--color--vivid-red) !important;}.has-luminous-vivid-orange-border-color{border-color: var(--wp--preset--color--luminous-vivid-orange) !important;}.has-luminous-vivid-amber-border-color{border-color: var(--wp--preset--color--luminous-vivid-amber) !important;}.has-light-green-cyan-border-color{border-color: var(--wp--preset--color--light-green-cyan) !important;}.has-vivid-green-cyan-border-color{border-color: var(--wp--preset--color--vivid-green-cyan) !important;}.has-pale-cyan-blue-border-color{border-color: var(--wp--preset--color--pale-cyan-blue) !important;}.has-vivid-cyan-blue-border-color{border-color: var(--wp--preset--color--vivid-cyan-blue) !important;}.has-vivid-purple-border-color{border-color: var(--wp--preset--color--vivid-purple) !important;}.has-vivid-cyan-blue-to-vivid-purple-gradient-background{background: var(--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple) !important;}.has-light-green-cyan-to-vivid-green-cyan-gradient-background{background: var(--wp--preset--gradient--light-green-cyan-to-vivid-green-cyan) !important;}.has-luminous-vivid-amber-to-luminous-vivid-orange-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-amber-to-luminous-vivid-orange) !important;}.has-luminous-vivid-orange-to-vivid-red-gradient-background{background: var(--wp--preset--gradient--luminous-vivid-orange-to-vivid-red) !important;}.has-very-light-gray-to-cyan-bluish-gray-gradient-background{background: var(--wp--preset--gradient--very-light-gray-to-cyan-bluish-gray) !important;}.has-cool-to-warm-spectrum-gradient-background{background: var(--wp--preset--gradient--cool-to-warm-spectrum) !important;}.has-blush-light-purple-gradient-background{background: var(--wp--preset--gradient--blush-light-purple) !important;}.has-blush-bordeaux-gradient-background{background: var(--wp--preset--gradient--blush-bordeaux) !important;}.has-luminous-dusk-gradient-background{background: var(--wp--preset--gradient--luminous-dusk) !important;}.has-pale-ocean-gradient-background{background: var(--wp--preset--gradient--pale-ocean) !important;}.has-electric-grass-gradient-background{background: var(--wp--preset--gradient--electric-grass) !important;}.has-midnight-gradient-background{background: var(--wp--preset--gradient--midnight) !important;}.has-small-font-size{font-size: var(--wp--preset--font-size--small) !important;}.has-medium-font-size{font-size: var(--wp--preset--font-size--medium) !important;}.has-large-font-size{font-size: var(--wp--preset--font-size--large) !important;}.has-x-large-font-size{font-size: var(--wp--preset--font-size--x-large) !important;}
+</style>
+<link rel='stylesheet' id='dashicons-css'  href='https://www.highwirepress.com/wp-includes/css/dashicons.min.css?ver=6.0.1' media='all' />
+<link rel='stylesheet' id='wpsm_counter-font-awesome-front-css'  href='https://www.highwirepress.com/wp-content/plugins/counter-number-showcase/assets/css/font-awesome/css/font-awesome.min.css?ver=6.0.1' media='all' />
+<link rel='stylesheet' id='wpsm_counter_bootstrap-front-css'  href='https://www.highwirepress.com/wp-content/plugins/counter-number-showcase/assets/css/bootstrap-front.css?ver=6.0.1' media='all' />
+<link rel='stylesheet' id='wpsm_counter_column-css'  href='https://www.highwirepress.com/wp-content/plugins/counter-number-showcase/assets/css/counter-column.css?ver=6.0.1' media='all' />
+<link rel='stylesheet' id='ultimate-sticky-popup-and-widgets-css'  href='https://www.highwirepress.com/wp-content/plugins/ultimate-sticky-popup-widgets/public/css/ultimate-sticky-popup-and-widgets-public.css?ver=1.0.2' media='all' />
+<link rel='stylesheet' id='moove_gdpr_frontend-css'  href='https://www.highwirepress.com/wp-content/plugins/gdpr-cookie-compliance/dist/styles/gdpr-main-nf.css?ver=4.8.12' media='all' />
+<style id='moove_gdpr_frontend-inline-css' type='text/css'>
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main h3.tab-title, 
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main span.tab-title,
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li a, 
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li button,
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content .moove-gdpr-branding-cnt a,
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-footer-content .moove-gdpr-button-holder a.mgbutton, 
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-footer-content .moove-gdpr-button-holder button.mgbutton,
+				#moove_gdpr_cookie_modal .cookie-switch .cookie-slider:after, 
+				#moove_gdpr_cookie_modal .cookie-switch .slider:after, 
+				#moove_gdpr_cookie_modal .switch .cookie-slider:after, 
+				#moove_gdpr_cookie_modal .switch .slider:after,
+				#moove_gdpr_cookie_info_bar .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content p, 
+				#moove_gdpr_cookie_info_bar .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content p a,
+				#moove_gdpr_cookie_info_bar .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a.mgbutton, 
+				#moove_gdpr_cookie_info_bar .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.mgbutton,
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main .moove-gdpr-tab-main-content h1, 
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main .moove-gdpr-tab-main-content h2, 
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main .moove-gdpr-tab-main-content h3, 
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main .moove-gdpr-tab-main-content h4, 
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main .moove-gdpr-tab-main-content h5, 
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main .moove-gdpr-tab-main-content h6,
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content.moove_gdpr_modal_theme_v2 .moove-gdpr-modal-title .tab-title,
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content.moove_gdpr_modal_theme_v2 .moove-gdpr-tab-main h3.tab-title, 
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content.moove_gdpr_modal_theme_v2 .moove-gdpr-tab-main span.tab-title,
+				#moove_gdpr_cookie_modal .moove-gdpr-modal-content.moove_gdpr_modal_theme_v2 .moove-gdpr-branding-cnt a {
+				 	font-weight: inherit				}
+			#moove_gdpr_cookie_modal,#moove_gdpr_cookie_info_bar,.gdpr_cookie_settings_shortcode_content{font-family:inherit}#moove_gdpr_save_popup_settings_button{background-color:#8d1530;color:#fff}#moove_gdpr_save_popup_settings_button:hover{background-color:#f0f0f0}#moove_gdpr_cookie_info_bar .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a.mgbutton,#moove_gdpr_cookie_info_bar .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.mgbutton{background-color:#8d1530}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-footer-content .moove-gdpr-button-holder a.mgbutton,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-footer-content .moove-gdpr-button-holder button.mgbutton,.gdpr_cookie_settings_shortcode_content .gdpr-shr-button.button-green{background-color:#8d1530;border-color:#8d1530}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-footer-content .moove-gdpr-button-holder a.mgbutton:hover,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-footer-content .moove-gdpr-button-holder button.mgbutton:hover,.gdpr_cookie_settings_shortcode_content .gdpr-shr-button.button-green:hover{background-color:#fff;color:#8d1530}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-close i,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-close span.gdpr-icon{background-color:#8d1530;border:1px solid #8d1530}#moove_gdpr_cookie_info_bar span.change-settings-button.focus-g,#moove_gdpr_cookie_info_bar span.change-settings-button:focus{-webkit-box-shadow:0 0 1px 3px #8d1530;-moz-box-shadow:0 0 1px 3px #8d1530;box-shadow:0 0 1px 3px #8d1530}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-close i:hover,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-close span.gdpr-icon:hover,#moove_gdpr_cookie_info_bar span[data-href]>u.change-settings-button{color:#8d1530}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li.menu-item-selected a span.gdpr-icon,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li.menu-item-selected button span.gdpr-icon{color:inherit}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li a span.gdpr-icon,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li button span.gdpr-icon{color:inherit}#moove_gdpr_cookie_modal .gdpr-acc-link{line-height:0;font-size:0;color:transparent;position:absolute}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-close:hover i,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li a,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li button,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li button i,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li a i,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main .moove-gdpr-tab-main-content a:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a.mgbutton:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.mgbutton:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content span.change-settings-button:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content u.change-settings-button:hover,#moove_gdpr_cookie_info_bar span[data-href]>u.change-settings-button,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a.mgbutton.focus-g,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.mgbutton.focus-g,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a.focus-g,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.focus-g,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a.mgbutton:focus,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.mgbutton:focus,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a:focus,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button:focus,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content span.change-settings-button.focus-g,span.change-settings-button:focus,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content u.change-settings-button.focus-g,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content u.change-settings-button:focus{color:#8d1530}#moove_gdpr_cookie_modal.gdpr_lightbox-hide{display:none}
+</style>
+<script src="https://www.highwirepress.com/wp-includes/js/jquery/jquery.min.js?ver=3.6.0" type="text/javascript" defer></script><script src="https://www.highwirepress.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.3.2" type="text/javascript" defer></script><script type='text/javascript' id='anc-6310-ajax-script-js-extra'>
+/* <![CDATA[ */
+var anc_6310_ajax_object = {"anc_6310_ajax_url":"https:\/\/www.highwirepress.com\/wp-admin\/admin-ajax.php"};
+/* ]]> */
+</script>
+<script src="https://www.highwirepress.com/wp-content/plugins/animated-number-counters/assets/js/ajaxdata.js?ver=6.0.1" type="text/javascript" defer></script><script src="https://www.highwirepress.com/wp-includes/js/jquery/ui/core.min.js?ver=1.13.1" type="text/javascript" defer></script><script src="https://www.highwirepress.com/wp-includes/js/jquery/ui/datepicker.min.js?ver=1.13.1" type="text/javascript" defer></script><script type='text/javascript' id='apply-online-js-extra'>
+/* <![CDATA[ */
+var aol_public = {"ajaxurl":"https:\/\/www.highwirepress.com\/wp-admin\/admin-ajax.php","date_format":"dd-mm-yy","url":"https:\/\/www.highwirepress.com\/wp-content\/plugins\/apply-online"};
+/* ]]> */
+</script>
+<script src="https://www.highwirepress.com/wp-content/plugins/apply-online/public/js/applyonline-public.js?ver=2.4.3" type="text/javascript" defer></script><script src="https://www.highwirepress.com/wp-content/plugins/ultimate-sticky-popup-widgets/public/js/ultimate-sticky-popup-and-widgets-public.js?ver=1.0.2" type="text/javascript" defer></script><link rel="https://api.w.org/" href="https://www.highwirepress.com/wp-json/" /><link rel="alternate" type="application/json" href="https://www.highwirepress.com/wp-json/wp/v2/pages/2" /><link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://www.highwirepress.com/wp-includes/wlwmanifest.xml" /> 
+<link rel='shortlink' href='https://www.highwirepress.com/' />
+<link rel="alternate" type="application/json+oembed" href="https://www.highwirepress.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.highwirepress.com%2F" />
+<link rel="alternate" type="text/xml+oembed" href="https://www.highwirepress.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.highwirepress.com%2F&#038;format=xml" />
+<meta name="google-site-verification" content="a4QChmfP9X81yrzBtnyFYXirFM2N-lYJjgbreRZyM6c" />
+<script type="text/javascript">
+_linkedin_partner_id = "8760028";
+window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
+window._linkedin_data_partner_ids.push(_linkedin_partner_id);
+</script><script type="text/javascript">
+(function(l) {
+if (!l){window.lintrk = function(a,b){window.lintrk.q.push([a,b])};
+window.lintrk.q=[]}
+var s = document.getElementsByTagName("script")[0];
+var b = document.createElement("script");
+b.type = "text/javascript";b.async = true;
+b.src = "https://snap.licdn.com/li.lms-analytics/insight.min.js";
+s.parentNode.insertBefore(b, s);})(window.lintrk);
+</script>
+<noscript>
+<img height="1" width="1" style="display:none;" alt="" src="https://px.ads.linkedin.com/collect/?pid=8760028&fmt=gif" />
+</noscript>		<style type="text/css" id="wp-custom-css">
+			.site-header {
+
+background-color: #8D1530 !important;
+    color: #fff;
+}
+
+.site-footer {
+    background-color: #8D1530;
+    color: #fff;
+}
+
+.site-navigation__sub-nav {
+
+    background-color: #8D1530 !important;
+   
+}
+
+.site-navigation__sub-nav:before {
+   
+  background-color: #8D1530;
+}
+
+#PureChatWidget.purechat .purechat-widget-header {
+    background-color: #8e1530 !important;
+}
+
+:root {
+    --purechat-p-bg: #8d1530 !important;
+	}
+
+h1.article-grid__heading {
+    text-transform: capitalize;
+}
+
+h3.article-grid__heading {
+	text-transform: capitalize;
+}
+
+
+input#aol_app_submit_button {
+    background: #8d1631;
+}
+
+p.mini-heading img {
+    height: auto;
+    width: 100%;
+    max-width: 280px;
+}
+
+
+
+#moove_gdpr_cookie_info_bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    min-height: 60px;
+    max-height: 400px;
+    color: #fff;
+    z-index: 99999999999;
+    background-color: #202020;
+    border-top: 1px solid #fff;
+    font-family: Nunito,sans-serif;
+    transition: bottom .3s cubic-bezier(.17,.04,.03,.94);
+}
+
+
+#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content {
+    width: 40%;
+    display: inline-block;
+    float: left;
+    padding: 40px 60px;
+    position: absolute;
+    height: 100%;
+    top: 0;
+    box-shadow: 0 0 30px 0 rgb(35 35 35 / 10%);
+    background: #8d1530;
+    z-index: 10;
+    left: 0;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+.moove-gdpr-branding-cnt {
+    display: none;
+}
+
+
+#PureChatWidget.purechat .purechat-collapsed .purechat-widget-header .purechat-btn:nth-child(3n+3) {
+   
+    display: none !important;
+}
+
+
+
+/*****************/
+h1.post-intro__article-heading.a_hw_pop_7 {
+    font-size: 1.2rem;
+    margin-top: 25px;
+}
+time.post-intro__meta.a_hw_pop_8 {
+    margin-top: -36px;
+    font-size: 0.8em;
+}
+
+@media (min-width: 1024px){}
+.post-intro__image {
+    width: 63%;
+    margin-top: 35px;
+}}
+
+@media (min-width: 1024px){}
+.post-intro__content.a_hw_pop_6 {
+    width: 75%;
+}
+
+}
+.post-intro__image.a_hw_pop_4 {
+    padding-left: calc(-100px + 1.71875vw);
+}
+@media (min-width: 768px){
+.post-intro__image.a_hw_pop_4 {
+    padding-left: calc(-100px + 1.71875vw);
+	}}
+
+.post-intro.a_hw_pop_2 {
+    border-bottom: 0px;
+    padding-bottom: 31px;
+}
+.section-wrap.inner-wrap-for-small-screens.a_hw_pop_1 {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+/*****************/
+
+
+img.popup_4.alignnone.size-medium.wp-image-89 {
+    max-width: 170px;
+}
+
+.post-intro__content.a_hw_pop_6 {
+    width: 100%;
+}
+
+.post-intro__image.a_hw_pop_4 {
+    display: none;
+}
+
+img.alignnone.size-medium.wp-image-89 {
+    max-width: 221px;
+}
+
+h6.post-intro__article-heading.a_hw_pop_7 {
+    font-size: 23px;
+}
+
+h5.post-intro__article-heading.a_hw_pop_7 {
+    margin-top: 18px;
+}
+
+
+input#form-submit {
+    background: #fff;
+    max-width: 200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border: 1px solid #8d1530;
+    color: #8d1530;
+    margin-top: 10px;
+    border-radius: 16px;
+}
+
+@media screen and (max-width: 1920px) {
+  .site-wrap{
+  
+   margin-top: 135px!important;
+  } 
+
+.site-header {
+    position: fixed;
+    z-index: 999!important;
+    width: 100%!important;
+    margin-top: -135px!important;
+
+}
+  
+}
+
+
+@media screen and (max-width: 768px) {
+    .site-wrap{
+  
+  margin-top: 68px!important;
+  }  
+  
+  .site-header {
+  position: fixed;
+    z-index: 999!important;
+    width: 100%!important;
+    
+    margin-top: -68px!important;
+  }
+  
+}
+
+@media screen and (min-device-width: 820px)
+    and (max-device-width: 1180px) {
+    .site-wrap{
+margin-top: 84px!important;
+}
+.site-header {
+margin-top: -84px!important;
+}
+}
+@media screen and (min-device-width: 768px) and (max-device-width: 1024px) {
+.site-wrap{
+    margin-top: 97px!important;
+}
+.site-header {
+ margin-top: -97px!important;
+}
+
+}
+
+@media screen and (min-width: 1024px)
+.site-footer__address-list {
+    margin-bottom: -1.5rem!important;
+}
+.co-tag {
+    position: absolute;
+    top: 5px;
+    right: 12px;
+    padding: 5px 20px;
+    color: #fff;
+    background: none!important;
+    font-size: 15px;
+    line-height: 22px;
+}		</style>
+		
+	<link rel="apple-touch-icon-precomposed" sizes="57x57" href="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/favicon/apple-touch-icon-57x57.png" />
+	<link rel="apple-touch-icon-precomposed" sizes="114x114" href="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/favicon/apple-touch-icon-114x114.png" />
+	<link rel="apple-touch-icon-precomposed" sizes="72x72" href="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/favicon/apple-touch-icon-72x72.png" />
+	<link rel="apple-touch-icon-precomposed" sizes="144x144" href="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/favicon/apple-touch-icon-144x144.png" />
+	<link rel="apple-touch-icon-precomposed" sizes="120x120" href="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/favicon/apple-touch-icon-120x120.png" />
+	<link rel="apple-touch-icon-precomposed" sizes="152x152" href="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/favicon/apple-touch-icon-152x152.png" />
+	<link rel="icon" type="image/png" href="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/favicon/favicon-32x32.png" sizes="32x32" />
+	<link rel="icon" type="image/png" href="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/favicon/favicon-16x16.png" sizes="16x16" />
+	<meta name="application-name" content="HighWire Press"/>
+	<meta name="msapplication-TileColor" content="#FFFFFF" />
+	<meta name="msapplication-TileImage" content="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/favicon/mstile-144x144.png" />
+
+    <link rel="preconnect" href="https://use.typekit.net/" />
+    <link rel="preconnect" href="https://app.purechat.com" />
+    <link rel="preconnect" href="https://www.googletagmanager.com" />
+
+    <script src="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/dist/js/main.js?v=td4ruy" defer></script>
+
+</head>
+
+<body class="home page-template-default page page-id-2 2.4.3 2.4.3-apply-online">
+<div class="site-wrap">
+
+	<header class="site-header">
+		<div class="section-wrap inner-wrap-for-small-screens">
+			<div class="site-header__inner-wrap">
+				<a href="/" class="site-header__logo">
+					                    <img src="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/highwirepress-logo.svg" class="" alt="Highwire">
+				</a>
+
+				<label class="site-header__nav-toggle js-toggle-nav-icon" for="nav-checkbox">
+					<span class="toggle-nav-icon js-toggle-nav-icon-inside">
+						<i></i>
+						<span></span>
+					</span>
+				</label>
+
+				<input type="checkbox" id="nav-checkbox" class="site-header__nav-checkbox js-nav-checkbox">
+
+				<div class="site-header__navigation">
+					<nav class="site-navigation js-site-nav">
+						<ul class="site-navigation__list">
+							<li class='site-navigation__item'><a class="site-navigation__link js-site-nav-item-with-children "  href='https://www.highwirepress.com/solutions/'><span class="site-navigation__link-text-wrap js-link-text-wrap">Solutions<i class="site-navigation__label-arrow">→</i></span><svg class="site-navigation__children-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9.01 5.52"><polyline points="8.51 0.5 4.5 4.51 0.51 0.5" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="1.43"/></svg></a>
+<ul class="site-navigation__sub-nav js-sub-nav site-navigation__sub-nav--level-0">
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link js-site-nav-sub-item-with-children "  href='#'><span class="site-navigation__link-text-wrap js-link-text-wrap">Hosting<i class="site-navigation__label-arrow">→</i></span><svg class="site-navigation__children-chevron site-navigation__children-chevron--sub ml-xs" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9.01 5.52"><polyline points="8.51 0.5 4.5 4.51 0.51 0.5" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="1.43"/></svg></a>
+	<ul class="site-navigation__sub-sub-nav js-sub-nav site-navigation__sub-sub-nav--level-1">
+<li class='site-navigation__sub-sub-item '><a class="site-navigation__sub-sub-link" href='https://www.highwirepress.com/solutions/highwire-scolaris/'>Scolaris</a></li>
+<li class='site-navigation__sub-sub-item '><a class="site-navigation__sub-sub-link" href='https://www.highwirepress.com/solutions/highwire-jcore/'>JCore</a></li>
+	</ul>
+</li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link js-site-nav-sub-item-with-children "  href='#'><span class="site-navigation__link-text-wrap js-link-text-wrap">Editorial &#038; Production<i class="site-navigation__label-arrow">→</i></span><svg class="site-navigation__children-chevron site-navigation__children-chevron--sub ml-xs" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9.01 5.52"><polyline points="8.51 0.5 4.5 4.51 0.51 0.5" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="1.43"/></svg></a>
+	<ul class="site-navigation__sub-sub-nav js-sub-nav site-navigation__sub-sub-nav--level-1">
+<li class='site-navigation__sub-sub-item '><a class="site-navigation__sub-sub-link" href='https://www.highwirepress.com/solutions/digicorepro/'>DigiCorePro</a></li>
+<li class='site-navigation__sub-sub-item '><a class="site-navigation__sub-sub-link" href='https://www.highwirepress.com/solutions/highwire-benchpress/'>BenchPress</a></li>
+<li class='site-navigation__sub-sub-item '><a class="site-navigation__sub-sub-link" href='https://www.highwirepress.com/solutions/highwire-digiedit/'>DigiEdit</a></li>
+<li class='site-navigation__sub-sub-item '><a class="site-navigation__sub-sub-link" href='https://www.highwirepress.com/solutions/rubriq/'>Rubriq</a></li>
+	</ul>
+</li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link js-site-nav-sub-item-with-children "  href='#'><span class="site-navigation__link-text-wrap js-link-text-wrap">Analytics<i class="site-navigation__label-arrow">→</i></span><svg class="site-navigation__children-chevron site-navigation__children-chevron--sub ml-xs" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9.01 5.52"><polyline points="8.51 0.5 4.5 4.51 0.51 0.5" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="1.43"/></svg></a>
+	<ul class="site-navigation__sub-sub-nav js-sub-nav site-navigation__sub-sub-nav--level-1">
+<li class='site-navigation__sub-sub-item '><a class="site-navigation__sub-sub-link" href='https://www.highwirepress.com/solutions/highwire-analytics/impact-vizor/'>Impact Vizor</a></li>
+<li class='site-navigation__sub-sub-item '><a class="site-navigation__sub-sub-link" href='https://www.highwirepress.com/highwire-insight-vizor/'>Insight Vizor</a></li>
+<li class='site-navigation__sub-sub-item '><a class="site-navigation__sub-sub-link" href='https://www.highwirepress.com/solutions/scholarly-stats/'>ScholarlyStats</a></li>
+	</ul>
+</li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link js-site-nav-sub-item-with-children "  href='#'><span class="site-navigation__link-text-wrap js-link-text-wrap">Identity<i class="site-navigation__label-arrow">→</i></span><svg class="site-navigation__children-chevron site-navigation__children-chevron--sub ml-xs" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9.01 5.52"><polyline points="8.51 0.5 4.5 4.51 0.51 0.5" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="1.43"/></svg></a>
+	<ul class="site-navigation__sub-sub-nav js-sub-nav site-navigation__sub-sub-nav--level-1">
+<li class='site-navigation__sub-sub-item '><a class="site-navigation__sub-sub-link" href='https://www.highwirepress.com/solutions/highwire-sigma/'>Sigma</a></li>
+	</ul>
+</li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link js-site-nav-sub-item-with-children "  href='#'><span class="site-navigation__link-text-wrap js-link-text-wrap">Subscriptions<i class="site-navigation__label-arrow">→</i></span><svg class="site-navigation__children-chevron site-navigation__children-chevron--sub ml-xs" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9.01 5.52"><polyline points="8.51 0.5 4.5 4.51 0.51 0.5" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="1.43"/></svg></a>
+	<ul class="site-navigation__sub-sub-nav js-sub-nav site-navigation__sub-sub-nav--level-1">
+<li class='site-navigation__sub-sub-item '><a class="site-navigation__sub-sub-link" href='https://www.highwirepress.com/solutions/think365/'>THINK365</a></li>
+	</ul>
+</li>
+</ul>
+</li>
+<li class='site-navigation__item'><a class="site-navigation__link js-site-nav-item-with-children "  href='https://www.highwirepress.com/services/'><span class="site-navigation__link-text-wrap js-link-text-wrap">Services<i class="site-navigation__label-arrow">→</i></span><svg class="site-navigation__children-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9.01 5.52"><polyline points="8.51 0.5 4.5 4.51 0.51 0.5" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="1.43"/></svg></a>
+<ul class="site-navigation__sub-nav js-sub-nav site-navigation__sub-nav--level-0">
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='https://www.highwirepress.com/services/mps-labs/'>MPSLabs</a></li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='https://www.highwirepress.com/services/fulfillment-services/'>Fulfillment Services</a></li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='https://www.highwirepress.com/services/book-production-services/'>Book Production Services</a></li>
+</ul>
+</li>
+<li class='site-navigation__item'><a class="site-navigation__link js-site-nav-item-with-children "  href='https://www.highwirepress.com/resources/'><span class="site-navigation__link-text-wrap js-link-text-wrap">Resources<i class="site-navigation__label-arrow">→</i></span><svg class="site-navigation__children-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9.01 5.52"><polyline points="8.51 0.5 4.5 4.51 0.51 0.5" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="1.43"/></svg></a>
+<ul class="site-navigation__sub-nav js-sub-nav site-navigation__sub-nav--level-0">
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='https://www.highwirepress.com/blog/'>Blog</a></li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='https://www.highwirepress.com/news/'>News</a></li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='/events/'>Events</a></li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='/videos/'>Videos</a></li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='https://www.highwirepress.com/case-studies/'>Case Studies</a></li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='https://www.highwirepress.com/newsletter/'>Newsletter</a></li>
+</ul>
+</li>
+<li class='site-navigation__item'><a class="site-navigation__link js-site-nav-item-with-children "  href='https://www.highwirepress.com/about-us/'><span class="site-navigation__link-text-wrap js-link-text-wrap">About Us<i class="site-navigation__label-arrow">→</i></span><svg class="site-navigation__children-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9.01 5.52"><polyline points="8.51 0.5 4.5 4.51 0.51 0.5" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="1.43"/></svg></a>
+<ul class="site-navigation__sub-nav js-sub-nav site-navigation__sub-nav--level-0">
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='https://www.highwirepress.com/why-highwire/'>Why Highwire</a></li>
+</ul>
+</li>
+<li class='site-navigation__item'><a class="site-navigation__link js-site-nav-item-with-children  test123"  href='https://www.highwirepress.com/support/'><span class="site-navigation__link-text-wrap js-link-text-wrap">Support<i class="site-navigation__label-arrow">→</i></span><svg class="site-navigation__children-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9.01 5.52"><polyline points="8.51 0.5 4.5 4.51 0.51 0.5" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="1.43"/></svg></a>
+<ul class="site-navigation__sub-nav js-sub-nav site-navigation__sub-nav--level-0">
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='https://www.highwirepress.com/support/'>General Support Questions</a></li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='https://www.highwirepress.com/librarian-reader-support/'>Librarian Support</a></li>
+<li class='site-navigation__sub-item '><a class="site-navigation__sub-link "  href='http://highwire.org/sf/production_request.dtl'>Highwire Express Support</a></li>
+</ul>
+</li>
+							<li class="site-navigation__item no-hover">
+								<a class="site-navigation__link site-navigation__link--contact" href="https://www.highwirepress.com/contact/">
+									<span class="site-navigation__link-text-wrap js-link-text-wrap">Contact</span>
+								</a>
+							</li>
+							<li class="site-navigation__item no-hover">
+								<a class="site-navigation__link site-navigation__link--sign-in" target="_blank" rel="noopener" href="http://highwire.org/cgi/login?uri=%2Fpublishers%2F">
+									<span class="site-navigation__link-text-wrap js-link-text-wrap">Sign in</span>
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 17.69 19.11"><path d="M1551.65,61.2c0-3.56,3.69-6.44,8.23-6.44s8.23,2.88,8.23,6.44" transform="translate(-1551.04 -42.09)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="1.22"/><ellipse cx="8.85" cy="5.35" rx="4.84" ry="4.75" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="1.2"/></svg>
+								</a>
+							</li>
+							<li class="site-navigation__item no-hover">
+								<a class="site-navigation__link site-navigation__link--search js-site-search-button" href="#">
+									<span class="site-navigation__link-text-wrap site-navigation__link-text-wrap--search js-link-text-wrap">Search</span>
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21.52 21.55"><title>Search</title><path d="M1631,61.58l-5.11-5.12a9,9,0,1,0-.89.89l5.11,5.12a.63.63,0,0,0,.44.19.61.61,0,0,0,.44-.19.63.63,0,0,0,0-.89Zm-19.58-11a7.71,7.71,0,1,1,7.71,7.72,7.72,7.72,0,0,1-7.71-7.72Zm0,0" transform="translate(-1609.91 -41.36)" fill="#fff" stroke="#fff" stroke-miterlimit="10" stroke-width="0.5"/></svg>
+								</a>
+							</li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+		</div>
+	</header>
+	<main class="site-main">
+		<!-- Added by Post/Page specific custom CSS plugin, thank you for using! -->
+<style>.fs-xxxl {
+    font-size: 3.5rem ;
+}
+
+.simple-text {
+    max-width: 1260px !important;
+    margin: auto;
+    text-align: center;
+}
+
+.simple-text__body {
+    margin: auto;
+    max-width: 1260px !important;
+}
+
+.stat-pullout__main {
+    font-size: 3rem;
+    font-weight: 600;
+    letter-spacing: -.06em;
+    color: #8D1530;
+ line-height: .1;
+margin-top: 2px !important;
+}
+
+.stat-pullout__heading {
+    padding-bottom: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: .1;
+    color: #868686;
+}
+
+.hero-banner-home {
+    background-color: #676767 !important;
+    color: #fff;
+}
+
+.awesclass {
+    color: #de9dac;
+    display: inline-block;
+    font-size: 30px !important;
+    line-height: 1;
+}
+
+.attention-bar {
+    display: block;
+    margin-left: 60px;
+    align-items: center;
+    justify-content: center;
+    text-align: left;
+
+}
+
+.attention-bar__cta {
+    padding-left: 2px;
+    /* margin-left: 200px !important; */
+    /* margin-top: -200px; */
+    padding-top: 20px;
+}
+.bgc-red {
+    background-color: #8D1530 !important;
+}
+
+.pb-xxxxl {
+    padding-bottom: calc(56.77419px + 8.35161vw) !important;
+}
+
+  #PureChatWidget.purechat .purechat-widget-header {
+    background-color: #8e1530 !important;
+ 
+}
+
+#PureChatWidget.purechat .purechat-btn {
+    background-color: #8d1530 !important;
+}
+
+.solutions-explorer__text-nav-button {
+    font-size: 2rem !important;
+}
+
+.solutions-explorer__logo {
+    width: 60% !important;
+}
+
+.counter {
+list-style-type: decimal !important;
+list-style-type: decimal;
+}
+
+
+
+
+
+@media only screen and (max-width: 600px){
+
+
+
+
+.hero-banner-home__image img {
+    /* padding: 0px !important; */
+    position: absolute;
+    opacity: 0;
+    margin-left: -21px !important;
+    padding-left: 0px;
+}
+
+
+.hero-banner-home.js-hero-banner-home {
+    background: url(https://www.highwirepress.com/wp-content/uploads/2021/06/01banner-310-390.jpg);
+    background-size: cover;
+}
+.hero-banner-home__image.js-images {
+    opacity: 0 !important;
+}
+
+.fs-xxxl {
+    font-size: 2rem;
+    line-height: 2rem;
+}
+h1.fs-xxxl {
+    line-height: 2.2rem !important;
+}
+p.cntr_head {
+    font-size: 56px;
+    font-weight: 600;
+    color: #8d1530;
+    font-family: 'Helvetica';
+    letter-spacing: 2px;
+    margin-top: 8px;
+    line-height: 10px !important;
+    padding-top: 0px;
+	 margin-bottom: 20px!important;
+}
+
+
+
+p.cntr_txt {
+    font-size: 10px !important;
+    font-weight: bolder;
+    font-family: 'Helvetica';
+    text-align: center;
+    letter-spacing: 1px;
+    color: #868686;
+    font-weight: 600;
+     margin-top: 10px!important; 
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+    line-height: 1.1em !important;
+}
+
+.column_cntr {
+    float: left;
+    width: 25%;
+    padding: 10px;
+    height: 85px !important;
+margin-bottom: 10px;
+}
+.cntr_icon {
+    font-size: 30px;
+    color: #de9dac;
+    margin-bottom: 10px;
+}
+
+span.post-fix {
+    font-size: 18px;
+}
+.section-wrap.inner-wrap-for-small-screens {
+    padding-right: 40px !important;
+}
+.attention-bar {
+    display: block;
+    margin-left: 18px;
+    align-items: center;
+    justify-content: center;
+    text-align: left;
+}
+}
+
+.solutions-explorer__text-nav-button {
+    font-size: 1.4rem !important;
+}
+
+
+.hero-banner-home__image {
+
+   position: inherit !important;
+
+}
+
+
+
+
+@media only screen and (max-width: 768px){
+.hero-banner-home.js-hero-banner-home {
+    background: url(https://www.highwirepress.com/wp-content/uploads/2021/06/01banner-310-390.jpg);
+    background-size: cover;
+    background-position: bottom;
+}
+
+.hero-banner-home__image.js-images {
+    opacity: 0;
+}
+}
+
+h1.fs-xxxl {
+    line-height: 3.2rem;
+}
+
+
+#crmWebToEntityForm.zcwf_lblLeft {
+                width:100%;
+                padding: 25px;
+                margin: 0 auto;
+                box-sizing: border-box;
+}
+#crmWebToEntityForm.zcwf_lblLeft * {
+                box-sizing: border-box;
+}
+#crmWebToEntityForm{text-align: left;}
+#crmWebToEntityForm * {
+                direction: ltr;
+}
+.zcwf_lblLeft .zcwf_title {
+                word-wrap: break-word;
+                padding: 0px 6px 10px;
+                font-weight: bold;
+}
+.zcwf_lblLeft .zcwf_col_fld input[type=text], .zcwf_lblLeft .zcwf_col_fld textarea {
+                width: 60%;
+                border: 1px solid #c0c6cc !important;
+                resize: vertical;
+                border-radius: 2px;
+                float: left;
+}
+.zcwf_lblLeft .zcwf_col_lab {
+                width: 30%;
+                word-break: break-word;
+                padding: 0px 6px 0px;
+                margin-right: 10px;
+                margin-top: 5px;
+                float: left;
+                min-height: 1px;
+}
+.zcwf_lblLeft .zcwf_col_fld {
+                float: left;
+                width: 68%;
+                padding: 0px 6px 0px;
+                position: relative;
+                margin-top: 5px;
+}
+.zcwf_lblLeft .zcwf_privacy{padding: 6px;}
+.zcwf_lblLeft .wfrm_fld_dpNn{display: none;}
+.dIB{display: inline-block;}
+.zcwf_lblLeft .zcwf_col_fld_slt {
+                width: 60%;
+                border: 1px solid #ccc;
+                background: #fff;
+                border-radius: 4px;
+                font-size: 12px;
+                float: left;
+                resize: vertical;
+                padding: 2px 5px;
+}
+.zcwf_lblLeft .zcwf_row:after, .zcwf_lblLeft .zcwf_col_fld:after {
+                content: '';
+                display: table;
+                clear: both;
+}
+.zcwf_lblLeft .zcwf_col_help {
+                float: left;
+                margin-left: 7px;
+                font-size: 12px;
+                max-width: 35%;
+                word-break: break-word;
+}
+.zcwf_lblLeft .zcwf_help_icon {
+                cursor: pointer;
+                width: 16px;
+                height: 16px;
+                display: inline-block;
+                background: #fff;
+                border: 1px solid #c0c6cc;
+                color: #c1c1c1;
+                text-align: center;
+                font-size: 11px;
+                line-height: 16px;
+                font-weight: bold;
+                border-radius: 50%;
+}
+.zcwf_lblLeft .zcwf_row {margin: 8px 0px;}
+.zcwf_lblLeft .formsubmit {
+                margin-right: 5px;
+                cursor: pointer;
+                color: var(--baseColor);
+                font-size: 12px;
+}
+.zcwf_lblLeft .zcwf_privacy_txt {
+                width: 90%;
+                color: rgb(0, 0, 0);
+                font-size: 12px;
+               
+    font-family: "sofia-pro", sans-serif, "Helvetica Neue", Helvetica, Arial, sans-serif;
+                display: inline-block;
+                vertical-align: top;
+                color: var(--baseColor);
+                padding-top: 2px;
+                margin-left: 6px;
+}
+.zcwf_lblLeft .zcwf_button {
+                font-size: 12px;
+                color: var(--baseColor);
+                border: 1px solid #c0c6cc;
+                padding: 3px 9px;
+                border-radius: 4px;
+                cursor: pointer;
+                max-width: 120px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+}
+.zcwf_lblLeft .zcwf_tooltip_over{
+                position: relative;
+}
+.zcwf_lblLeft .zcwf_tooltip_ctn{
+                position: absolute;
+                background: #dedede;
+                padding: 3px 6px;
+                top: 3px;
+                border-radius: 4px;word-break: break-word;
+                min-width: 100px;
+                max-width: 150px;
+                color: var(--baseColor);
+                z-index: 100;
+}
+.zcwf_lblLeft .zcwf_ckbox{
+                float: left;
+}
+.zcwf_lblLeft .zcwf_file{
+                width: 55%;
+                box-sizing: border-box;
+                float: left;
+}
+.clearB:after{
+                content:'';
+                display: block;
+                clear: both;
+}
+@media all and (max-width: 600px) {
+                .zcwf_lblLeft .zcwf_col_lab, .zcwf_lblLeft .zcwf_col_fld {
+                                width: auto;
+                                float: none !important;
+                }
+                .zcwf_lblLeft .zcwf_col_help {width: 40%;}
+}
+
+
+
+
+
+
+
+
+
+
+@media (min-width: 600px){
+p.cntr_head {
+    font-size: 15px;
+    font-weight: 600;
+    color: #8d1530;
+    font-family: 'Helvetica';
+    letter-spacing: 2px;
+    margin-top: 8px;
+    line-height: 1.3em;
+    padding-top: 0px;
+}
+span.counter {
+    font-size: 46px !important;
+}p.cntr_txt {
+    font-size: 16px;
+    font-weight: bolder;
+    font-family: 'Helvetica';
+    text-align: center;
+    letter-spacing: 1px;
+    color: #868686;
+    font-weight: 600;
+    /* margin-top: -36px; */
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+    line-height: 1.1em;
+}
+.column_cntr {
+    float: left;
+    width: 25%;
+    padding: 10px;
+    height: 85px;
+}
+.cntr_icon {
+    font-size: 30px;
+    color: #de9dac;
+    margin-bottom: 10px;
+}
+}
+/*********************************************/
+
+.cntr_icon {
+    font-size: 30px;
+    color: #de9dac;
+}
+p.cntr_head {
+    font-size: 56px;
+    font-weight: 600;
+    color: #8d1530;
+    font-family: 'Helvetica';
+    letter-spacing: 2px;
+    margin-top: 8px;
+    line-height: 1.3em;
+    padding-top: 0px;
+}
+p.cntr_txt {
+    font-size: 16px;
+    font-weight: bolder;
+    font-family: 'Helvetica';
+    letter-spacing: 2px;
+    color: #868686;
+    font-weight: 600;
+    margin-top: -36px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+    line-height: 1.3em;
+}
+.column_cntr {
+  float: left;
+  width: 25%;
+  padding: 10px;
+height: 215px;
+  /*height: aut0;
+  min-height: 300px;*/
+}
+@media (max-width: 600px){
+.column_cntr {
+  float: left;
+  width: 100%;
+  padding: 10px;
+  /*height: aut0;
+  min-height: 300px;*/
+}
+
+}
+/* Clear floats after the columns */
+.row_cntr:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+
+
+
+
+.cntr_icon {
+    font-size: 30px;
+    color: #de9dac;
+    margin-bottom: 10px;
+}
+
+.counter {
+list-style-type: decimal !important;
+list-style-type: decimal;
+}
+
+@media only screen and (max-width: 600px) {
+    span.counter {
+        font-size: 20px !important;
+    }
+}</style>
+
+
+    <div class="hero-banner-home js-hero-banner-home">
+        <div class="section-wrap inner-wrap-for-small-screens">
+            <div class="hero-banner-home__inner-wrap">
+                <div class="hero-banner-home__image js-images">
+                                            <picture>
+                            <source media="(min-width: 1024px)" srcset="https://www.highwirepress.com/wp-content/uploads/2021/03/01back-to-our-roots.jpg">
+                            <source media="(min-width: 768px)" srcset="https://www.highwirepress.com/wp-content/uploads/2021/06/bg-022.jpg">
+                            <img src="https://www.highwirepress.com/wp-content/uploads/2021/06/01banner-310-390.jpg" class="responsive-img" alt="">
+                        </picture>
+                                            <picture>
+                            <source media="(min-width: 1024px)" srcset="https://www.highwirepress.com/wp-content/uploads/2021/03/02what-we-do.jpg">
+                            <source media="(min-width: 768px)" srcset="https://www.highwirepress.com/wp-content/uploads/2021/06/banner-02-800x700-1.jpg">
+                            <img src="https://www.highwirepress.com/wp-content/uploads/2021/06/02banner-310-390.jpg" class="responsive-img" alt="">
+                        </picture>
+                                            <picture>
+                            <source media="(min-width: 1024px)" srcset="https://www.highwirepress.com/wp-content/uploads/2021/03/03our-customers.jpg">
+                            <source media="(min-width: 768px)" srcset="https://www.highwirepress.com/wp-content/uploads/2021/06/banner-03-800x700-1.jpg">
+                            <img src="https://www.highwirepress.com/wp-content/uploads/2021/06/03banner-310-390.jpg" class="responsive-img" alt="">
+                        </picture>
+                                    </div>
+
+                <div class="hero-banner-home__text-content js-content-outer-wrap">
+                                            <div class="hero-banner-home__content-wrap js-content js-content-1">
+                            <div class="hero-banner-home__mini-heading js-mini-heading">
+                                <p class="mini-heading">01. Back to our roots</p>
+                            </div>
+                            <div class="hero-banner-home__main-heading js-main-heading">
+                                <h1 class="fs-xxxl">Innovation in <br>the Service of <br>the Scholarly <br>Community</h1>
+                            </div>
+                            <div class="hero-banner-home__body js-body">
+                                <p>Connecting the best minds to the most people</p>
+                            </div>
+                            <div class="hero-banner-home__cta js-cta">
+                                <a href="/about-us/" class="cta cta--medium cta--button cta--outline fc-white">Explore more</a>
+                            </div>
+                        </div>
+                                            <div class="hero-banner-home__content-wrap js-content js-content-2">
+                            <div class="hero-banner-home__mini-heading js-mini-heading">
+                                <p class="mini-heading">02. What we do</p>
+                            </div>
+                            <div class="hero-banner-home__main-heading js-main-heading">
+                                <h1 class="fs-xxxl"><h2 style=" font-size: 3.5rem; line-height: 3.2rem;">Connecting the best minds to the most people</h2></h1>
+                            </div>
+                            <div class="hero-banner-home__body js-body">
+                                <p>HighWire is the principal digital partner for the global publishing community.</p>
+                            </div>
+                            <div class="hero-banner-home__cta js-cta">
+                                <a href="/about-us/" class="cta cta--medium cta--button cta--outline fc-white">Explore</a>
+                            </div>
+                        </div>
+                                            <div class="hero-banner-home__content-wrap js-content js-content-3">
+                            <div class="hero-banner-home__mini-heading js-mini-heading">
+                                <p class="mini-heading">03. Our customers</p>
+                            </div>
+                            <div class="hero-banner-home__main-heading js-main-heading">
+                                <h1 class="fs-xxxl"><h2 style=" font-size: 3.5rem; line-height: 3.2rem;">You power <br>scholarly publishing</h2></h1>
+                            </div>
+                            <div class="hero-banner-home__body js-body">
+                                <p>Whether a society, university press or an independent publisher, it is critical that your content attract and captivate the attention of your target audiences. That’s why we’ve been helping the brightest minds reach more people since 1995. </p>
+                            </div>
+                            <div class="hero-banner-home__cta js-cta">
+                                <a href="/contact/" class="cta cta--medium cta--button cta--outline fc-white">Speak to our Team</a>
+                            </div>
+                        </div>
+                                    </div>
+
+                <div class="hero-banner-home__nav js-nav">
+                    <ul class="hero-banner-home__nav-list no-list">
+                                                    <li class="hero-banner-home__nav-item js-nav-item is-active">
+                                <button class="hero-banner-home__nav-button js-button-1">
+                                    <span>01.</span>
+                                    Back to our roots                                </button>
+                            </li>
+                                                    <li class="hero-banner-home__nav-item js-nav-item">
+                                <button class="hero-banner-home__nav-button js-button-2">
+                                    <span>02.</span>
+                                    What we do                                </button>
+                            </li>
+                                                    <li class="hero-banner-home__nav-item js-nav-item">
+                                <button class="hero-banner-home__nav-button js-button-3">
+                                    <span>03.</span>
+                                    Our customers                                </button>
+                            </li>
+                                            </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class=" pt-xl pb-xl  tabbed-content__element js-tabbed-content-element">
+    <div class="section-wrap inner-wrap-for-small-screens  ">
+
+		<div class="image-pattern-feature">
+		    <div class="image-pattern-feature__images">
+
+			
+                <div class="square-image-feature">
+                    <div class="square-image-feature__large">
+                        <img src="https://www.highwirepress.com/wp-content/uploads/2021/03/image-feature-large-350x350-1-350x350-1-350x350.jpg" class="responsive-img" alt="Books">
+
+                        <div class="square-image-feature__medium">
+                            <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/image-feature-medium-250x250.jpg" class="responsive-img" alt="featured image">
+
+                            <div class="square-image-feature__small">
+                                <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/image-feature-small-150x150.jpg" class="responsive-img" alt="featured images">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+			
+		    </div>
+		    <div class="image-pattern-feature__text-content">
+
+		    	
+			        <div class="image-pattern-feature__mini-heading">
+			            <p class="mini-heading">About HighWire</p>
+			        </div>
+
+		    	
+			        <div class="image-pattern-feature__main-heading">
+			            <h2><h2 style="font-size:30px;">Over 75 years of combined experience in shaping industry</h2></h2>
+			        </div>
+
+		    	
+			        <div class="image-pattern-feature__body">
+
+			        	<p>Born out of Stanford University, HighWire is a trusted global provider of innovative scholarly publishing services. In 1995, we spearheaded the digital publishing revolution, working with Google to digitize and index academic journals. Today, we are powered by MPS, providing the scholarly publishing community with leading edge solutions and capabilities.</p>
+<p>Our end-to-end suite of platform tools span the entire publishing lifecycle: from manuscript submission and peer review, content hosting and publication, to analytics and reporting. Whether it’s a journal, preprint repository, or books and multimedia, we help you connect the brightest minds with the most people.</p>
+
+			        </div>
+
+		    	
+			        <div class="image-pattern-feature__cta">
+			            <a href="/about-us/" class="cta cta--medium cta--button cta--outline fc-red">Find out more</a>
+			        </div>
+
+		    			    </div>
+		</div>
+
+	</div>
+</div>
+
+<div class="bgc-gallery-grey pt-m pb-xs tabbed-content__element js-tabbed-content-element">
+	<div class="section-wrap inner-wrap-for-small-screens">
+		<div class="simple-text">
+										<div class="simple-text__body">
+					<div class="row_cntr">
+<div class="column_cntr">
+<p class="cntr_head"><span class="counter">99.97</span><span class="post-fix">%</span></p>
+<p class="cntr_txt">Uptime delivered</p>
+</div>
+<div class="column_cntr">
+<p class="cntr_head"><span class="counter">85</span><span class="post-fix">m</span></p>
+<p class="cntr_txt">Monthly search requests</p>
+</div>
+<div class="column_cntr">
+<p class="cntr_head"><span class="counter">60</span><span class="post-fix">m</span></p>
+<p class="cntr_txt">Monthly users</p>
+</div>
+<div class="column_cntr">
+<p class="cntr_head"><span class="counter">200</span><span class="post-fix">m</span></p>
+<p class="cntr_txt">Key activities per month</p>
+</div>
+</div>
+<div class="row_cntr">
+<div class="column_cntr">
+<p class="cntr_head"><span class="counter">80</span><span class="post-fix">m</span></p>
+<p class="cntr_txt">Unique visitors per month</p>
+</div>
+<div class="column_cntr">
+<p class="cntr_head"><span class="counter">28</span><span class="post-fix">m</span></p>
+<p class="cntr_txt">Downloads per month</p>
+</div>
+<div class="column_cntr">
+<p class="cntr_head"><span class="counter">15</span><span class="post-fix">m</span></p>
+<p class="cntr_txt">New content alerts per month</p>
+</div>
+<div class="column_cntr">
+<p class="cntr_head"><span class="counter">7</span><span class="post-fix">m</span></p>
+<p class="cntr_txt">Search requests per month</p>
+</div>
+</div>
+				</div>
+					</div>
+	</div>
+</div>
+<div class="pb-xl pt-xl  tabbed-content__element js-tabbed-content-element">
+    <div class="section-wrap inner-wrap-for-small-screens">
+        <div class="logo-collection js-logo-collection-carousel">
+            <h4 class="logo-collection__heading">We power the publishing world</h4>
+            <div class="logo-collection__intro">
+                <p><p>Our clients include some of the most influential scientific journals and publishers in the world.</p>
+</p>
+            </div>
+
+            <div class="logo-collection__logos js-carousel-list">
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--square">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-mc-grawhill.png" alt="McGraw Hill Education">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--vwide-and-vshort">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-connect.png" alt="Connect Logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-bmj.png" alt="BMJ logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-aaas.png" alt="AAAS Logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2020/06/client-logos-acs.png" alt="ACS logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--square">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-cabi.png" alt="Cabi logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--square">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2020/06/client-logos-csiro.png" alt="csiro logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--narrow-and-tall">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-brill.png" alt="Brill Logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-bloomsbury.png" alt="Bloomsbury Logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2020/06/client-logos-GSL.png" alt="GSL logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--vvwide-and-vvshort">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-taylor-francis.png" alt="Taylor & Francis Group logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2020/06/client-logos-wkh.png" alt="Wolters Kluwer Health Logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-palgrave.png" alt="palgrave macmillan">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--vwide-and-vshort">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-royal-pharmecutical.png" alt="Royal Pharmecutical Society">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2020/06/client-logos-acs.png" alt="ACS logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2020/06/client-logos-who.png" alt="World Health Organization">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-ochsner.png" alt="ochsner journal logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--vwide-and-vshort">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-oxford.png" alt="Oxford University Press">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--vwide-and-vshort">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-macmillan.png" alt="macmillan education logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--square">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-ios.png" alt="ios press logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--vwide-and-vshort">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logo-ascls.png" alt="ASCLS logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--vwide-and-vshort">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logo-american-college-of-cardiology.png" alt="American College of Cardiology">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--vvwide-and-vvshort">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logo-american-academy-of-pediatrics.png" alt="American Academy of Pediatrics">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/client-logos-wiley.png" alt="Wiley logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2021/07/download.png" alt="ELSEVIER Logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2021/07/88857-22.gif" alt="IEEE Logo">
+                                            </div>
+                                    <div class="logo-collection__item js-logo-collection-item logo-collection__item--wide-and-short">
+                                                    <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/csh-logo.jpg" alt="Cold Spring Harbor Laboratory">
+                                            </div>
+                            </div>
+
+            <ul class="logo-collection__counters js-logo-collection-counters no-list">
+                <!-- Counters will go here -->
+            </ul>
+
+            <div class="logo-collection__next-prev-buttons">
+                <button class="logo-collection__button js-prev">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11.34 19.85"><title>Previous</title><polygon points="9.92 19.85 0 9.92 9.92 0 11.34 1.41 2.83 9.92 11.34 18.43 9.92 19.85" fill="#e40040"/></svg>
+                </button>
+                <button class="logo-collection__button js-next">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11.34 19.85"><title>Next</title><polygon points="1.41 19.85 0 18.43 8.51 9.92 0 1.41 1.41 0 11.34 9.92 1.41 19.85" fill="#e40040"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bgc-gallery-grey tabbed-content__element js-tabbed-content-element">
+    <div class="pb-xl pt-xl">
+        <div class="section-wrap inner-wrap-for-small-screens">
+            <div class="testimonials js-testimonials-carousel">
+                <h3 class="testimonials__heading">
+                    What Our Customers Say                </h3>
+                <ul class="testimonials__item-list no-list js-carousel-list">
+                                            <li class="testimonials__item js-testimonial-carousel-item">
+                            <p class="testimonials__body">“I have always been satisfied with the stable and reliable product that HighWire provides; there is virtually zero down-time or outages, and there rarely seem to be any problems for our readers.”</p>
+                            <p class="testimonials__cite fc-red">Raquel Abad, Managing Editor, American Society for Enology and Viticulture</p>
+                        </li>
+                                            <li class="testimonials__item js-testimonial-carousel-item">
+                            <p class="testimonials__body">“It’s very important that we have close, trusted working relationships with our digital partners. The HighWire team has listened to our recent feedback to ensure a level of service that supports our day-to-day requirements and gives us confidence in the future.”</p>
+                            <p class="testimonials__cite fc-red">Kathryn Gibbons, Operations Manager, BMJ</p>
+                        </li>
+                                            <li class="testimonials__item js-testimonial-carousel-item">
+                            <p class="testimonials__body">“When looking for partners to digitise our range of publications, HighWire’s intelligent platform was an easy choice. It gives us the ability to offer up our extensive collection of content instantaneously and with ease, as well as providing us with valuable insight and data to inform our publishing process."</p>
+                            <p class="testimonials__cite fc-red">Pascal Schwarzer, VP of Digital Development, Springer Publishing</p>
+                        </li>
+                                            <li class="testimonials__item js-testimonial-carousel-item">
+                            <p class="testimonials__body">“Content upload was reduced from 26 hours to 45 minutes, there was a 200% traffic uplift and a 42.24% rise in organic referrals.”</p>
+                            <p class="testimonials__cite fc-red">BrillOnline Reference Works & BrillOnline Bibliographies</p>
+                        </li>
+                                            <li class="testimonials__item js-testimonial-carousel-item">
+                            <p class="testimonials__body">“We needed a fast, reliable and scalable system that would allow for thousands of submissions. It was a natural fit to choose the flexibility of BenchPress as it successfully tackled our business challenges and led to reduced costs and time saved.”</p>
+                            <p class="testimonials__cite fc-red">Kevin-John Black, Product Lead for bioRxiv, Cold Spring Harbor Laboratory</p>
+                        </li>
+                                    </ul>
+                <ul class="testimonials__counters js-testimonial-carousel-counters no-list">
+                    <!-- Counters will go here -->
+                </ul>
+
+                <div class="testimonials__next-prev-buttons">
+                    <button class="testimonials__button js-prev is-disabled" disabled="">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11.34 19.85"><title>Previous</title><polygon points="9.92 19.85 0 9.92 9.92 0 11.34 1.41 2.83 9.92 11.34 18.43 9.92 19.85" fill="#e40040"></polygon></svg>
+                    </button>
+                    <button class="testimonials__button js-next">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11.34 19.85"><title>Next</title><polygon points="1.41 19.85 0 18.43 8.51 9.92 0 1.41 1.41 0 11.34 9.92 1.41 19.85" fill="#e40040"></polygon></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="  pb-l pt-l tabbed-content__element js-tabbed-content-element">
+	<div class="section-wrap inner-wrap-for-small-screens  ">
+
+		<div class="featured-content js-featured-content-carousel">
+		    <div class="featured-content__heading-wrap">
+
+		    	
+			        <h5 class="featured-content__heading">
+			            Featured content			        </h5>
+
+		        
+		        <div class="featured-content__next-prev-buttons is-hidden js-next-prev-buttons">
+		            <button class="featured-content__button js-prev is-disabled" disabled="">
+		                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11.34 19.85"><title>Previous</title><polygon points="9.92 19.85 0 9.92 9.92 0 11.34 1.41 2.83 9.92 11.34 18.43 9.92 19.85" fill="#e40040"></polygon></svg>
+		            </button>
+		            <button class="featured-content__button js-next ml-m">
+		                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11.34 19.85"><title>Next</title><polygon points="1.41 19.85 0 18.43 8.51 9.92 0 1.41 1.41 0 11.34 9.92 1.41 19.85" fill="#e40040"></polygon></svg>
+		            </button>
+		        </div>
+		    </div>
+
+		    <div class="js-featured-content-carousel-wrapper featured-content__article-wrapper">
+
+		        
+			        <article class="featured-content__article">
+			            <div class="featured-content__image">
+
+			            				            	<a href="https://www.highwirepress.com/news/highwire-partnership-with-mcgraw-hill-strengthened-by-five-year-renewal-agreement-for-identity-management-and-hosting-services/">
+			            	
+                                <img data-src="https://www.highwirepress.com/wp-content/uploads/2021/03/highwire-graphics4-670x470-2-670x470-1-670x470.jpg" class="responsive-img lazy-load" alt="" >
+			            				            	</a>
+			            				            </div>
+			            <div class="featured-content__content">
+
+			            	
+				                <p class="featured-content__date">
+				                    August, 24, 2021				                </p>
+
+			            	
+								<a href="https://www.highwirepress.com/news/highwire-partnership-with-mcgraw-hill-strengthened-by-five-year-renewal-agreement-for-identity-management-and-hosting-services/">
+					                <h2 class="featured-content__article-heading">
+					                    HighWire partnership with McGraw Hill strengthened by five-year renewal agreement for identity management and hosting services 					                </h2>
+					            </a>
+
+			            	
+			                <div class="featured-content__body">
+			                    <p><span class="TextRun SCXW68941228 BCX0" lang="EN-US" xml:lang="EN-US" data-contrast="auto"><span class="NormalTextRun SCXW68941228 BCX0">McGraw Hill and </span><span class="NormalTextRun SCXW68941228 BCX0">HighWire</span><span class="NormalTextRun SCXW68941228 BCX0"> are </span><span class="NormalTextRun SCXW68941228 BCX0">pleased </span><span class="NormalTextRun SCXW68941228 BCX0">to announce a five-year renewal agreement</span><span class="NormalTextRun SCXW68941228 BCX0"> to host</span><span class="NormalTextRun SCXW68941228 BCX0"> McGraw Hill’s</span><span class="NormalTextRun SCXW68941228 BCX0"> </span></span><a class="Hyperlink SCXW68941228 BCX0" href="https://www.accessengineeringlibrary.com/" target="_blank" rel="noreferrer noopener"><span class="TextRun Underlined SCXW68941228 BCX0" lang="EN-US" xml:lang="EN-US" data-contrast="none"><span class="NormalTextRun SCXW68941228 BCX0" data-ccp-charstyle="Hyperlink">AccessEngineering</span></span></a><span class="TextRun SCXW68941228 BCX0" lang="EN-US" xml:lang="EN-US" data-contrast="auto"><span class="NormalTextRun SCXW68941228 BCX0"> </span><span class="NormalTextRun SCXW68941228 BCX0">and </span></span><a class="Hyperlink SCXW68941228 BCX0" href="https://www.accessscience.com/" target="_blank" rel="noreferrer noopener"><span class="TextRun Underlined SCXW68941228 BCX0" lang="EN-US" xml:lang="EN-US" data-contrast="none"><span class="NormalTextRun SCXW68941228 BCX0" data-ccp-charstyle="Hyperlink">AccessScience</span></span></a><span class="TextRun SCXW68941228 BCX0" lang="EN-US" xml:lang="EN-US" data-contrast="auto"><span class="NormalTextRun SCXW68941228 BCX0"> on </span><span class="NormalTextRun SCXW68941228 BCX0">HighWire’s</span><span class="NormalTextRun SCXW68941228 BCX0"> </span><span class="NormalTextRun SCXW68941228 BCX0">Scolaris</span><span class="NormalTextRun SCXW68941228 BCX0"> platform. This means that </span><span class="NormalTextRun SCXW68941228 BCX0">Access Science</span><span class="NormalTextRun SCXW68941228 BCX0"> will be migrating from </span><span class="NormalTextRun SCXW68941228 BCX0">an earlier version platform</span><span class="NormalTextRun SCXW68941228 BCX0"> to </span></span><a class="Hyperlink SCXW68941228 BCX0" href="https://www.highwirepress.com/solutions/highwire-scolaris/" target="_blank" rel="noreferrer noopener"><span class="TextRun Underlined SCXW68941228 BCX0" lang="EN-US" xml:lang="EN-US" data-contrast="none"><span class="NormalTextRun SCXW68941228 BCX0" data-ccp-charstyle="Hyperlink">Scolaris</span></span></a><span class="TextRun SCXW68941228 BCX0" lang="EN-US" xml:lang="EN-US" data-contrast="auto"><span class="NormalTextRun SCXW68941228 BCX0">, </span><span class="NormalTextRun SCXW68941228 BCX0">HighWire’s</span><span class="NormalTextRun SCXW68941228 BCX0"> multi-content, future-facing platform</span><span class="NormalTextRun SCXW68941228 BCX0">. </span></span><span class="EOP SCXW68941228 BCX0" data-ccp-props="{}"> </span></p>
+			                </div>
+
+			            					                <div class="featured-content__cta">
+				                    <a href="https://www.highwirepress.com/news/highwire-partnership-with-mcgraw-hill-strengthened-by-five-year-renewal-agreement-for-identity-management-and-hosting-services/" class="cta cta--simple fc-red">
+				                        Read the Press Release				                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 5.51 9.01"><polygon points="1.01 9.01 0 8 3.5 4.5 0 1.01 1.01 0 5.51 4.5 1.01 9.01" fill="#e40040"/></svg>
+				                    </a>
+				                </div>
+
+			            	
+			            </div>
+			        </article>
+
+		        
+			        <article class="featured-content__article">
+			            <div class="featured-content__image">
+
+			            	
+                                <img data-src="" class="responsive-img lazy-load" alt="" >
+			            				            </div>
+			            <div class="featured-content__content">
+
+			            	
+			            </div>
+			        </article>
+
+		        
+		    </div>
+		</div>
+
+	</div>
+</div>
+
+
+<div class="bgc-gallery-grey">
+    <div class="section-wrap  inner-wrap-for-small-screens">
+        <div class="attention-bar">
+            <div class="attention-bar__copy fc-almost-black">
+                            <h3 class="attention-bar__heading">
+                    Share your content with the world                </h3>
+                                        <p>We can help you widen your reach and improve engagement, today.</p>
+                        </div>
+                        <div class="attention-bar__cta">
+                <a href="/contact/" class="cta cta--button cta--medium bgc-red fc-white" target="">Contact Us</a>
+            </div>
+                    </div>
+    </div>
+</div>
+
+<div class="pt-xl pb-xl">
+	<div class="section-wrap inner-wrap-for-small-screens">
+
+		<div class="newsletter-signup">
+							<h3 class="newsletter-signup__heading">
+					Sign up to receive our newsletter				</h3>
+										<p class="newsletter-signup__intro">
+					Get the latest industry insights and news from HighWire				</p>
+						<div role="form" class="wpcf7" id="wpcf7-f578-o1" lang="en-GB" dir="ltr">
+<div class="screen-reader-response"><p role="status" aria-live="polite" aria-atomic="true"></p> <ul></ul></div>
+<form action="/#wpcf7-f578-o1" method="post" class="wpcf7-form init site-form" novalidate="novalidate" data-status="init">
+<div style="display: none;">
+<input type="hidden" name="_wpcf7" value="578" />
+<input type="hidden" name="_wpcf7_version" value="5.6.2" />
+<input type="hidden" name="_wpcf7_locale" value="en_GB" />
+<input type="hidden" name="_wpcf7_unit_tag" value="wpcf7-f578-o1" />
+<input type="hidden" name="_wpcf7_container_post" value="0" />
+<input type="hidden" name="_wpcf7_posted_data_hash" value="" />
+</div>
+<div class="newsletter-signup__form-elements">
+<div class="newsletter-signup__email-and-button">
+        <span id="wpcf7-69d66e0f2532c-wrapper" class="wpcf7-form-control-wrap website-hp-34-wrap" style="display:none !important; visibility:hidden !important;"><label for="wpcf7-69d66e0f2532c-field" class="hp-message">Please leave this field empty.</label><input id="wpcf7-69d66e0f2532c-field"  class="wpcf7-form-control wpcf7-text" type="text" name="website-hp-34" value="" size="40" tabindex="-1" autocomplete="new-password" /></span>
+        <span class="wpcf7-form-control-wrap" data-name="email"><input type="email" name="email" value="" size="40" class="wpcf7-form-control wpcf7-text wpcf7-email wpcf7-validates-as-required wpcf7-validates-as-email newsletter-signup__input js-input" aria-required="true" aria-invalid="false" placeholder="Enter email address" /></span>
+        <input type="submit" value="Subscribe" class="wpcf7-form-control has-spinner wpcf7-submit newsletter-signup__button" id="submit" />
+    </div>
+<div class="site-form__gdpr-wrap ta-left js-llp-and-consent">
+<div class="js-llp-checkbox">
+    <span class="wpcf7-form-control-wrap" data-name="llp"><span class="wpcf7-form-control wpcf7-checkbox"><span class="wpcf7-list-item first last"><label><input type="checkbox" name="llp[]" value="Are you a sole trader or LLP?" /><span class="wpcf7-list-item-label">Are you a sole trader or LLP?</span></label></span></span></span>
+</div>
+<div class="js-consent-checkbox">
+    <span class="wpcf7-form-control-wrap" data-name="gdpr"><span class="wpcf7-form-control wpcf7-checkbox" id="gdpr"><span class="wpcf7-list-item first last"><label><input type="checkbox" name="gdpr[]" value="By providing your personal data you are consenting to receive HighWire marketing emails, please check the box to confirm. We will hold your details in accordance with our data protection policy." /><span class="wpcf7-list-item-label">By providing your personal data you are consenting to receive HighWire marketing emails, please check the box to confirm. We will hold your details in accordance with our data protection policy.</span></label></span></span></span>
+</div>
+</div>
+</div>
+<input type='hidden' class='wpcf7-pum' value='{"closepopup":false,"closedelay":0,"openpopup":false,"openpopup_id":0}' /><div class="wpcf7-response-output" aria-hidden="true"></div></form></div>		</div>
+		
+	</div>
+</div>	</main>
+﻿<footer class="site-footer">
+
+	<div class="section-wrap inner-wrap-for-small-screens">
+		<div class="site-footer__inner-wrap">
+			<ul class="site-footer__nav no-list menu"><li class='site-footer__nav-item'><a class=""  href='https://www.highwirepress.com/solutions/'>Solutions</a></li>
+<li class='site-footer__nav-item'><a class=""  href='https://www.highwirepress.com/news/'>News</a></li>
+<li class='site-footer__nav-item'><a class=""  href='/events/'>Events</a></li>
+<li class='site-footer__nav-item'><a class=""  href='/resources/'>Resources</a></li>
+<li class='site-footer__nav-item'><a class=""  href='https://www.highwirepress.com/support/'>Support</a></li>
+<li class='site-footer__nav-item'><a class=""  href='https://www.highwirepress.com/contact/'>Contact</a></li>
+<li class='site-footer__nav-item'><a class=""  href='https://www.highwirepress.com/sitemap/'>Sitemap</a></li>
+</ul>			<div class="site-footer__additional">
+				<div class="site-footer__social">
+					<div class="social-share">
+												<p class="social-share__copy pr-s">Follow Us</p>
+						<ul class="social-share__list no-list">
+
+							                                                                                                <li class="social-share__list-item">
+                                        <a href="https://twitter.com/highwirepress" class="social-share__link" target="_blank" rel="noopener">
+                                            <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/twitter-logo.svg" alt="Twitter">
+                                        </a>
+                                    </li>
+                                							                                                                                                <li class="social-share__list-item">
+                                        <a href="https://www.linkedin.com/company/highwire-press/" class="social-share__link" target="_blank" rel="noopener">
+                                            <img src="https://www.highwirepress.com/wp-content/uploads/2019/02/linkedin-logo.svg" alt="LinkedIn">
+                                        </a>
+                                    </li>
+                                							
+						</ul>
+											</div>
+				</div>
+
+									<ul class="site-footer__address-list no-list">
+											<li class="site-footer__address">
+							941 West Morse Blvd, <br />
+Suite 100 Winter Park, Florida 32789, United States						</li>
+											<li class="site-footer__address">
+													</li>
+											<li class="site-footer__address">
+							4th Floor, Tower – A,<br />
+Windsor IT Park, A-1,<br />
+Sector 125, <br />
+Noida - 201 303,<br />
+India						</li>
+										</ul>
+				
+
+
+			</div>
+			<div class="site-footer__small">
+				<ul class="site-footer__util-links no-list">
+					<li>
+						<a href="https://www.highwirepress.com/privacy-policy/">Privacy Policy</a>
+					</li>
+				</ul>
+				<div class="site-footer__logo">
+										<img src="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/highwirepress-logo.svg" class="" alt="Highwire">
+				</div>
+				<small class="site-footer__copyright">© 2026 HighWire Press, Inc. All rights
+					reserved.
+				</small>
+			</div>
+		</div>
+	</div>
+</footer>
+
+<div class="site-mask is-hidden js-site-mask"></div>
+
+<form action="/" method="get" class="site-search site-search--full-screen js-site-search">
+	<button class="site-search__close-button js-close-button"></button>
+	<label class="site-search__heading js-label" for="site-search-input">Search the site</label>
+	<div class="site-search__form-elems js-form-elems">
+		<input class="site-search__input" id="site-search-input" placeholder="Type a keyword or search term" type="" name="s">
+		<button class="site-search__button">Search</button>
+	</div>
+</form>
+
+</div>
+
+
+		
+		<script>
+			document.addEventListener( 'wpcf7mailsent', function( event ) {
+				if ( 0 == event.detail.contactFormId ){
+					jQuery('body').append('<a id="cf7fd-attachment-link" href="" download=""></a>');
+					jQuery('#cf7fd-attachment-link')[0].click();
+
+					setTimeout(function(){
+						jQuery('#cf7fd-attachment-link').remove();
+					},2000);
+				}
+
+
+			}, false );
+		</script>
+
+
+
+
+
+
+		
+  <!--copyscapeskip-->
+  <aside id="moove_gdpr_cookie_info_bar" class="moove-gdpr-info-bar-hidden moove-gdpr-align-center moove-gdpr-light-scheme gdpr_infobar_postion_bottom" role="note" aria-label="GDPR Cookie Banner" style="display: none;">
+    <div class="moove-gdpr-info-bar-container">
+      <div class="moove-gdpr-info-bar-content">
+        
+<div class="moove-gdpr-cookie-notice">
+  <p>This website uses cookies to enhance your digital experience. For additional details please visit <a href="https://www.highwirepress.com/privacy-policy/">Privacy Notice</a> and <a href="https://www.highwirepress.com/cookie-policy/">Cookie Policy</a></p>
+				<button class="moove-gdpr-infobar-close-btn gdpr-content-close-btn" aria-label="Close GDPR Cookie Banner">
+					<span class="gdpr-sr-only">Close GDPR Cookie Banner</span>
+					<i class="moovegdpr-arrow-close"></i>
+				</button>
+			</div>
+<!--  .moove-gdpr-cookie-notice -->        
+<div class="moove-gdpr-button-holder">
+		  <button class="mgbutton moove-gdpr-infobar-allow-all gdpr-fbo-0" aria-label="Accept"  tabindex="1"  role="button">Accept</button>
+	  				<button class="mgbutton moove-gdpr-infobar-reject-btn gdpr-fbo-1 "  tabindex="1"  aria-label="Reject">Reject</button>
+							<button class="mgbutton moove-gdpr-infobar-settings-btn change-settings-button gdpr-fbo-2" data-href="#moove_gdpr_cookie_modal" tabindex="2"  aria-label="Manage">Manage</button>
+							<button class="moove-gdpr-infobar-close-btn gdpr-fbo-3" aria-label="Close GDPR Cookie Banner"  tabindex="3" >
+					<span class="gdpr-sr-only">Close GDPR Cookie Banner</span>
+					<i class="moovegdpr-arrow-close"></i>
+				</button>
+			</div>
+<!--  .button-container -->      </div>
+      <!-- moove-gdpr-info-bar-content -->
+    </div>
+    <!-- moove-gdpr-info-bar-container -->
+  </aside>
+  <!-- #moove_gdpr_cookie_info_bar -->
+  <!--/copyscapeskip-->
+<script src="https://www.highwirepress.com/wp-content/plugins/animated-number-counters/assets/js/jquery.counterup.js?ver=1.1.0" type="text/javascript" defer></script><script src="https://www.highwirepress.com/wp-content/plugins/animated-number-counters/assets/js/anc-6310-output.js?ver=1.1.0" type="text/javascript" defer></script><script src="https://www.highwirepress.com/wp-includes/js/dist/vendor/regenerator-runtime.min.js?ver=0.13.9" type="text/javascript" defer></script><script src="https://www.highwirepress.com/wp-includes/js/dist/vendor/wp-polyfill.min.js?ver=3.15.0" type="text/javascript" defer></script><script type='text/javascript' id='contact-form-7-js-extra'>
+/* <![CDATA[ */
+var wpcf7 = {"api":{"root":"https:\/\/www.highwirepress.com\/wp-json\/","namespace":"contact-form-7\/v1"}};
+/* ]]> */
+</script>
+<script src="https://www.highwirepress.com/wp-content/plugins/contact-form-7/includes/js/index.js?ver=5.6.2" type="text/javascript" defer></script><script src="https://www.highwirepress.com/wp-content/plugins/counter-number-showcase/assets/js/bootstrap.js?ver=6.0.1" type="text/javascript" defer></script><script src="https://www.highwirepress.com/wp-content/plugins/counter-number-showcase/assets/js/counter_nscript.js?ver=6.0.1" type="text/javascript" defer></script><script src="https://www.highwirepress.com/wp-content/plugins/counter-number-showcase/assets/js/waypoints.min.js?ver=6.0.1" type="text/javascript" defer></script><script src="https://www.highwirepress.com/wp-content/plugins/counter-number-showcase/assets/js/jquery.counterup.min.js?ver=6.0.1" type="text/javascript" defer></script><script type='text/javascript' id='moove_gdpr_frontend-js-extra'>
+/* <![CDATA[ */
+var moove_frontend_gdpr_scripts = {"ajaxurl":"https:\/\/www.highwirepress.com\/wp-admin\/admin-ajax.php","post_id":"2","plugin_dir":"https:\/\/www.highwirepress.com\/wp-content\/plugins\/gdpr-cookie-compliance","show_icons":"all","is_page":"1","strict_init":"3","enabled_default":{"third_party":0,"advanced":0},"geo_location":"false","force_reload":"false","is_single":"","hide_save_btn":"false","current_user":"0","cookie_expiration":"365","script_delay":"2000","close_btn_action":"2","close_cs_action":"2","gdpr_scor":"true","wp_lang":""};
+/* ]]> */
+</script>
+<script src="https://www.highwirepress.com/wp-content/plugins/gdpr-cookie-compliance/dist/scripts/main.js?ver=4.8.12" type="text/javascript" defer></script><script type="text/javascript">
+window.addEventListener("load", function(event) {
+jQuery(".cfx_form_main,.wpcf7-form,.wpforms-form,.gform_wrapper form").each(function(){
+var form=jQuery(this); 
+var screen_width=""; var screen_height="";
+ if(screen_width == ""){
+ if(screen){
+   screen_width=screen.width;  
+ }else{
+     screen_width=jQuery(window).width();
+ }    }  
+  if(screen_height == ""){
+ if(screen){
+   screen_height=screen.height;  
+ }else{
+     screen_height=jQuery(window).height();
+ }    }
+form.append('<input type="hidden" name="vx_width" value="'+screen_width+'">');
+form.append('<input type="hidden" name="vx_height" value="'+screen_height+'">');
+form.append('<input type="hidden" name="vx_url" value="'+window.location.href+'">');  
+}); 
+
+});
+</script> 
+
+    
+  <!--copyscapeskip-->
+  <!-- V1 -->
+  <div id="moove_gdpr_cookie_modal" class="gdpr_lightbox-hide" role="complementary" aria-label="GDPR Settings Screen">
+    <div class="moove-gdpr-modal-content moove-clearfix logo-position-left moove_gdpr_modal_theme_v1">
+          
+        <button class="moove-gdpr-modal-close" aria-label="Close GDPR Cookie Settings">
+          <span class="gdpr-sr-only">Close GDPR Cookie Settings</span>
+          <span class="gdpr-icon moovegdpr-arrow-close"></span>
+        </button>
+            <div class="moove-gdpr-modal-left-content">
+        
+<div class="moove-gdpr-company-logo-holder">
+  <img src="https://www.highwirepress.com/wp-content/themes/highwirepress/assets/images/highwirepress-logo.svg" alt="Highwire Press"     class="img-responsive" />
+</div>
+<!--  .moove-gdpr-company-logo-holder -->        <ul id="moove-gdpr-menu">
+          
+<li class="menu-item-on menu-item-privacy_overview menu-item-selected">
+  <button data-href="#privacy_overview" class="moove-gdpr-tab-nav" aria-label="Privacy Overview">
+    <span class="gdpr-svg-icon">
+      <svg class="icon icon-privacy-overview" viewBox="0 0 26 32">
+        <path d="M11.082 27.443l1.536 0.666 1.715-0.717c5.018-2.099 8.294-7.014 8.294-12.442v-5.734l-9.958-5.325-9.702 5.325v5.862c0 5.376 3.2 10.24 8.115 12.365zM4.502 10.138l8.166-4.506 8.397 4.506v4.813c0 4.838-2.893 9.19-7.347 11.034l-1.101 0.461-0.922-0.41c-4.352-1.894-7.194-6.195-7.194-10.957v-4.941zM12.029 14.259h1.536v7.347h-1.536v-7.347zM12.029 10.394h1.536v2.483h-1.536v-2.483z" fill="currentColor"></path>
+      </svg>      
+    </span> 
+    <span class="gdpr-nav-tab-title">Privacy Overview</span>
+  </button>
+</li>
+
+
+
+  <li class="menu-item-off menu-item-third_party_cookies">
+    <button data-href="#third_party_cookies" class="moove-gdpr-tab-nav" aria-label="Performance Cookies">
+      <span class="gdpr-svg-icon">
+        <svg class="icon icon-3rd-party" viewBox="0 0 26 32">
+          <path d="M25.367 3.231c-0.020 0-0.040 0-0.060 0.020l-4.98 1.080c-0.16 0.040-0.2 0.16-0.080 0.28l1.42 1.42-10.060 10.040 1.14 1.14 10.060-10.060 1.42 1.42c0.12 0.12 0.24 0.080 0.28-0.080l1.060-5.020c0-0.14-0.080-0.26-0.2-0.24zM1.427 6.371c-0.74 0-1.4 0.66-1.4 1.4v19.6c0 0.74 0.66 1.4 1.4 1.4h19.6c0.74 0 1.4-0.66 1.4-1.4v-14.6h-1.6v14.4h-19.2v-19.2h14.38v-1.6h-14.58z" fill="currentColor"></path>
+        </svg>        
+      </span> 
+      <span class="gdpr-nav-tab-title">Performance Cookies</span>
+    </button>
+  </li>
+
+  <li class="menu-item-advanced-cookies menu-item-off">
+    <button data-href="#advanced-cookies" class="moove-gdpr-tab-nav" aria-label="Social Media Cookies">
+      <span class="gdpr-svg-icon">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <g data-name="1">
+            <path d="M293.9,450H233.53a15,15,0,0,1-14.92-13.42l-4.47-42.09a152.77,152.77,0,0,1-18.25-7.56L163,413.53a15,15,0,0,1-20-1.06l-42.69-42.69a15,15,0,0,1-1.06-20l26.61-32.93a152.15,152.15,0,0,1-7.57-18.25L76.13,294.1a15,15,0,0,1-13.42-14.91V218.81A15,15,0,0,1,76.13,203.9l42.09-4.47a152.15,152.15,0,0,1,7.57-18.25L99.18,148.25a15,15,0,0,1,1.06-20l42.69-42.69a15,15,0,0,1,20-1.06l32.93,26.6a152.77,152.77,0,0,1,18.25-7.56l4.47-42.09A15,15,0,0,1,233.53,48H293.9a15,15,0,0,1,14.92,13.42l4.46,42.09a152.91,152.91,0,0,1,18.26,7.56l32.92-26.6a15,15,0,0,1,20,1.06l42.69,42.69a15,15,0,0,1,1.06,20l-26.61,32.93a153.8,153.8,0,0,1,7.57,18.25l42.09,4.47a15,15,0,0,1,13.41,14.91v60.38A15,15,0,0,1,451.3,294.1l-42.09,4.47a153.8,153.8,0,0,1-7.57,18.25l26.61,32.93a15,15,0,0,1-1.06,20L384.5,412.47a15,15,0,0,1-20,1.06l-32.92-26.6a152.91,152.91,0,0,1-18.26,7.56l-4.46,42.09A15,15,0,0,1,293.9,450ZM247,420h33.39l4.09-38.56a15,15,0,0,1,11.06-12.91A123,123,0,0,0,325.7,356a15,15,0,0,1,17,1.31l30.16,24.37,23.61-23.61L372.06,328a15,15,0,0,1-1.31-17,122.63,122.63,0,0,0,12.49-30.14,15,15,0,0,1,12.92-11.06l38.55-4.1V232.31l-38.55-4.1a15,15,0,0,1-12.92-11.06A122.63,122.63,0,0,0,370.75,187a15,15,0,0,1,1.31-17l24.37-30.16-23.61-23.61-30.16,24.37a15,15,0,0,1-17,1.31,123,123,0,0,0-30.14-12.49,15,15,0,0,1-11.06-12.91L280.41,78H247l-4.09,38.56a15,15,0,0,1-11.07,12.91A122.79,122.79,0,0,0,201.73,142a15,15,0,0,1-17-1.31L154.6,116.28,131,139.89l24.38,30.16a15,15,0,0,1,1.3,17,123.41,123.41,0,0,0-12.49,30.14,15,15,0,0,1-12.91,11.06l-38.56,4.1v33.38l38.56,4.1a15,15,0,0,1,12.91,11.06A123.41,123.41,0,0,0,156.67,311a15,15,0,0,1-1.3,17L131,358.11l23.61,23.61,30.17-24.37a15,15,0,0,1,17-1.31,122.79,122.79,0,0,0,30.13,12.49,15,15,0,0,1,11.07,12.91ZM449.71,279.19h0Z" fill="currentColor"/>
+            <path d="M263.71,340.36A91.36,91.36,0,1,1,355.08,249,91.46,91.46,0,0,1,263.71,340.36Zm0-152.72A61.36,61.36,0,1,0,325.08,249,61.43,61.43,0,0,0,263.71,187.64Z" fill="currentColor"/>
+          </g>
+        </svg>
+      </span> 
+      <span class="gdpr-nav-tab-title">Social Media Cookies</span>
+    </button>
+  </li>
+
+  <li class="menu-item-moreinfo menu-item-off">
+    <button data-href="#cookie_policy_modal" class="moove-gdpr-tab-nav" aria-label="Registration cookies">
+      <span class="gdpr-svg-icon">
+        <svg class="icon icon-policy" viewBox="0 0 26 32">
+          <path d="M21.936 10.816c0-0.205-0.077-0.384-0.23-0.538l-5.862-5.99c-0.154-0.154-0.333-0.23-0.538-0.23h-9.088c-1.408 0-2.56 1.152-2.56 2.56v18.765c0 1.408 1.152 2.56 2.56 2.56h13.158c1.408 0 2.56-1.152 2.56-2.56v-14.566zM16.022 6.669l3.558 3.635h-3.302c-0.154 0-0.256-0.102-0.256-0.256v-3.379zM19.376 26.381h-13.158c-0.563 0-1.024-0.461-1.024-1.024v-18.739c0-0.563 0.461-1.024 1.024-1.024h8.269v4.454c0 0.998 0.794 1.792 1.792 1.792h4.122v13.542c0 0.538-0.461 0.998-1.024 0.998zM16.893 18.419h-8.192c-0.435 0-0.768 0.333-0.768 0.768s0.333 0.768 0.768 0.768h8.192c0.435 0 0.768-0.333 0.768-0.768s-0.333-0.768-0.768-0.768zM16.893 14.528h-8.192c-0.435 0-0.768 0.333-0.768 0.768s0.333 0.768 0.768 0.768h8.192c0.435 0 0.768-0.333 0.768-0.768s-0.333-0.768-0.768-0.768z" fill="currentColor"></path>
+        </svg>        
+      </span> 
+      <span class="gdpr-nav-tab-title">Registration cookies</span>
+    </button>
+  </li>
+        </ul>
+        
+<div class="moove-gdpr-branding-cnt">
+  
+		<a href="https://wordpress.org/plugins/gdpr-cookie-compliance/" target="_blank" rel="noopener noreferrer nofollow" class='moove-gdpr-branding'>Powered by&nbsp; <span>GDPR Cookie Compliance</span></a>
+		</div>
+<!--  .moove-gdpr-branding -->      </div>
+      <!--  .moove-gdpr-modal-left-content -->
+      <div class="moove-gdpr-modal-right-content">
+        <div class="moove-gdpr-modal-title">
+           
+        </div>
+        <!-- .moove-gdpr-modal-ritle -->
+        <div class="main-modal-content">
+
+          <div class="moove-gdpr-tab-content">
+            
+<div id="privacy_overview" class="moove-gdpr-tab-main">
+      <span class="tab-title">Privacy Overview</span>
+    <div class="moove-gdpr-tab-main-content">
+  	<p>This website may store or retrieve information on your browser, mostly in the form of cookies. This information might be about you, your preferences or your device and is mostly used to make the website work as you expect it to and give you a more personalized web experience. We respect your right to privacy, so you can choose not to allow some types of cookies. Click on the different category headings to find out more. You can accept or refuse our use of cookies, by moving the selector switch in each category to change our default settings. However, blocking some types of cookies may impact your experience of the site and the services we are able to offer you.</p>
+  	  </div>
+  <!--  .moove-gdpr-tab-main-content -->
+
+</div>
+<!-- #privacy_overview -->            
+            
+  <div id="third_party_cookies" class="moove-gdpr-tab-main" style="display:none">
+    <span class="tab-title">Performance Cookies</span>
+    <div class="moove-gdpr-tab-main-content">
+      <p>These cookies allow us to count visits and traffic sources so we can measure and improve the performance of our site. They help us to know which pages are the most and least popular and see how visitors move around the site. All information these cookies collect is aggregated and therefore anonymous. If you do not allow these cookies we will not know when you have visited our site, and will not be able to monitor its performance.</p>
+      <div class="moove-gdpr-status-bar">
+        <div class="gdpr-cc-form-wrap">
+          <div class="gdpr-cc-form-fieldset">
+            <label class="cookie-switch" for="moove_gdpr_performance_cookies">    
+              <span class="gdpr-sr-only">Enable or Disable Cookies</span>     
+              <input type="checkbox" aria-label="Performance Cookies" value="check" name="moove_gdpr_performance_cookies" id="moove_gdpr_performance_cookies" >
+              <span class="cookie-slider cookie-round" data-text-enable="Enabled" data-text-disabled="Disabled"></span>
+            </label>
+          </div>
+          <!-- .gdpr-cc-form-fieldset -->
+        </div>
+        <!-- .gdpr-cc-form-wrap -->
+      </div>
+      <!-- .moove-gdpr-status-bar -->
+              <div class="moove-gdpr-strict-secondary-warning-message" style="margin-top: 10px; display: none;">
+          <p>Please enable Strictly Necessary Cookies first so that we can save your preferences!</p>
+        </div>
+        <!--  .moove-gdpr-tab-main-content -->
+             
+    </div>
+    <!--  .moove-gdpr-tab-main-content -->
+  </div>
+  <!-- #third_party_cookies -->
+            
+  <div id="advanced-cookies" class="moove-gdpr-tab-main" style="display:none">
+    <span class="tab-title">Social Media Cookies</span>
+    <div class="moove-gdpr-tab-main-content">
+      <p>These cookies are set by a range of social media services that we have added to the site to enable you to share our content with your friends and networks. They are capable of tracking your browser across other sites and building up a profile of your interests. This may impact the content and messages you see on other websites you visit. If you do not allow these cookies you may not be able to use or see these sharing tools.</p>
+      <div class="moove-gdpr-status-bar">
+        <div class="gdpr-cc-form-wrap">
+          <div class="gdpr-cc-form-fieldset">
+            <label class="cookie-switch" for="moove_gdpr_advanced_cookies">    
+              <span class="gdpr-sr-only">Enable or Disable Cookies</span>
+              <input type="checkbox" aria-label="Social Media Cookies" value="check" name="moove_gdpr_advanced_cookies" id="moove_gdpr_advanced_cookies" >
+              <span class="cookie-slider cookie-round" data-text-enable="Enabled" data-text-disabled="Disabled"></span>
+            </label>
+          </div>
+          <!-- .gdpr-cc-form-fieldset -->
+        </div>
+        <!-- .gdpr-cc-form-wrap -->
+      </div>
+      <!-- .moove-gdpr-status-bar -->
+          <div class="moove-gdpr-strict-secondary-warning-message" style="margin-top: 10px; display: none;">
+        <p>Please enable Strictly Necessary Cookies first so that we can save your preferences!</p>
+      </div>
+      <!--  .moove-gdpr-strict-secondary-warning-message -->
+       
+        </div>
+    <!--  .moove-gdpr-tab-main-content -->
+  </div>
+  <!-- #advanced-cookies -->
+            
+  <div id="cookie_policy_modal" class="moove-gdpr-tab-main" style="display:none">
+    <span class="tab-title">Registration cookies</span>
+    <div class="moove-gdpr-tab-main-content">
+      <p>There are several ways you may register with a MPS’ site, for example you may register our forms for requesting a demo, contact us, subscribe to a newsletter, or register for an event.</p>
+<p>While you have registered one of our contact forms in our sites, we combine information from your registration cookies with analytics cookies, which we could use to identify which pages you have seen on our sites.</p>
+       
+    </div>
+    <!--  .moove-gdpr-tab-main-content -->
+  </div>
+          </div>
+          <!--  .moove-gdpr-tab-content -->
+        </div>
+        <!--  .main-modal-content -->
+        <div class="moove-gdpr-modal-footer-content">
+          <div class="moove-gdpr-button-holder">
+			  		<button class="mgbutton moove-gdpr-modal-allow-all button-visible" role="button" aria-label="Enable All">Enable All</button>
+		  					<button class="mgbutton moove-gdpr-modal-reject-all button-visible" role="button" aria-label="Reject All">Reject All</button>
+				</div>
+<!--  .moove-gdpr-button-holder -->        </div>
+        <!--  .moove-gdpr-modal-footer-content -->
+      </div>
+      <!--  .moove-gdpr-modal-right-content -->
+
+      <div class="moove-clearfix"></div>
+
+    </div>
+    <!--  .moove-gdpr-modal-content -->
+  </div>
+  <!-- #moove_gdpr_cookie_modal -->
+  <!--/copyscapeskip-->
+
+
+
+<script type='text/javascript' data-cfasync='false'>window.purechatApi = { l: [], t: [], on: function () { this.l.push(arguments); } }; (function () { var done = false; var script = document.createElement('script'); script.async = true; script.type = 'text/javascript'; script.src = 'https://app.purechat.com/VisitorWidget/WidgetScript'; document.getElementsByTagName('HEAD').item(0).appendChild(script); script.onreadystatechange = script.onload = function (e) { if (!done && (!this.readyState || this.readyState == 'loaded' || this.readyState == 'complete')) { var w = new PCWidget({c: '547bceb7-6f41-4419-8a51-2ba40fc7f59c', f: true }); done = true; } }; })();</script>
+
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KH7V86Q');</script>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KH7V86Q"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+
+ 
+
+<script type="text/javascript">window.NREUM||(NREUM={});NREUM.info={"beacon":"bam.nr-data.net","licenseKey":"NRJS-333ee02360711bae4cc","applicationID":"1146108104","transactionName":"NFEBMBZQW0QEBhYIVg0bIgcQWFpZShUDBlw=","queueTime":0,"applicationTime":704,"atts":"GBYCRl5KSEo=","errorBeacon":"bam.nr-data.net","agent":""}</script></body>
+</html>

@@ -1,41 +1,26 @@
 import os
-import re
 import hashlib
-import tempfile
+import shutil
+import uuid
 from typing import Dict, Any, Optional
-from app.services.llm_service import detect_category
-from langchain_huggingface import HuggingFaceEmbeddings
-from pgvector.psycopg2 import register_vector
-
-import requests
 from bs4 import BeautifulSoup
 
-try:
-    import fitz  # PyMuPDF
-    PYMUPDF_AVAILABLE = True
-except ImportError:
-    PYMUPDF_AVAILABLE = False
-
-try:
-    import pytesseract
-    from PIL import Image
-    import io
-    # Auto-detect tesseract in Docker, fallback to Windows path for local dev
-    import shutil
-    tesseract_path = shutil.which('tesseract')
-    if tesseract_path:
-        pytesseract.pytesseract.tesseract_cmd = tesseract_path
-    elif os.path.exists(r'C:\Users\Venkata.Jakkinapalli\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'):
-        pytesseract.pytesseract.tesseract_cmd = r'C:\Users\Venkata.Jakkinapalli\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
-    OCR_AVAILABLE = True
-except ImportError:
-    OCR_AVAILABLE = False
-
-try:
-    from pptx import Presentation
-    PPTX_AVAILABLE = True
-except ImportError:
-    PPTX_AVAILABLE = False
+from app.services.llm_service import detect_category
+from langchain_community.document_loaders import (
+    TextLoader,
+    PyPDFLoader,
+    Docx2txtLoader,
+    CSVLoader,
+    UnstructuredPowerPointLoader,
+    UnstructuredExcelLoader,
+    UnstructuredPDFLoader,
+)
+from PIL import Image
+import pytesseract
+from langchain_core.documents import Document
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from pgvector.psycopg2 import register_vector
 
 from app.db.database import get_connection
 
@@ -52,6 +37,9 @@ DEFAULT_INGEST_CONFIG = {
     "kb_chunks_table": "kb_chunks"
 }
 
+# Base URL for serving uploaded files — change this in production
+BASE_UPLOAD_URL = os.getenv("BASE_UPLOAD_URL", "http://localhost:8000")
+
 
 # ==========================================================
 # UTILS
@@ -65,177 +53,114 @@ def create_embeddings(model_name: str):
     return HuggingFaceEmbeddings(model_name=model_name)
 
 
+def get_public_url(bot_id: int, filename: str) -> str:
+    """Build a public URL for a file stored in uploads/{bot_id}/"""
+    return f"{BASE_UPLOAD_URL}/uploads/{bot_id}/{filename}"
+
+
 # ==========================================================
-# EXTRACTION FUNCTIONS
+# HTML PROCESSOR
+# Extracts clean text and collects image URLs separately.
+# Returns (clean_text: str, image_urls: list[str])
 # ==========================================================
 
-def extract_text_file(path: str) -> str:
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
+def process_html_with_images(file_path: str, bot_id: int):
+    bot_upload_dir = f"uploads/{bot_id}"
+    os.makedirs(bot_upload_dir, exist_ok=True)
 
+    with open(file_path, "r", encoding="utf-8") as f:
+        soup = BeautifulSoup(f, "html.parser")
 
-def extract_html_structured(html: str, base_url: str = "") -> str:
-    soup = BeautifulSoup(html, "html.parser")
+    image_urls = []
 
-    # Remove nav, footer, script, style noise
-    for tag in soup.find_all(["nav", "footer", "script", "style", "noscript"]):
-        tag.decompose()
-
-    content = []
-    current_section = ""
-
-    for tag in soup.find_all(["h1", "h2", "h3", "h4", "p", "li", "td", "th", "img"]):
-        if tag.name == "img":
-            # Try alt text first
-            alt = tag.get("alt", "").strip()
-            if alt:
-                content.append(f"{current_section}: [Image: {alt}]" if current_section else f"[Image: {alt}]")
-
-            # OCR the image if it has a src and OCR is available
-            if OCR_AVAILABLE:
-                src = tag.get("src", "")
-                if src:
-                    try:
-                        if src.startswith("http"):
-                            img_response = requests.get(src, timeout=5)
-                            img = Image.open(io.BytesIO(img_response.content))
-                        elif src.startswith("data:image"):
-                            # base64 embedded image
-                            import base64
-                            header, data = src.split(",", 1)
-                            img = Image.open(io.BytesIO(base64.b64decode(data)))
-                        else:
-                            continue
-                        ocr_text = pytesseract.image_to_string(img).strip()
-                        if ocr_text:
-                            content.append(f"{current_section}: {ocr_text}" if current_section else ocr_text)
-                    except Exception:
-                        pass  # skip unreadable images silently
+    for img in soup.find_all("img"):
+        src = img.get("src")
+        if not src:
+            img.decompose()
             continue
 
-        text = tag.get_text(strip=True)
-        if not text:
+        if src.startswith("http://") or src.startswith("https://"):
+            # External image — keep URL as-is
+            image_urls.append(src)
+            img.decompose()
             continue
 
-        if tag.name in ["h1", "h2", "h3", "h4"]:
-            current_section = text
-        else:
-            content.append(f"{current_section}: {text}" if current_section else text)
+        # Local image — copy to uploads and build public URL
+        html_dir = os.path.dirname(file_path)
+        local_img_path = os.path.join(html_dir, src)
 
-    return "\n".join(content)
+        if os.path.exists(local_img_path):
+            safe_name = f"html_img_{uuid.uuid4().hex[:6]}_{os.path.basename(src)}"
+            new_img_path = os.path.join(bot_upload_dir, safe_name)
+            shutil.copy2(local_img_path, new_img_path)
+            public_url = get_public_url(bot_id, safe_name)
+            image_urls.append(public_url)
 
+        img.decompose()
 
-def extract_pdf(path: str) -> str:
-    if not PYMUPDF_AVAILABLE:
-        raise ImportError("PyMuPDF (fitz) is not installed. Run: pip install pymupdf")
-    doc = fitz.open(path)
-    text = ""
-    for page in doc:
-        text += page.get_text()
-        # OCR images embedded in PDF pages
-        if OCR_AVAILABLE:
-            for img in page.get_images(full=True):
-                try:
-                    xref = img[0]
-                    base_image = doc.extract_image(xref)
-                    img_obj = Image.open(io.BytesIO(base_image["image"]))
-                    ocr_text = pytesseract.image_to_string(img_obj).strip()
-                    if ocr_text:
-                        text += "\n" + ocr_text
-                except Exception:
-                    pass
-    return text
-
-
-def extract_image_text(path: str) -> str:
-    if not OCR_AVAILABLE:
-        raise ImportError("pytesseract or Pillow not installed. Run: pip install pytesseract pillow")
-    img = Image.open(path)
-    return pytesseract.image_to_string(img)
-
-
-def extract_pptx(path: str) -> str:
-    if not PPTX_AVAILABLE:
-        raise ImportError("python-pptx not installed. Run: pip install python-pptx")
-    prs = Presentation(path)
-    lines = []
-    for slide_num, slide in enumerate(prs.slides, 1):
-        lines.append(f"Slide {slide_num}")
-        for shape in slide.shapes:
-            if shape.has_text_frame:
-                for para in shape.text_frame.paragraphs:
-                    text = para.text.strip()
-                    if text:
-                        lines.append(text)
-    return "\n".join(lines)
-
-
-def fetch_url_content(url: str) -> str:
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, timeout=15, headers=headers)
-    response.raise_for_status()
-    return extract_html_structured(response.text, base_url=url)
+    # Clean text only — no HTML tags, no markdown noise
+    clean_text = soup.get_text(separator="\n", strip=True)
+    return clean_text, image_urls
 
 
 # ==========================================================
-# CLEANING LAYER
+# BUILD CHUNK TEXT WITH IMAGES
+# Injects image markdown at the END of chunk text so the LLM
+# can include it in its answer.
+# Format:  [IMAGE_REF:url]  — a unique marker the LLM is
+# instructed to preserve, and the frontend can render.
 # ==========================================================
 
-def clean_text(text: str) -> str:
-    text = re.sub(r'\S+@\S+', '[EMAIL]', text)
-    text = re.sub(r'http\S+', '[URL]', text)
-    text = re.sub(r'password\s*=\s*\S+', '[REDACTED]', text)
-    text = re.sub(r'api[_-]?key\s*=\s*\S+', '[REDACTED]', text)
-    text = re.sub(r'\s+', ' ', text)
-    return text.strip()
+def build_chunk_text_with_images(text: str, image_urls: list) -> str:
+    if not image_urls:
+        return text
+    image_block = "\n".join(
+        f"[IMAGE_REF:{url}]" for url in image_urls
+    )
+    return f"{text}\n\n{image_block}"
 
 
 # ==========================================================
-# SMART CHUNKING
+# MULTI FILE LOADER
 # ==========================================================
 
-def smart_chunk(text: str, max_size: int = 500) -> list:
-    # First, normalize whitespace and split into sentences
-    text = re.sub(r'\s+', ' ', text).strip()
-    
-    # Split on sentence boundaries (., !, ?) followed by space
-    sentences = re.split(r'(?<=[.!?])\s+', text)
-    
-    chunks = []
-    current = ""
-    
-    for sentence in sentences:
-        sentence = sentence.strip()
-        if not sentence:
-            continue
-        
-        # If adding this sentence exceeds max_size, save current and start new
-        if current and len(current) + len(sentence) + 1 > max_size:
-            chunks.append(current)
-            current = sentence
-        else:
-            current = current + " " + sentence if current else sentence
-    
-    # Handle leftover
-    if current:
-        chunks.append(current)
-    
-    # If no sentence boundaries found (e.g., list items), fall back to word-based chunking
-    if len(chunks) == 1 and len(chunks[0]) > max_size:
-        words = chunks[0].split()
-        chunks = []
-        current = ""
-        for word in words:
-            if len(current) + len(word) + 1 > max_size:
-                if current:
-                    chunks.append(current)
-                current = word
-            else:
-                current = current + " " + word if current else word
-        if current:
-            chunks.append(current)
-    
-    return chunks
+def get_loader(file_path: str):
+    _, ext = os.path.splitext(file_path.lower())
+
+    if ext in [".txt", ".md", ".json", ".yaml", ".yml"]:
+        return TextLoader(file_path, encoding="utf-8")
+
+    elif ext == ".pdf":
+        try:
+            return UnstructuredPDFLoader(file_path, strategy="hi_res")
+        except Exception:
+            return PyPDFLoader(file_path)
+
+    elif ext == ".docx":
+        return Docx2txtLoader(file_path)
+
+    elif ext == ".pptx":
+        return UnstructuredPowerPointLoader(file_path)
+
+    elif ext in [".xlsx", ".xls"]:
+        return UnstructuredExcelLoader(file_path)
+
+    elif ext == ".csv":
+        return CSVLoader(file_path)
+
+    elif ext == ".svg":
+        return TextLoader(file_path, encoding="utf-8")
+
+    elif ext in [".png", ".jpg", ".jpeg"]:
+        return None  # handled separately
+
+    else:
+        try:
+            return TextLoader(file_path, encoding="utf-8")
+        except Exception:
+            raise ValueError(f"Unsupported file type: {ext}")
+
+
 # ==========================================================
 # MAIN INGEST FUNCTION
 # ==========================================================
@@ -247,53 +172,95 @@ def ingest_file(
 ) -> dict:
 
     config = {**DEFAULT_INGEST_CONFIG, **(ingest_config or {})}
-
     file_name = os.path.basename(file_path)
-    ext = file_path.lower().split('.')[-1]
+    _, ext = os.path.splitext(file_name.lower())
 
     # ------------------------------------------------------
-    # 1️⃣ Extract content based on file type
+    # 1️⃣ LOAD FILE
     # ------------------------------------------------------
 
-    if ext in ["txt", "md"]:
-        raw_text = extract_text_file(file_path)
-    elif ext == "html":
-        with open(file_path, "r", encoding="utf-8") as f:
-            raw_text = extract_html_structured(f.read())
-    elif ext == "pdf":
-        raw_text = extract_pdf(file_path)
-    elif ext in ["png", "jpg", "jpeg"]:
-        raw_text = extract_image_text(file_path)
-    elif ext == "pptx":
-        raw_text = extract_pptx(file_path)
+    image_urls = []  # collected image URLs for this file
+
+    if ext in [".html", ".htm"]:
+        clean_text, image_urls = process_html_with_images(file_path, bot_id)
+        documents = [
+            Document(
+                page_content=clean_text,
+                metadata={"source": file_name, "type": "html", "image_urls": image_urls}
+            )
+        ]
+
+    elif ext in [".png", ".jpg", ".jpeg"]:
+        bot_upload_dir = f"uploads/{bot_id}"
+        os.makedirs(bot_upload_dir, exist_ok=True)
+
+        safe_name = f"ocr_{uuid.uuid4().hex[:6]}_{file_name}"
+        new_img_path = os.path.join(bot_upload_dir, safe_name)
+        shutil.copy2(file_path, new_img_path)
+
+        image = Image.open(file_path)
+        text = pytesseract.image_to_string(image).strip()
+
+        if not text:
+            text = f"[Visual Asset: {file_name} — diagram or logo without readable text]"
+
+        img_url = get_public_url(bot_id, safe_name)
+        image_urls = [img_url]
+
+        documents = [
+            Document(
+                page_content=text,
+                metadata={"source": file_name, "type": "image", "image_urls": image_urls}
+            )
+        ]
+
     else:
-        raise ValueError(f"Unsupported file type: .{ext}")
+        loader = get_loader(file_path)
+        if loader is None:
+            raise ValueError(f"No loader available for {ext}")
+        documents = loader.load()
 
-    if not raw_text or not raw_text.strip():
-        return {
-            "file_name": file_name,
-            "message": "Empty content extracted, skipping file",
-            "chunks_inserted": 0,
-            "chunks_skipped": 0
-        }
-
-    # ------------------------------------------------------
-    # 2️⃣ Clean + smart chunk
-    # ------------------------------------------------------
-
-    cleaned = clean_text(raw_text)
-    chunk_texts = smart_chunk(cleaned, max_size=config["chunk_size"])
-
-    file_hash = generate_hash(cleaned)
+        # For PDFs and PPTX, UnstructuredLoader may extract embedded images
+        # as separate elements — collect any image paths from metadata if present
+        for doc in documents:
+            for key in ("image_url", "img_url", "image_path"):
+                val = doc.metadata.get(key)
+                if val:
+                    image_urls.append(val)
 
     # ------------------------------------------------------
-    # 3️⃣ Create Embedding Model (Configurable)
+    # 2️⃣ HASH
+    # ------------------------------------------------------
+
+    full_text = "\n".join([
+        doc.page_content.replace('\x00', '') for doc in documents
+    ])
+    file_hash = generate_hash(full_text)
+
+    # ------------------------------------------------------
+    # 3️⃣ SPLIT
+    # ------------------------------------------------------
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=config["chunk_size"],
+        chunk_overlap=config["chunk_overlap"]
+    )
+    chunks = splitter.split_documents(documents)
+
+    # ------------------------------------------------------
+    # 4️⃣ EMBEDDINGS
     # ------------------------------------------------------
 
     embeddings = create_embeddings(config["embedding_model"])
 
     # ------------------------------------------------------
-    # 4️⃣ DB Connection
+    # 5️⃣ CATEGORY
+    # ------------------------------------------------------
+
+    file_category = detect_category(full_text[:500])
+
+    # ------------------------------------------------------
+    # 6️⃣ DB
     # ------------------------------------------------------
 
     conn = get_connection()
@@ -303,26 +270,16 @@ def ingest_file(
     inserted_chunks = 0
     skipped_chunks = 0
 
-    kb_files_table = config["kb_files_table"]
-    kb_chunks_table = config["kb_chunks_table"]
-
     try:
-
-        # --------------------------------------------------
-        # 5️⃣ Prevent Duplicate File (by hash + bot_id)
-        # --------------------------------------------------
-        
-        # Use psycopg2.sql for safe table name interpolation
-        from psycopg2 import sql
-
-        query = sql.SQL("SELECT id FROM {} WHERE file_hash = %s AND bot_id = %s").format(
-            sql.Identifier(kb_files_table)
+        # Duplicate file check
+        cur.execute(
+            f"""
+            SELECT id FROM {config['kb_files_table']}
+            WHERE file_hash = %s AND bot_id = %s;
+            """,
+            (file_hash, bot_id)
         )
-        cur.execute(query, (file_hash, bot_id))
-
-        existing_file = cur.fetchone()
-
-        if existing_file:
+        if cur.fetchone():
             return {
                 "file_name": file_name,
                 "message": "File already ingested",
@@ -330,164 +287,72 @@ def ingest_file(
                 "chunks_skipped": 0
             }
 
-        # --------------------------------------------------
-        # 6️⃣ Insert File Record
-        # --------------------------------------------------
-
-        query = sql.SQL(
-            "INSERT INTO {} (file_name, file_hash, bot_id) VALUES (%s, %s, %s) RETURNING id"
-        ).format(sql.Identifier(kb_files_table))
-        cur.execute(query, (file_name, file_hash, bot_id))
-
+        # Insert file record
+        cur.execute(
+            f"""
+            INSERT INTO {config['kb_files_table']}
+            (file_name, file_hash, bot_id)
+            VALUES (%s, %s, %s)
+            RETURNING id;
+            """,
+            (file_name, file_hash, bot_id)
+        )
         kb_file_id = cur.fetchone()[0]
 
-        # --------------------------------------------------
-        # 7️⃣ Insert Chunks
-        # --------------------------------------------------
+        # Insert chunks
+        # ✅ KEY FIX: image URLs are attached to the FIRST chunk of the document.
+        # All other chunks get the text only.
+        # This means the LLM will see [IMAGE_REF:url] markers when the first
+        # chunk is retrieved, and the frontend will render them.
 
-        for chunk_text in chunk_texts:
-            chunk_text = chunk_text.strip()
-
+        for i, chunk in enumerate(chunks):
+            chunk_text = chunk.page_content.replace('\x00', '').strip()
             if not chunk_text:
                 continue
 
-            chunk_hash = generate_hash(chunk_text)
+            # Attach image refs only to the first chunk of each document
+            # so images aren't duplicated across every chunk
+            chunk_image_urls = []
+            if i == 0 and image_urls:
+                chunk_image_urls = image_urls
+            elif "image_urls" in chunk.metadata and chunk.metadata["image_urls"]:
+                # If splitter preserved metadata, use that
+                chunk_image_urls = chunk.metadata["image_urls"]
 
-            # Duplicate check per bot
-            query = sql.SQL("SELECT id FROM {} WHERE chunk_hash = %s AND bot_id = %s").format(
-                sql.Identifier(kb_chunks_table)
+            final_chunk_text = build_chunk_text_with_images(chunk_text, chunk_image_urls)
+
+            chunk_hash = generate_hash(final_chunk_text)
+
+            # Dedup check
+            cur.execute(
+                f"""
+                SELECT id FROM {config['kb_chunks_table']}
+                WHERE chunk_hash = %s AND bot_id = %s;
+                """,
+                (chunk_hash, bot_id)
             )
-            cur.execute(query, (chunk_hash, bot_id))
-
             if cur.fetchone():
                 skipped_chunks += 1
                 continue
 
-            vector = embeddings.embed_query(chunk_text)
+            vector = embeddings.embed_query(final_chunk_text)
 
-            chunk_category = detect_category(chunk_text)
-
-            query = sql.SQL(
-                "INSERT INTO {} (chunk_text, chunk_hash, embedding, kb_file_id, bot_id, category) VALUES (%s, %s, %s, %s, %s, %s)"
-            ).format(sql.Identifier(kb_chunks_table))
-            cur.execute(query, (chunk_text, chunk_hash, vector, kb_file_id, bot_id, chunk_category))
-
+            cur.execute(
+                f"""
+                INSERT INTO {config['kb_chunks_table']}
+                (chunk_text, chunk_hash, embedding, kb_file_id, bot_id, category)
+                VALUES (%s, %s, %s, %s, %s, %s);
+                """,
+                (final_chunk_text, chunk_hash, vector, kb_file_id, bot_id, file_category)
+            )
             inserted_chunks += 1
 
         conn.commit()
-
         return {
             "file_name": file_name,
             "chunks_inserted": inserted_chunks,
-            "chunks_skipped": skipped_chunks
-        }
-
-    except Exception as e:
-        conn.rollback()
-        raise e
-
-    finally:
-        cur.close()
-        conn.close()
-
-
-# ==========================================================
-# URL INGESTION (same pipeline, no file needed)
-# ==========================================================
-
-def ingest_from_url(
-    url: str,
-    bot_id: int,
-    ingest_config: Optional[Dict[str, Any]] = None
-) -> dict:
-
-    config = {**DEFAULT_INGEST_CONFIG, **(ingest_config or {})}
-
-    raw_text = fetch_url_content(url)
-
-    if not raw_text or not raw_text.strip():
-        return {
-            "source": url,
-            "message": "No content extracted from URL",
-            "chunks_inserted": 0,
-            "chunks_skipped": 0
-        }
-
-    cleaned = clean_text(raw_text)
-    chunk_texts = smart_chunk(cleaned, max_size=config["chunk_size"])
-    file_hash = generate_hash(cleaned)
-
-    # Use domain+path as the "file name" for display
-    from urllib.parse import urlparse
-    parsed = urlparse(url)
-    source_name = parsed.netloc + parsed.path
-
-    embeddings = create_embeddings(config["embedding_model"])
-
-    conn = get_connection()
-    register_vector(conn)
-    cur = conn.cursor()
-
-    inserted_chunks = 0
-    skipped_chunks = 0
-
-    kb_files_table = config["kb_files_table"]
-    kb_chunks_table = config["kb_chunks_table"]
-
-    try:
-        # Use psycopg2.sql for safe table name interpolation
-        from psycopg2 import sql
-        
-        query = sql.SQL("SELECT id FROM {} WHERE file_hash = %s AND bot_id = %s").format(
-            sql.Identifier(kb_files_table)
-        )
-        cur.execute(query, (file_hash, bot_id))
-        
-        if cur.fetchone():
-            return {
-                "source": url,
-                "message": "URL already ingested (content unchanged)",
-                "chunks_inserted": 0,
-                "chunks_skipped": 0
-            }
-
-        query = sql.SQL(
-            "INSERT INTO {} (file_name, file_hash, bot_id) VALUES (%s, %s, %s) RETURNING id"
-        ).format(sql.Identifier(kb_files_table))
-        cur.execute(query, (source_name, file_hash, bot_id))
-        kb_file_id = cur.fetchone()[0]
-
-        for chunk_text in chunk_texts:
-            chunk_text = chunk_text.strip()
-            if not chunk_text:
-                continue
-
-            chunk_hash = generate_hash(chunk_text)
-            
-            query = sql.SQL("SELECT id FROM {} WHERE chunk_hash = %s AND bot_id = %s").format(
-                sql.Identifier(kb_chunks_table)
-            )
-            cur.execute(query, (chunk_hash, bot_id))
-            
-            if cur.fetchone():
-                skipped_chunks += 1
-                continue
-
-            vector = embeddings.embed_query(chunk_text)
-            chunk_category = detect_category(chunk_text)
-
-            query = sql.SQL(
-                "INSERT INTO {} (chunk_text, chunk_hash, embedding, kb_file_id, bot_id, category) VALUES (%s, %s, %s, %s, %s, %s)"
-            ).format(sql.Identifier(kb_chunks_table))
-            cur.execute(query, (chunk_text, chunk_hash, vector, kb_file_id, bot_id, chunk_category))
-            
-            inserted_chunks += 1
-
-        conn.commit()
-        return {
-            "source": url,
-            "chunks_inserted": inserted_chunks,
-            "chunks_skipped": skipped_chunks
+            "chunks_skipped": skipped_chunks,
+            "category": file_category
         }
 
     except Exception as e:

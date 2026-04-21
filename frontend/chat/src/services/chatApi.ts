@@ -45,7 +45,7 @@ class ChatApiService {
 
   async sendMessage(
     request: ChatRequest | string,
-    onChunk: (text: string) => void
+    onChunk: (text: string, suggestions?: string[]) => void
   ): Promise<void> {
     try {
       let chatRequest: ChatRequest;
@@ -84,7 +84,6 @@ class ChatApiService {
 
       // Structured request
       else {
-
         chatRequest = {
           ...request,
           user_session_id: request.user_session_id || this.sessionId,
@@ -100,7 +99,7 @@ class ChatApiService {
         (chatRequest as any).organization_id = this.organizationId;
       }
 
-      const finalUrl = `${this.baseUrl}/api/chat`;
+      const finalUrl = `${this.baseUrl}/api/v1/chat`;
 
       const response = await fetch(finalUrl, {
         method: "POST",
@@ -111,6 +110,15 @@ class ChatApiService {
         body: JSON.stringify(chatRequest)
       });
 
+      let suggestions: string[] | undefined;
+      const suggestionsHeader = response.headers.get("X-Suggestions");
+      if (suggestionsHeader) {
+        try {
+          suggestions = JSON.parse(suggestionsHeader);
+        } catch (e) {
+          console.error("Failed to parse suggestions header", e);
+        }
+      }
       if (!response.ok) {
         throw new Error("Backend connection failed");
       }
@@ -129,7 +137,7 @@ class ChatApiService {
         }
 
         if (data.message) {
-          onChunk(data.message);
+          onChunk(data.message, suggestions);
         }
 
         return;
@@ -150,7 +158,7 @@ class ChatApiService {
 
         const chunk = decoder.decode(value, { stream: true });
 
-        onChunk(chunk);
+        onChunk(chunk, suggestions);
       }
 
     } catch (error) {
@@ -165,7 +173,7 @@ class ChatApiService {
 
     try {
 
-      const finalUrl = `${this.baseUrl}/api/chat/initial-message/${this.botId}`;
+      const finalUrl = `${this.baseUrl}/api/v1/chat/initial-message/${this.botId}`;
 
       const response = await fetch(finalUrl, {
         method: "GET"
@@ -192,12 +200,11 @@ class ChatApiService {
 
     try {
 
-      const finalUrl = `${this.baseUrl}/bot/${this.botId}/suggestions`;
+      const finalUrl = `${this.baseUrl}/api/v1/bot/${this.botId}/suggestions`;
 
       const response = await fetch(finalUrl, {
         method: "GET"
       });
-
       if (!response.ok) {
         throw new Error("Failed to fetch suggestions");
       }

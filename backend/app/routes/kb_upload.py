@@ -1,17 +1,45 @@
 # kb_upload.py
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query
-from pydantic import BaseModel
+import logging
+from fastapi import APIRouter, UploadFile, File, HTTPException, Query, Header
+from pydantic import BaseModel, validator, constr
 from app.services.ingestion_service import ingest_file, ingest_from_url
 from app.services.bot_service import get_bot_config
+from app.services.auth_service import verify_admin_token
 import shutil
 import os
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 # Router prefix only once
 router = APIRouter(prefix="/admin")
 
 BASE_UPLOAD_DIR = "uploads"
 os.makedirs(BASE_UPLOAD_DIR, exist_ok=True)
+
+
+# ==========================================================
+# PYDANTIC MODELS FOR INPUT VALIDATION
+# ==========================================================
+
+class IngestURLRequest(BaseModel):
+    url: constr(min_length=10, max_length=2048)
+    bot_id: int
+    
+    @validator('url')
+    def validate_url(cls, v):
+        if not v.startswith(('http://', 'https://')):
+            raise ValueError('URL must start with http:// or https://')
+        # Basic URL validation
+        if ' ' in v:
+            raise ValueError('URL cannot contain spaces')
+        return v.strip()
+    
+    @validator('bot_id')
+    def validate_bot_id(cls, v):
+        if v < 1:
+            raise ValueError('bot_id must be positive')
+        return v
 
 
 # ==========================================================
@@ -47,9 +75,23 @@ def list_kb_files(bot_id: int):
 
 @router.post("/upload-kb")
 async def upload_kb(
-    bot_id: int = Query(...),
-    file: UploadFile = File(...)
+    bot_id: int = Query(..., gt=0, description="Bot ID must be positive"),
+    file: UploadFile = File(...),
+    authorization: str = Header(None)
 ):
+    # Verify admin authentication
+    verify_admin_token(authorization)
+    
+    logger.info(f"File upload request for bot_id={bot_id}, filename={file.filename}")
+
+    # Validate filename
+    if not file.filename or len(file.filename) > 255:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    
+    # Sanitize filename
+    safe_filename = os.path.basename(file.filename)
+    if safe_filename != file.filename:
+        raise HTTPException(status_code=400, detail="Invalid filename path")
 
     # Fetch bot config (string is fine here if your service expects it)
     bot_config = get_bot_config(str(bot_id))
@@ -59,7 +101,7 @@ async def upload_kb(
 
     # ✅ Allow multiple file types
     allowed = [".txt", ".md", ".html", ".pdf", ".png", ".jpg", ".jpeg", ".pptx"]
-    if not any(file.filename.lower().endswith(ext) for ext in allowed):
+    if not any(safe_filename.lower().endswith(ext) for ext in allowed):
         raise HTTPException(
             status_code=400,
             detail="Only .txt, .md, .html, .pdf, .png, .jpg, .jpeg, .pptx files allowed"
@@ -67,12 +109,16 @@ async def upload_kb(
 
     contents = await file.read()
 
-    # ✅ File size check (5MB)
-    if len(contents) > 5 * 1024 * 1024:
+    # ✅ File size check (20MB)
+    if len(contents) > 20 * 1024 * 1024:
         raise HTTPException(
             status_code=400,
-            detail="File too large (max 5MB)"
+            detail="File too large (max 20MB)"
         )
+    
+    # Check for empty files
+    if len(contents) == 0:
+        raise HTTPException(status_code=400, detail="File is empty")
 
     await file.seek(0)
 
@@ -81,7 +127,7 @@ async def upload_kb(
     os.makedirs(bot_upload_dir, exist_ok=True)
 
     # Optional: sanitize filename
-    file_name = os.path.basename(file.filename)
+    file_name = safe_filename
 
     file_path = os.path.join(bot_upload_dir, file_name)
 
@@ -96,6 +142,8 @@ async def upload_kb(
         ingest_config=bot_config.get("ingest_config", {})
     )
 
+    logger.info(f"File processed: {result.get('file_name')}, chunks_inserted={result.get('chunks_inserted', 0)}")
+    
     return {
         "message": "File processed",
         "file_name": result.get("file_name"),
@@ -108,20 +156,19 @@ async def upload_kb(
 # INGEST FROM URL (web page / Confluence / any HTML page)
 # ==========================================================
 
-class IngestURLRequest(BaseModel):
-    url: str
-    bot_id: int
-
-
 @router.post("/ingest-url")
-async def ingest_url(request: IngestURLRequest):
+async def ingest_url(request: IngestURLRequest, authorization: str = Header(None)):
+    # Verify admin authentication
+    verify_admin_token(authorization)
+    
+    logger.info(f"URL ingestion request for bot_id={request.bot_id}, url={request.url}")
 
     bot_config = get_bot_config(str(request.bot_id))
 
     if not bot_config:
         raise HTTPException(status_code=404, detail="Invalid bot_id")
 
-    if not request.url.startswith("http"):
+    if not request.url.startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="URL must start with http:// or https://")
 
     try:
@@ -131,8 +178,11 @@ async def ingest_url(request: IngestURLRequest):
             ingest_config=bot_config.get("ingest_config", {})
         )
     except Exception as e:
+        logger.error(f"Failed to ingest URL {request.url}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to fetch or ingest URL: {str(e)}")
 
+    logger.info(f"URL ingested: {result.get('source')}, chunks_inserted={result.get('chunks_inserted', 0)}")
+    
     return {
         "message": "URL ingested",
         "source": result.get("source"),

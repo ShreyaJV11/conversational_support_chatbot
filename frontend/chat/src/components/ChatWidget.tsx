@@ -83,52 +83,12 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
     }
   }, [state.isOpen, initialMessage, state.messages.length, chatApi]);
 
-  useEffect(() => {
-    if (state.userInfo?.name && state.userInfo?.email) {
-      const loadSuggestions = async () => {
-        try {
-          const data = await chatApi.getSuggestions();
-          setSuggestions(data);
-        } catch (err) {
-          console.error("Suggestions error", err);
-        }
-      };
-      loadSuggestions();
-    }
-  }, [state.userInfo]);
-
-
   // Focus input when chat opens
   useEffect(() => {
     if (state.isOpen && !state.isMinimized) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [state.isOpen, state.isMinimized]);
-
- useEffect(() => {
-    const lastMessage = state.messages[state.messages.length - 1];
-    
-    // ✨ FIX 1: state.isLoading === false (Yani jab bot ki typing poori khatam ho jaye, tabhi chalega)
-    if (!state.isLoading && lastMessage && lastMessage.type === 'bot' && lastMessage.content.includes('Thank you')) {
-      
-      const fetchChips = async () => {
-        try {
-          const data: any = await chatApi.getSuggestions(); 
-          
-          // ✨ FIX 2: Backend ke Object se asli Array bahar nikala!
-          const actualArray = Array.isArray(data) ? data : (data.suggestions || []);
-          
-          if (actualArray.length > 0) {
-            setSuggestions(actualArray); 
-          }
-        } catch (err) {
-          console.error("Suggestions nahi aayi", err);
-        }
-      };
-      
-      fetchChips();
-    }
-  }, [state.messages, state.isLoading, chatApi]);
 
   const loadInitialMessage = async () => {
     try {
@@ -203,10 +163,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
   const handleSendMessage = async (customMessage?: string) => {
     const message = (customMessage ?? inputValue).trim();
   if (!message || state.isLoading) return;
-  
 
-  // ✅ Step A: Login detect karo aur state update karo
-  if (message.includes(',')) {
+  if (!state.userInfo?.email && message.includes(',')) {
     const parts = message.split(',');
     if (parts.length === 2) {
       setState(prev => ({
@@ -268,7 +226,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
         request.user_info = state.userInfo;
       }
 
-      await chatApi.sendMessage(request, (chunk: string) => {
+      await chatApi.sendMessage(
+        request,
+        (chunk: string, incomingSuggestions?: string[]) => {
         setState(prev => ({
           ...prev,
           messages: prev.messages.map(msg =>
@@ -277,6 +237,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
               : msg
           )
         }));
+        if (incomingSuggestions && incomingSuggestions.length > 0) {
+          setSuggestions(incomingSuggestions);
+        }
       });
 
       setState(prev => ({
@@ -285,8 +248,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ config = {} }) => {
       }));
       if (message.includes(',') || state.userInfo?.email) {
         try {
-          const newSuggestions = await chatApi.getSuggestions();
-          setSuggestions(newSuggestions);
         } catch (err) {
           console.error("Suggestions nahi aayi", err);
         }

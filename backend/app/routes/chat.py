@@ -157,6 +157,16 @@ def detect_category(query: str) -> str:
 
     return "general"
 
+import json
+def get_query_suggestions(bot_id: int, user_query: str, answer: str = ""):
+    try:
+        enriched = f"{user_query}\n{answer[:200]}"
+        return json.dumps(
+            get_suggestions(bot_id, user_query=enriched, step=None)
+        )
+    except:
+        return json.dumps([])
+
 @router.post("/chat")
 async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)):
 
@@ -235,10 +245,25 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
 
             token = create_jwt_token(email)
 
-            return {
-                "message": f"Thank you {name}. How can I assist you today?",
-                "token": token
-            }
+            from fastapi.responses import JSONResponse
+            import json
+
+            suggestions = get_suggestions(
+                request.bot_id,
+                user_query="start",
+                step=None
+            )
+
+            response = JSONResponse(
+                content={
+                    "message": f"Thank you {name}. How can I assist you today?",
+                    "token": token
+                }
+            )
+
+            response.headers["X-Suggestions"] = json.dumps(suggestions)
+
+            return response
 
         # ---------------- NORMAL FLOW ----------------
 
@@ -278,9 +303,17 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
         # ---------------- SMALLTALK HANDLING ----------------
         smalltalk_type = detect_smalltalk(request.user_question)
         if smalltalk_type:
+            response = get_smalltalk_response(smalltalk_type)
+
             return StreamingResponse(
-                stream_text(get_smalltalk_response(smalltalk_type)),
-                media_type="text/plain"
+                stream_text(response),
+                media_type="text/plain",
+                headers={
+                    "X-Suggestions": get_query_suggestions(
+                        request.bot_id,
+                        request.user_question
+                    )
+                }
             )
 
         # ---------------- SMART TICKET INTENT ----------------
@@ -323,7 +356,13 @@ async def chat(request: ChatRequest, authorization: Optional[str] = Header(None)
                 save_message(conversation_id, "user", request.user_question)
                 reply = "How long has this issue been occurring?"
                 save_message(conversation_id, "assistant", reply)
-                return StreamingResponse(stream_text(reply), media_type="text/plain")
+                return StreamingResponse(stream_text(reply), media_type="text/plain",
+                    headers={
+                        "X-Suggestions": get_query_suggestions(
+                            request.bot_id,
+                            request.user_question
+                        )
+                    })
 
             # STEP 3: User just gave duration → now create the ticket
             if last_role == "assistant" and "how long has this issue" in last_msg.lower():
@@ -403,7 +442,13 @@ Category : {ticket_category}
         if not is_domain:
             return StreamingResponse(
                 stream_text(bot_config["domain_message"]),
-                media_type="text/plain"
+                media_type="text/plain",
+                headers={
+                    "X-Suggestions": get_query_suggestions(
+                        request.bot_id,
+                        request.user_question
+                    )
+                }
             )
 
         if not chunks:
@@ -415,7 +460,10 @@ Category : {ticket_category}
 
             return StreamingResponse(
                 stream_text(escalation_text),
-                media_type="text/plain"
+                media_type="text/plain",
+                headers={
+                    "X-Suggestions": json.dumps(["Yes", "No"])
+                }
             )
 
         context_text = "\n".join(chunks)
@@ -454,7 +502,13 @@ Category : {ticket_category}
         return StreamingResponse(
             stream_wrapper(),
             media_type="text/plain",
-            headers={"X-Accel-Buffering": "no"}
+            headers={
+                "X-Accel-Buffering": "no",
+                "X-Suggestions": get_query_suggestions(
+                    request.bot_id,
+                    request.user_question
+                )
+            }
         )
 
     except Exception as e:
@@ -485,3 +539,19 @@ async def get_initial(bot_id: int):
             "Welcome. Please provide your name and email."
         )
     }
+
+from fastapi import Query
+from typing import Optional
+
+@router.get("/bot/{bot_id}/suggestions")
+async def get_bot_suggestions(
+    bot_id: int,
+    step: Optional[str] = None,
+    last_query: Optional[str] = None,
+):
+    suggestions = get_suggestions(
+        bot_id,
+        user_query=last_query or "",
+        step=step
+    )
+    return {"suggestions": suggestions}

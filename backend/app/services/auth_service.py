@@ -1,3 +1,4 @@
+import os
 import jwt
 import time
 from datetime import datetime, timedelta
@@ -6,7 +7,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from app.core.redis_config import redis_client
 
-SECRET_KEY = "k3J9@xP!92kLm#Q7zA1$D5"
+# Load from environment in production
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "k3J9@xP!92kLm#Q7zA1$D5")
 ALGORITHM = "HS256"
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -47,6 +49,41 @@ def verify_jwt_token(token: str):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+# NEW: Admin token verification for protected endpoints
+def verify_admin_token(authorization: str = None):
+    """
+    Verify admin JWT token from Authorization header.
+    Returns decoded payload if valid, raises HTTPException if not.
+    """
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header missing"
+        )
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization format. Use: Bearer <token>"
+        )
+    
+    token = authorization.replace("Bearer ", "")
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expired"
+        )
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
         )
 
 

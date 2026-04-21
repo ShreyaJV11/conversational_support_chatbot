@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
+import { authService } from "../utils/auth";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
 
@@ -24,8 +25,8 @@ export default function KBUpload() {
       setStatus("error");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setMessage("File too large (max 5MB)");
+    if (file.size > 20 * 1024 * 1024) {
+      setMessage("File too large (max 20MB)");
       setStatus("error");
       return;
     }
@@ -37,10 +38,36 @@ export default function KBUpload() {
       const formData = new FormData();
       formData.append("file", file);
 
+      // Get auth header automatically
+      const authHeader = await authService.getAuthHeader();
+
       const response = await fetch(`${API_BASE}/admin/upload-kb?bot_id=${botId}`, {
         method: "POST",
+        headers: authHeader,
         body: formData,
       });
+
+      // If 401, clear token and retry once
+      if (response.status === 401) {
+        authService.clearToken();
+        const retryAuthHeader = await authService.getAuthHeader();
+        const retryResponse = await fetch(`${API_BASE}/admin/upload-kb?bot_id=${botId}`, {
+          method: "POST",
+          headers: retryAuthHeader,
+          body: formData,
+        });
+        
+        if (!retryResponse.ok) {
+          const err = await retryResponse.json();
+          throw new Error(err.detail || "Upload failed");
+        }
+        
+        const data = await retryResponse.json();
+        setStatus("success");
+        setMessage(`Indexed ✅ ${data.chunks_inserted} chunks (${data.chunks_skipped} skipped)`);
+        setFile(null);
+        return;
+      }
 
       if (!response.ok) {
         const err = await response.json();
@@ -68,11 +95,42 @@ export default function KBUpload() {
       setStatus("uploading");
       setMessage("Fetching and indexing page...");
 
+      // Get auth header automatically
+      const authHeader = await authService.getAuthHeader();
+
       const response = await fetch(`${API_BASE}/admin/ingest-url`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
         body: JSON.stringify({ url, bot_id: parseInt(botId) }),
       });
+
+      // If 401, clear token and retry once
+      if (response.status === 401) {
+        authService.clearToken();
+        const retryAuthHeader = await authService.getAuthHeader();
+        const retryResponse = await fetch(`${API_BASE}/admin/ingest-url`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            ...retryAuthHeader,
+          },
+          body: JSON.stringify({ url, bot_id: parseInt(botId) }),
+        });
+        
+        if (!retryResponse.ok) {
+          const err = await retryResponse.json();
+          throw new Error(err.detail || "URL ingestion failed");
+        }
+        
+        const data = await retryResponse.json();
+        setStatus("success");
+        setMessage(`Indexed ✅ ${data.chunks_inserted} chunks from ${data.source}`);
+        setUrl("");
+        return;
+      }
 
       if (!response.ok) {
         const err = await response.json();
@@ -96,7 +154,7 @@ export default function KBUpload() {
       {/* File Upload */}
       <div>
         <h3 className="text-lg font-medium mb-2">Upload File</h3>
-        <p className="text-sm text-gray-500 mb-3">Supported: .txt, .md, .html, .pdf, .pptx, .png, .jpg, .jpeg</p>
+        <p className="text-sm text-gray-500 mb-3">Supported: .txt, .md, .html, .pdf, .pptx, .png, .jpg, .jpeg (max 20MB)</p>
         <input
           type="file"
           accept=".txt,.md,.html,.pdf,.pptx,.png,.jpg,.jpeg"

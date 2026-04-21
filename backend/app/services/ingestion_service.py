@@ -311,14 +311,14 @@ def ingest_file(
         # --------------------------------------------------
         # 5️⃣ Prevent Duplicate File (by hash + bot_id)
         # --------------------------------------------------
+        
+        # Use psycopg2.sql for safe table name interpolation
+        from psycopg2 import sql
 
-        cur.execute(
-            f"""
-            SELECT id FROM {kb_files_table}
-            WHERE file_hash = %s AND bot_id = %s;
-            """,
-            (file_hash, bot_id)
+        query = sql.SQL("SELECT id FROM {} WHERE file_hash = %s AND bot_id = %s").format(
+            sql.Identifier(kb_files_table)
         )
+        cur.execute(query, (file_hash, bot_id))
 
         existing_file = cur.fetchone()
 
@@ -334,15 +334,10 @@ def ingest_file(
         # 6️⃣ Insert File Record
         # --------------------------------------------------
 
-        cur.execute(
-            f"""
-            INSERT INTO {kb_files_table}
-            (file_name, file_hash, bot_id)
-            VALUES (%s, %s, %s)
-            RETURNING id;
-            """,
-            (file_name, file_hash, bot_id)
-        )
+        query = sql.SQL(
+            "INSERT INTO {} (file_name, file_hash, bot_id) VALUES (%s, %s, %s) RETURNING id"
+        ).format(sql.Identifier(kb_files_table))
+        cur.execute(query, (file_name, file_hash, bot_id))
 
         kb_file_id = cur.fetchone()[0]
 
@@ -359,13 +354,10 @@ def ingest_file(
             chunk_hash = generate_hash(chunk_text)
 
             # Duplicate check per bot
-            cur.execute(
-                f"""
-                SELECT id FROM {kb_chunks_table}
-                WHERE chunk_hash = %s AND bot_id = %s;
-                """,
-                (chunk_hash, bot_id)
+            query = sql.SQL("SELECT id FROM {} WHERE chunk_hash = %s AND bot_id = %s").format(
+                sql.Identifier(kb_chunks_table)
             )
+            cur.execute(query, (chunk_hash, bot_id))
 
             if cur.fetchone():
                 skipped_chunks += 1
@@ -375,14 +367,10 @@ def ingest_file(
 
             chunk_category = detect_category(chunk_text)
 
-            cur.execute(
-                f"""
-                INSERT INTO {kb_chunks_table}
-                (chunk_text, chunk_hash, embedding, kb_file_id, bot_id, category)
-                VALUES (%s, %s, %s, %s, %s, %s);
-                """,
-                (chunk_text, chunk_hash, vector, kb_file_id, bot_id, chunk_category)
-            )
+            query = sql.SQL(
+                "INSERT INTO {} (chunk_text, chunk_hash, embedding, kb_file_id, bot_id, category) VALUES (%s, %s, %s, %s, %s, %s)"
+            ).format(sql.Identifier(kb_chunks_table))
+            cur.execute(query, (chunk_text, chunk_hash, vector, kb_file_id, bot_id, chunk_category))
 
             inserted_chunks += 1
 
@@ -447,10 +435,14 @@ def ingest_from_url(
     kb_chunks_table = config["kb_chunks_table"]
 
     try:
-        cur.execute(
-            f"SELECT id FROM {kb_files_table} WHERE file_hash = %s AND bot_id = %s;",
-            (file_hash, bot_id)
+        # Use psycopg2.sql for safe table name interpolation
+        from psycopg2 import sql
+        
+        query = sql.SQL("SELECT id FROM {} WHERE file_hash = %s AND bot_id = %s").format(
+            sql.Identifier(kb_files_table)
         )
+        cur.execute(query, (file_hash, bot_id))
+        
         if cur.fetchone():
             return {
                 "source": url,
@@ -459,10 +451,10 @@ def ingest_from_url(
                 "chunks_skipped": 0
             }
 
-        cur.execute(
-            f"INSERT INTO {kb_files_table} (file_name, file_hash, bot_id) VALUES (%s, %s, %s) RETURNING id;",
-            (source_name, file_hash, bot_id)
-        )
+        query = sql.SQL(
+            "INSERT INTO {} (file_name, file_hash, bot_id) VALUES (%s, %s, %s) RETURNING id"
+        ).format(sql.Identifier(kb_files_table))
+        cur.execute(query, (source_name, file_hash, bot_id))
         kb_file_id = cur.fetchone()[0]
 
         for chunk_text in chunk_texts:
@@ -471,10 +463,12 @@ def ingest_from_url(
                 continue
 
             chunk_hash = generate_hash(chunk_text)
-            cur.execute(
-                f"SELECT id FROM {kb_chunks_table} WHERE chunk_hash = %s AND bot_id = %s;",
-                (chunk_hash, bot_id)
+            
+            query = sql.SQL("SELECT id FROM {} WHERE chunk_hash = %s AND bot_id = %s").format(
+                sql.Identifier(kb_chunks_table)
             )
+            cur.execute(query, (chunk_hash, bot_id))
+            
             if cur.fetchone():
                 skipped_chunks += 1
                 continue
@@ -482,12 +476,11 @@ def ingest_from_url(
             vector = embeddings.embed_query(chunk_text)
             chunk_category = detect_category(chunk_text)
 
-            cur.execute(
-                f"""INSERT INTO {kb_chunks_table}
-                (chunk_text, chunk_hash, embedding, kb_file_id, bot_id, category)
-                VALUES (%s, %s, %s, %s, %s, %s);""",
-                (chunk_text, chunk_hash, vector, kb_file_id, bot_id, chunk_category)
-            )
+            query = sql.SQL(
+                "INSERT INTO {} (chunk_text, chunk_hash, embedding, kb_file_id, bot_id, category) VALUES (%s, %s, %s, %s, %s, %s)"
+            ).format(sql.Identifier(kb_chunks_table))
+            cur.execute(query, (chunk_text, chunk_hash, vector, kb_file_id, bot_id, chunk_category))
+            
             inserted_chunks += 1
 
         conn.commit()

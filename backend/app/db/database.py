@@ -14,3 +14,6 @@ def get_connection():
         host=settings.DB_HOST,
         port=settings.DB_PORT or 5432
     )
+
+def return_connection(conn):
+    conn.close()

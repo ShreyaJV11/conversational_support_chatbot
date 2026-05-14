@@ -9,8 +9,8 @@ def get_bot_config(bot_id: int):
         "memory_limit": 6,
         "retriever_config": {},
         "llm_config": {
-            "repo_id": "llama-3.1-8b-instant",  # Fixed: GROQ model name
+            "model": "gpt-4o-mini",
             "temperature": 0.0,
-            "max_new_tokens": 2048  # Increased for better responses
+            "max_new_tokens": 2048
         }
     }

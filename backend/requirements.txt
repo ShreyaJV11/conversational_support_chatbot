@@ -4,9 +4,10 @@ psycopg2-binary
 python-dotenv
 langchain
 langchain-community
+langchain-ollama
+langchain-openai
 langchain-text-splitters
 langchain-huggingface
-langchain-groq
 sentence-transformers
 pgvector
 pgvector[psycopg2]

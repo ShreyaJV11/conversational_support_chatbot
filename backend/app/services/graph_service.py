@@ -169,3 +169,59 @@ class GraphService:
 
         logger.info(f"Draft created: {draft_id} for message: {message_id}")
         return draft_id
+
+    # -------------------------------
+    # SEND EMAIL (for ticket creation)
+    # -------------------------------
+    def send_email(self, to_email: str, subject: str, body_html: str, cc_emails: list = None) -> str:
+        """
+        Send an email via Microsoft Graph API.
+        Used for creating tickets by emailing the ticketing system.
+        
+        Args:
+            to_email: Recipient email address
+            subject: Email subject
+            body_html: HTML body content
+            cc_emails: Optional list of CC email addresses
+            
+        Returns:
+            Message ID of sent email
+        """
+        url = f"{GRAPH_BASE}/users/{self.user_id}/sendMail"
+        
+        # Sanitize HTML content
+        safe_html = bleach.clean(
+            body_html,
+            tags=ALLOWED_TAGS,
+            attributes=ALLOWED_ATTRIBUTES,
+            strip=True
+        )
+        
+        # Build recipients
+        to_recipients = [{"emailAddress": {"address": to_email}}]
+        cc_recipients = [{"emailAddress": {"address": email}} for email in (cc_emails or [])]
+        
+        payload = {
+            "message": {
+                "subject": subject,
+                "body": {
+                    "contentType": "HTML",
+                    "content": safe_html
+                },
+                "toRecipients": to_recipients,
+                "ccRecipients": cc_recipients if cc_recipients else []
+            },
+            "saveToSentItems": "true"
+        }
+        
+        try:
+            response = requests.post(url, headers=self._headers(), json=payload, timeout=15)
+            self._raise_for_status(response, "sendMail")
+            
+            logger.info(f"Email sent to {to_email} with subject: {subject}")
+            return "sent"  # Graph API returns 202 Accepted with no body
+            
+        except GraphServiceError:
+            raise
+        except Exception as e:
+            raise GraphServiceError(f"send_email unexpected error: {e}")

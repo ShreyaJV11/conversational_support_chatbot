@@ -1,13 +1,7 @@
--- ============================================================
--- HIGHWIRE CHATBOT DATABASE SCHEMA
--- ============================================================
 
--- Enable pgvector extension for embeddings
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- ============================================================
--- USERS TABLE
--- ============================================================
+
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     bot_id INTEGER NOT NULL,
@@ -23,9 +17,7 @@ CREATE INDEX idx_users_bot_email ON users(bot_id, email);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_organization ON users(organization);
 
--- ============================================================
--- SESSIONS TABLE
--- ============================================================
+
 CREATE TABLE IF NOT EXISTS sessions (
     id SERIAL PRIMARY KEY,
     bot_id INTEGER NOT NULL,

@@ -30,9 +30,9 @@ from app.db.database import get_connection
 # ==========================================================
 
 DEFAULT_INGEST_CONFIG = {
-    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-    "chunk_size": 500,
-    "chunk_overlap": 50,
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",  # Back to local embeddings
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
     "kb_files_table": "kb_files",
     "kb_chunks_table": "kb_chunks"
 }
@@ -50,6 +50,7 @@ def generate_hash(text: str) -> str:
 
 
 def create_embeddings(model_name: str):
+    """Create embeddings - using HuggingFace local models."""
     return HuggingFaceEmbeddings(model_name=model_name)
 
 

@@ -18,11 +18,11 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_RETRIEVER_CONFIG = {
     "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-    "top_k": 30,
-    "domain_threshold": 0.75,  # Increased from 0.60 to be more lenient (higher = more lenient)
-    "distance_margin": 0.20,
-    "max_chunks": 15,
-    "enable_rewrite": True,
+    "top_k": 50,  # Increased to get more candidates
+    "domain_threshold": 0.60,  # Lowered to be more lenient (was 0.75)
+    "distance_margin": 0.35,  # Increased to include more chunks (was 0.20)
+    "max_chunks": 20,  # Increased from 15
+    "enable_rewrite": False,
     "rewrite_max_words": 20,
     "kb_table": "kb_chunks"
 }
@@ -41,7 +41,7 @@ def create_embeddings(model_name: str):
         _embedding_cache[model_name] = HuggingFaceEmbeddings(model_name=model_name)
         # Warmup: create a dummy embedding to load the model
         _embedding_cache[model_name].embed_query("warmup query")
-        logger.info(f"Embedding model loaded and warmed up: {model_name}")
+        logger.info(f"Embedding model loaded: {model_name}")
     return _embedding_cache[model_name]
 
 

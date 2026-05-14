@@ -2,7 +2,7 @@ import os
 import re
 import logging
 from dotenv import load_dotenv
-from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from functools import lru_cache
 from typing import Optional
@@ -16,12 +16,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# CONSTANTS
+# DEFAULT CONFIG - OpenAI
 # ---------------------------------------------------------------------------
 
-DEFAULT_REPO_ID      = "llama-3.1-8b-instant"
+DEFAULT_MODEL        = "gpt-4o-mini"
 DEFAULT_TEMPERATURE  = 0.0
-DEFAULT_MAX_TOKENS   = 4096  # Increased for more detailed responses
+DEFAULT_MAX_TOKENS   = 2048
 EMAIL_MAX_TOKENS     = 300
 EMAIL_TEMPERATURE    = 0.2
 HISTORY_WINDOW       = 3
@@ -107,49 +107,44 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
 
 
 # ---------------------------------------------------------------------------
-# MODEL FACTORY (CACHED)
+# MODEL FACTORY (OpenAI-compatible API)
 # ---------------------------------------------------------------------------
 
 @lru_cache(maxsize=8)
 def _create_chat_model_cached(
-    repo_id: str,
+    model: str,
     temperature: float,
-    max_new_tokens: int,
-) -> ChatGroq:
-    groq_key = os.getenv("GROQ_API_KEY")
-    if not groq_key:
-        raise EnvironmentError("GROQ_API_KEY is not set.")
-
-    logger.info(f"Initializing model: {repo_id} (temp={temperature}, max_tokens={max_new_tokens})")
-
-    return ChatGroq(
-        model=repo_id,
+    max_tokens: int,
+) -> ChatOpenAI:
+    logger.info(f"Initializing ChatOpenAI model: {model} (temp={temperature})")
+    
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY not found in environment variables")
+    
+    return ChatOpenAI(
+        model=model,
         temperature=temperature,
-        max_tokens=max_new_tokens,
-        api_key=groq_key,
+        max_tokens=max_tokens,
+        api_key=api_key,
     )
 
 
-def create_chat_model(llm_config: Optional[dict] = None) -> ChatGroq:
+def create_chat_model(llm_config: Optional[dict] = None) -> ChatOpenAI:
     cfg = llm_config or {}
 
-    repo_id     = cfg.get("repo_id", DEFAULT_REPO_ID)
+    model = cfg.get("repo_id") or cfg.get("model") or os.getenv("LLM_MODEL", DEFAULT_MODEL)
     temperature = float(cfg.get("temperature", DEFAULT_TEMPERATURE))
-    max_tokens  = int(cfg.get("max_new_tokens", DEFAULT_MAX_TOKENS))
-
-    GROQ_SUPPORTED = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "mixtral-8x7b-32768"]
-    if repo_id not in GROQ_SUPPORTED:
-        logger.warning(f"Unsupported model '{repo_id}', overriding to {DEFAULT_REPO_ID}")
-        repo_id = DEFAULT_REPO_ID
+    max_tokens = int(cfg.get("max_new_tokens", DEFAULT_MAX_TOKENS))
 
     if max_tokens < 500:
         logger.warning(f"max_tokens={max_tokens} too low, overriding to {DEFAULT_MAX_TOKENS}")
         max_tokens = DEFAULT_MAX_TOKENS
 
     return _create_chat_model_cached(
-        repo_id=repo_id,
+        model=model,
         temperature=temperature,
-        max_new_tokens=max_tokens,
+        max_tokens=max_tokens,
     )
 
 
@@ -212,6 +207,14 @@ def extract_image_refs(context: str) -> list:
 # ---------------------------------------------------------------------------
 
 def clean_final_output(text: str) -> str:
+    # Remove Mistral template tags
+    text = re.sub(r'<\|im_start\|>', '', text)
+    text = re.sub(r'<\|im_end\|>', '', text)
+    text = re.sub(r'<\|im_[^|]+\|>', '', text)  # Any other im_ tags
+    
+    # Remove thinking tokens (gemma4 structured output)
+    text = re.sub(r'\{"type":\s*"thinking"[^}]*\}', '', text)
+    
     for pattern in OUTPUT_REMOVE_PATTERNS:
         text = re.sub(pattern, "", text)
     return text.strip()
@@ -489,7 +492,7 @@ def get_answers(
     llm_config: Optional[dict] = None,
 ):
     """
-    Streams text tokens from the LLM.
+    Streams text tokens from the Ollama LLM.
     Yields plain text strings token by token.
     """
     if not user_query or not user_query.strip():
@@ -513,11 +516,17 @@ def get_answers(
     # Extract image URLs from context
     image_urls = extract_image_refs(context)
 
-    messages = [SystemMessage(content=SYSTEM_PROMPT)]
-    messages.extend(_build_history_messages(history, window=HISTORY_WINDOW))
+    # Build conversation history
+    history_text = ""
+    if history and isinstance(history, list):
+        for msg in history[-HISTORY_WINDOW:]:
+            role = msg.get("role", "").lower()
+            content = msg.get("content", "").strip()
+            if content and role in ("user", "assistant"):
+                history_text += f"{role.upper()}: {content}\n"
 
     FORMAT_REMINDER = (
-        "\n\n🚨 CRITICAL RULES — follow exactly:\n"
+        "\n\n� CRITICAL RULES — follow exactly:\n"
         "1. Use ONLY information from the DOCUMENTATION above.\n"
         "2. Do NOT invent or assume any names, people, or organisations.\n"
         "3. If the answer is not explicitly in the DOCUMENTATION, write ONLY:\n"
@@ -536,24 +545,38 @@ def get_answers(
         "<all [IMAGE_REF:...] lines from documentation>"
     )
 
-    messages.append(
-        HumanMessage(
-            content=(
-                f"DOCUMENTATION:\n{context}"
-                f"\n\nQUERY:\n{user_query}"
-                f"{FORMAT_REMINDER}"
-            )
-        )
-    )
+    # Build the full prompt for Ollama
+    full_prompt = f"""{SYSTEM_PROMPT}
+
+{history_text}
+
+DOCUMENTATION:
+{context}
+
+QUERY:
+{user_query}
+{FORMAT_REMINDER}"""
 
     try:
         logger.info(f"get_answers: streaming for query='{user_query[:60]}...'")
         logger.info(f"get_answers: context contains {len(image_urls)} image(s)")
         full_response = ""
 
-        for chunk in chat_model.stream(messages):
-            token = chunk.content
+        for chunk in chat_model.stream(full_prompt):
+            # Extract content from AIMessageChunk
+            token = chunk.content if hasattr(chunk, 'content') else str(chunk)
             if not token:
+                continue
+
+            # Remove Mistral template tags from streaming output
+            token = re.sub(r'<\|im_start\|>', '', token)
+            token = re.sub(r'<\|im_end\|>', '', token)
+            token = re.sub(r'<\|im_[^|]+\|>', '', token)
+            
+            # Remove thinking tokens (gemma4 structured output)
+            token = re.sub(r'\{"type":\s*"thinking"[^}]*\}', '', token)
+            
+            if not token:  # Skip if token becomes empty after cleaning
                 continue
 
             if any(phrase in token for phrase in BANNED_PHRASES):
